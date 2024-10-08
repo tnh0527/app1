@@ -7,20 +7,25 @@
 }
 
 :root {
-  --clr-primary: #29221d;
-  --clr-primar-light: #473b33;
-  --clr-secondary: #1e1611;
+  /* --clr-primary: #29221d; */
+  --clr-primary: #054063;
+  /* --clr-primary-light: #473b33; */
+  /* --clr-secondary: #1e1611; */
+  --clr-secondary: #082142;
   --clr-white: #fff;
   --clr-black: #000;
-  --clr-pumpkin: #fe6c00;
+  /* --clr-pumpkin: #fe6c00; */
+  --clr-pumpkin: rgb(42, 163, 163);
   --clr-silver: #a8a5a6;
   --clr-silver-v1: #bdbabb;
   --clr-scarlet: #fe1e00;
   --clr-scarlet-v1: rgb(254, 30, 0, 0.79);
   --clr-green: #00fe93;
   --clr-yellow: #fec80a;
-  --clr-jet: #302924;
-  --clr-peach: #ffc397;
+  /* --clr-jet: #302924; */
+  --clr-jet: rgb(31, 34, 34);
+  /* --clr-peach: #ffc397; */
+  --clr-peach: cyan;
   --font-family-bai: "Bai Jamjuree", sans-serif;
   --transition-default: all 300ms ease-in-out;
 }

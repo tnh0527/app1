@@ -1,23 +1,24 @@
-* {
+.login-page * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
 }
 
-body {
+.login-page {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #081b29;
+  /* background: #081b29; */
+  background-image: url(/app1_background.jpg);
 }
 
 .wrapper {
   position: relative;
   width: 750px;
   height: 450px;
-  background: transparent;
+  background-color: transparent;
   border: 2px solid #0ef;
   box-shadow: 0 0 25px #0ef;
   overflow: hidden;
@@ -270,13 +271,13 @@ body {
   border-bottom: 3px solid #0ef;
   transform: rotate(10deg) skewY(40deg);
   transform-origin: bottom right;
-  transition: 1.5s ease;
-  transition-delay: 1s;
+  transition: 1.6s ease;
+  transition-delay: 1.15s;
 }
 
 .wrapper.active .bg-animate {
   transform: rotate(0) skewY(0);
-  transition-delay: 0.3s;
+  transition-delay: 0.1s;
 }
 
 .wrapper .bg-animate2 {
@@ -295,5 +296,5 @@ body {
 
 .wrapper.active .bg-animate2 {
   transform: rotate(-11deg) skewY(-41deg);
-  transition-delay: 1.1s;
+  transition-delay: 0.9s;
 }
