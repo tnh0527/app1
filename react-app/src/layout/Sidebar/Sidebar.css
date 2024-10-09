@@ -28,8 +28,9 @@
 }
 .navigation {
   margin-top: 28px;
-  height: 600px;
-  overflow-y: scroll;
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-bottom: 20px;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -80,18 +81,28 @@
 .nav-link-text {
   text-transform: capitalize;
 }
+.top-links {
+  margin-bottom: 145px;
+}
+.bottom-links {
+  padding-top: 12px;
+  border-top: 1px solid var(--clr-primary-light);
+}
 
 @media screen and (max-width: 1400px) {
   .sidebar {
     padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .bottom-links {
+    margin-top: 70%;
   }
 }
 
 @media screen and (max-width: 1200px) {
   .sidebar {
     width: 72px;
-    padding-left: 12px;
-    padding-right: 12px;
   }
   .sidebar-change {
     margin-left: -72px;
@@ -123,11 +134,29 @@
   }
 }
 
+@media screen and (max-width: 1000px) {
+  .bottom-links {
+    margin-top: 1600%;
+  }
+}
+
+@media screen and (max-width: 765px) {
+  .bottom-links {
+    margin-top: 3900%;
+  }
+}
+
 @media screen and (max-width: 420px) {
   .sidebar {
     margin-left: -72px;
   }
   .sidebar-change {
     margin-left: 0px;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .bottom-links {
+    margin-top: 3900%;
   }
 }

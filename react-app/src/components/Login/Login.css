@@ -10,9 +10,9 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  /* background: #081b29; */
   background-image: url(/app1_background.jpg);
 }
+/* background: #081b29; */
 
 .wrapper {
   position: relative;
@@ -123,7 +123,7 @@
 
 .input-box input:focus ~ label,
 .input-box input:valid ~ label {
-  top: -5px;
+  top: 2px;
   color: #0ef;
 }
 
@@ -156,6 +156,7 @@
   font-weight: 600;
   z-index: 1;
   overflow: hidden;
+  margin-top: 10px;
 }
 
 .btn::before {
@@ -297,4 +298,10 @@
 .wrapper.active .bg-animate2 {
   transform: rotate(-11deg) skewY(-41deg);
   transition-delay: 0.9s;
+}
+
+.login-page .invalid-feedback {
+  color: red;
+  font-size: 13px;
+  padding-top: 3px;
 }

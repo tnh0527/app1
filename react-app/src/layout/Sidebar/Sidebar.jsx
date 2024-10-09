@@ -34,11 +34,30 @@ const Sidebar = () => {
       </div>
 
       <nav className="navigation">
-        <ul className="nav-list">
-          {navigationLinks.map((navigationLink) => (
+        <ul className="nav-list top-links">
+          {navigationLinks.slice(0, -3).map((navigationLink) => (
             <li className="nav-item" key={navigationLink.id}>
               <a
-                href="#"
+                className={`nav-link ${
+                  navigationLink.id === activeLinkIdx ? "active" : null
+                }`}
+              >
+                <img
+                  src={navigationLink.image}
+                  className="nav-link-icon"
+                  alt={navigationLink.title}
+                />
+                <span className="nav-link-text">{navigationLink.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        {/* Bottom links placed after the main navigation */}
+        <ul className="nav-list bottom-links">
+          {navigationLinks.slice(-3).map((navigationLink) => (
+            <li className="nav-item" key={navigationLink.id}>
+              <a
                 className={`nav-link ${
                   navigationLink.id === activeLinkIdx ? "active" : null
                 }`}
