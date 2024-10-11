@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
@@ -30,7 +30,7 @@ const Login = () => {
         : { username, password };
 
     try {
-      const response = await fetch("http://localhost:5000/auth/", {
+      const response = await fetch("http://localhost:5001/auth/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -134,7 +134,7 @@ const Login = () => {
             </div>
             <button
               type="submit"
-              className="btn animation"
+              className="button animation"
               style={{ "--i": 3, "--j": 24 }}
             >
               {loading ? (
@@ -279,7 +279,7 @@ const Login = () => {
             </div>
             <button
               type="submit"
-              className="btn animation"
+              className="button animation"
               style={{ "--i": 21, "--j": 4 }}
             >
               {loading ? (

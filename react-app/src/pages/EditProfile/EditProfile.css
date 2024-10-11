@@ -1,0 +1,122 @@
+.profile-content {
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--clr-secondary);
+  flex: 1;
+  padding: 40px;
+  color: white;
+}
+.profile-edit-container {
+  flex: 1;
+  padding: 80px;
+  border-radius: 15px;
+  background-color: var(--clr-primary);
+  height: fit-content;
+}
+.profile-edit-container h3 {
+  display: block;
+  text-align: center;
+  padding: 20px;
+  font-size: 25px;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 27px;
+}
+.form-group input {
+  color: white;
+  background: var(--clr-secondary);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 16px;
+}
+.form-group select {
+  color: white;
+  background: var(--clr-secondary);
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 16px;
+}
+
+.form-group-row {
+  display: flex;
+  gap: 10%;
+}
+.form-group-row .form-group {
+  flex: 1;
+}
+.button-container {
+  width: 100px;
+  margin-left: auto;
+}
+
+.profile-pic-page {
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--clr-primary);
+  margin-left: 20px;
+  width: 300px;
+  height: 300px;
+}
+.profile-picture {
+  position: relative;
+  border-radius: 50%;
+  margin-bottom: 25px;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.profile-picture img {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.upload-input {
+  display: none;
+}
+
+.upload-button {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 100%;
+  height: 25%;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 0 0 50% 50%;
+  text-align: center;
+  cursor: pointer;
+  display: none;
+  font-size: 30px;
+}
+.form-group .is-invalid {
+  border: 1px solid red;
+}
+
+.profile-form .form-control:focus {
+  border: 1px solid #0ef;
+  outline: none;
+}
+
+.profile-picture:hover .upload-button {
+  display: block;
+}

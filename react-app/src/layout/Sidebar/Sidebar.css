@@ -69,6 +69,7 @@
 }
 .nav-link:hover {
   border: 3px solid var(--clr-primary-light);
+  cursor: pointer;
 }
 .nav-link.active {
   background-color: var(--clr-pumpkin);
@@ -82,7 +83,7 @@
   text-transform: capitalize;
 }
 .top-links {
-  margin-bottom: 145px;
+  margin-bottom: 200px;
 }
 .bottom-links {
   padding-top: 12px;
@@ -134,29 +135,11 @@
   }
 }
 
-@media screen and (max-width: 1000px) {
-  .bottom-links {
-    margin-top: 1600%;
-  }
-}
-
-@media screen and (max-width: 765px) {
-  .bottom-links {
-    margin-top: 3900%;
-  }
-}
-
 @media screen and (max-width: 420px) {
   .sidebar {
     margin-left: -72px;
   }
   .sidebar-change {
     margin-left: 0px;
-  }
-}
-
-@media screen and (max-width: 650px) {
-  .bottom-links {
-    margin-top: 3900%;
   }
 }

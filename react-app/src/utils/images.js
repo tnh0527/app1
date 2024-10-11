@@ -18,6 +18,8 @@ import wallet from "../assets/icons/wallet.svg";
 import wealth from "../assets/icons/wealth.svg";
 import exit from "../assets/icons/exit.svg";
 import savings from "../assets/icons/savings.svg";
+import edit from "../assets/icons/edit.svg";
+import security from "../assets/icons/security.svg";
 
 import Minji from "../assets/images/minji_id.jpg";
 import person_three from "../assets/images/person_three.jpg";
@@ -43,6 +45,8 @@ export const iconsImgs = {
   wealth,
   exit,
   savings,
+  security,
+  edit,
 };
 
 export const personsImgs = {

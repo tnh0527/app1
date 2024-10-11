@@ -79,9 +79,7 @@ def authenticate():
 
     # Handle login
     is_valid, errors = valid_login(username, password)
-    print("data:", data)
     if not is_valid:
-        print(errors)
         return jsonify(errors), 400
 
     # Create a session for the logged-in user
