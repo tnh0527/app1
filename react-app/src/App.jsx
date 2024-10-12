@@ -1,31 +1,9 @@
 import "./App.css";
-import {
-  RouterProvider,
-  createBrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Login from "./components/Login/Login";
-import Sidebar from "./layout/Sidebar/Sidebar";
-import Content from "./layout/Content/Content";
-import EditProfile from "./pages/EditProfile/EditProfile";
-import ProfileLeft from "./pages/EditProfile/ProfileLeft";
-import Security from "./pages/Security/Security";
-
-const Account = () => {
-  return (
-    <div className="app">
-      <Sidebar />
-      <ProfileLeft />
-      <Routes>
-        <Route path="/" element={<Navigate to="edit-profile" replace />} />
-        <Route path="edit-profile" element={<EditProfile />} />
-        <Route path="security" element={<Security />} />
-      </Routes>
-    </div>
-  );
-};
+import SidebarProvider from "./layout/Sidebar/SidebarProvider";
+import Dashboard from "./layout/Dashboard/Dashboard";
+import Account from "./layout/Account/AccountContent";
 
 function App() {
   const route = createBrowserRouter([
@@ -37,8 +15,8 @@ function App() {
       path: "/home",
       element: (
         <div className="app">
-          <Sidebar />
-          <Content />
+          <SidebarProvider />
+          <Dashboard />
         </div>
       ),
     },

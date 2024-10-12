@@ -1,11 +1,11 @@
 import "./Sidebar.css";
-import { personsImgs } from "../../utils/images";
 import { navigationLinks } from "../../data/data";
 import { useState, useContext, useEffect } from "react";
 import { SidebarContext } from "./Context";
 import { useLocation, useNavigate } from "react-router-dom";
+import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
 
-const Sidebar = () => {
+const Sidebar = ({ profilePic, setProfilePic }) => {
   const [sidebarClass, setSidebarClass] = useState("");
   const { isSidebarOpen } = useContext(SidebarContext);
   const location = useLocation();
@@ -43,9 +43,10 @@ const Sidebar = () => {
     <div className={`sidebar ${sidebarClass}`}>
       <div className="user-info">
         <div className="info-img img-fit-cover">
-          <img src={personsImgs.Minji} alt="profile image" />
+          <img src={profilePic} alt="profile image" />
         </div>
-        <span className="info-name">kim-minji</span>
+        <span className="info-name">Tuan Hoang</span>
+        <ProfilePicModal onUpload={setProfilePic} />
       </div>
 
       <nav className="navigation">
