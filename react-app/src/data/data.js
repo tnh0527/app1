@@ -1,4 +1,3 @@
-import { Children } from "react";
 import { iconsImgs } from "../utils/images";
 import { personsImgs } from "../utils/images";
 
@@ -21,7 +20,7 @@ export const navigationLinks = [
   { id: 1, title: "Home", image: iconsImgs.home, path: "/home" },
   { id: 2, title: "Budget", image: iconsImgs.budget },
   { id: 3, title: "Transactions", image: iconsImgs.plane },
-  { id: 4, title: "Subscriptions", image: iconsImgs.wallet },
+  { id: 4, title: "Schedule", image: iconsImgs.calendar, path: "/schedule" },
   { id: 5, title: "Loans", image: iconsImgs.bills },
   { id: 6, title: "Reports", image: iconsImgs.report },
   { id: 7, title: "Savings", image: iconsImgs.savings },

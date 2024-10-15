@@ -5,7 +5,6 @@ import profileImage from "../../assets/images/default-profile.jpg";
 import EditProfile from "../../pages/Account/EditProfile";
 import ProfileLeft from "../../pages/Account/AccountNav";
 import Security from "../../pages/Security/Security";
-import "./AccountContent.css";
 
 const Account = () => {
   const [profilePic, setProfilePic] = useState(profileImage);

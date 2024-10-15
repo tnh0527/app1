@@ -4,6 +4,7 @@
   padding: 36px 20px;
   transition: var(--transition-default);
 }
+
 .user-info {
   display: flex;
   justify-content: flex-start;
@@ -28,8 +29,6 @@
 }
 .navigation {
   margin-top: 28px;
-  overflow-y: auto;
-  flex-grow: 1;
   padding-bottom: 20px;
 
   &::-webkit-scrollbar {
@@ -114,7 +113,7 @@
   .nav-item {
     display: flex;
     justify-content: center;
-    margin-bottom: 18px;
+    /* margin-bottom: 18px; */
   }
   .nav-link {
     padding: 0;

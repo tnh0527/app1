@@ -65,4 +65,5 @@
 
 .save-button:disabled {
   background-color: #ccccccb0;
+  cursor: default;
 }

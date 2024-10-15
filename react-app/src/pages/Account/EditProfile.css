@@ -5,6 +5,7 @@
   flex: 1;
   padding: 40px;
   color: white;
+  height: auto;
 }
 .profile-edit-container {
   flex: 1;

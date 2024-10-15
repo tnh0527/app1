@@ -4,6 +4,7 @@ import Login from "./components/Login/Login";
 import SidebarProvider from "./layout/Sidebar/SidebarProvider";
 import Dashboard from "./layout/Dashboard/Dashboard";
 import Account from "./layout/Account/AccountContent";
+import ScheduleContent from "./layout/Schedule/ScheduleContent";
 
 function App() {
   const route = createBrowserRouter([
@@ -20,6 +21,11 @@ function App() {
         </div>
       ),
     },
+    {
+      path: "/schedule/*",
+      element: <ScheduleContent />,
+    },
+
     {
       path: "/account/*",
       element: <Account />,
