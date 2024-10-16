@@ -4,11 +4,13 @@ import { useState, useContext, useEffect } from "react";
 import { SidebarContext } from "./Context";
 import { useLocation, useNavigate } from "react-router-dom";
 import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
+import { useAuth } from "../../utils/AuthContext";
 
 const Sidebar = ({ profilePic, setProfilePic }) => {
   const [sidebarClass, setSidebarClass] = useState("");
   const { isSidebarOpen } = useContext(SidebarContext);
   const location = useLocation();
+  const { logout } = useAuth();
 
   const navigate = useNavigate();
 
@@ -20,8 +22,17 @@ const Sidebar = ({ profilePic, setProfilePic }) => {
     }
   }, [isSidebarOpen]);
 
-  const handleLogout = () => {
-    navigate("/");
+  const handleLogout = async () => {
+    const response = await fetch("http://localhost:5001/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    if (response.ok) {
+      logout();
+      navigate("/");
+    } else {
+      console.error("An error occurred while logging out.");
+    }
   };
 
   const activeLinkIdx = (path, children) => {

@@ -5,11 +5,7 @@ import profileImage from "../../assets/images/default-profile.jpg";
 const SidebarProvider = () => {
   const [profilePic, setProfilePic] = useState(profileImage);
 
-  return (
-    <div className="side-bar-provider">
-      <Sidebar profilePic={profilePic} setProfilePic={setProfilePic} />
-    </div>
-  );
+  return <Sidebar profilePic={profilePic} setProfilePic={setProfilePic} />;
 };
 
 export default SidebarProvider;

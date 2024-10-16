@@ -15,11 +15,31 @@ const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selectedImage) {
-      onUpload(selectedImage);
-      onClose();
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+        const response = await fetch(
+          "http://localhost:5001/profile/profile-pic",
+          {
+            method: "PUT",
+            credentials: "include",
+            body: formData,
+          }
+        );
+        if (response.ok) {
+          onUpload(selectedImage);
+          console.log("Profile picture updated.");
+        } else {
+          const errorData = await response.json();
+          console.error("Error updating profile picture:", errorData.error);
+        }
+      } catch (error) {
+        console.error("Failed to update profile picture:", error);
+      }
     }
+    onClose();
   };
 
   if (!isOpen) return null;

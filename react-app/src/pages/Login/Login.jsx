@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
+import { useAuth } from "../../utils/AuthContext";
 
 const Login = () => {
   const [isActive, setIsActive] = useState(false);
@@ -13,6 +14,7 @@ const Login = () => {
   const [errors, setErrors] = useState({ login: {}, register: {} });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e, type) => {
     e.preventDefault();
@@ -35,6 +37,7 @@ const Login = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(userData),
       });
 
@@ -46,6 +49,7 @@ const Login = () => {
           setIsActive(false);
           console.log("Registered successfully!");
         } else {
+          login();
           navigate("/home");
           console.log("Logged in successfully!");
         }

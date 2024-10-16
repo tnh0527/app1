@@ -1,6 +1,6 @@
 const daysInWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const RenderCalendar = ({ currentDate, events, onDateClick }) => {
+const RenderCalendar = ({ currentDate, events, onDateClick, removeEvent }) => {
   const getDaysInMonth = (month, year) =>
     new Date(year, month + 1, 0).getDate();
 
@@ -38,8 +38,22 @@ const RenderCalendar = ({ currentDate, events, onDateClick }) => {
             {isToday && <span className="today-label"> Today</span>}
           </div>
           {dayEvents.map((event) => (
-            <div key={event.id} className="event">
+            <div
+              key={event.id}
+              className="event"
+              onClick={(e) => e.stopPropagation()}
+            >
               {event.title}
+              <button
+                type="button"
+                className="delete-event"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeEvent(event.id);
+                }}
+              >
+                <i className="bi bi-trash"></i>
+              </button>
             </div>
           ))}
         </div>

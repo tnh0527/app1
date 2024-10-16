@@ -1,7 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session, current_app, send_from_directory
 from marshmallow import fields, ValidationError, pre_load
 from datetime import datetime
 from flask_marshmallow import Marshmallow
+from .Auth import login_required
+import os
+from werkzeug.utils import secure_filename
 
 profile_bp = Blueprint("profile", __name__)
 
@@ -81,11 +84,20 @@ profile_schema = ProfileSchema()
 
 user_profile = {}
 
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @profile_bp.route("/profile/edit-profile", methods=["GET", "PUT"])
+@login_required
 def profile():
     if request.method == "GET":
-        return jsonify(user_profile), 200
+        if user_profile:
+            return jsonify(user_profile), 200
+        return jsonify({"msg": "Profile not found."}), 404
 
     if request.method == "PUT":
         try:
@@ -103,3 +115,35 @@ def profile():
             ),
             200,
         )
+
+
+@profile_bp.route("/profile/profile-pic", methods=["GET", "PUT"])
+@login_required
+def profile_pic():
+    PROFILE_PIC_FOLDER = os.path.join(current_app.root_path, "static", "profile_pics")
+    user_email = user_profile.get("email", None)
+    if not user_email:
+        return jsonify({"error": "User email not found."}), 400
+
+    if request.method == "GET":
+        profile_pic_filename = user_profile.get("profile_pic", None)
+        if profile_pic_filename:
+            return send_from_directory(PROFILE_PIC_FOLDER, profile_pic_filename), 200
+        return jsonify({"error": "No profile picture found."}), 404
+
+    if request.method == "PUT":
+        if "file" not in request.files:
+            return jsonify({"error": "Requested with no file."}), 400
+
+        file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "No file."}), 400
+
+        if file and allowed_file(file.filename):
+            extension = file.filename.rsplit(".", 1)[1].lower()
+            filename = secure_filename(f"{user_email}.{extension}")
+
+            file.save(os.path.join(PROFILE_PIC_FOLDER, filename))
+            return jsonify({"msg": "Profile picture saved successfully!"}), 200
+
+        return jsonify({"error": "File format not allowed."}), 400

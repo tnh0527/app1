@@ -3,6 +3,9 @@
   width: 260px;
   padding: 36px 20px;
   transition: var(--transition-default);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .user-info {
@@ -21,6 +24,7 @@
   overflow: hidden;
   border-radius: 100%;
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+  border: 1px solid #0ef;
 }
 .info-name {
   font-size: 20px;
@@ -83,10 +87,13 @@
 }
 .top-links {
   margin-bottom: 200px;
+  padding-top: 9px;
+  border-top: 1px solid var(--clr-primary-light);
 }
 .bottom-links {
   padding-top: 12px;
   border-top: 1px solid var(--clr-primary-light);
+  margin-bottom: 0;
 }
 
 @media screen and (max-width: 1400px) {
@@ -113,7 +120,6 @@
   .nav-item {
     display: flex;
     justify-content: center;
-    /* margin-bottom: 18px; */
   }
   .nav-link {
     padding: 0;

@@ -13,13 +13,15 @@ const initialState = {
   email: "",
   city: "",
   state: "",
-  birthday: null,
+  birthdate: null,
 };
 
 const formReducer = (state, action) => {
   switch (action.type) {
     case "SET_FIELD":
       return { ...state, [action.field]: action.value };
+    case "SET_PROFILE":
+      return { ...state, ...action.payload };
     default:
       return state;
   }
@@ -38,7 +40,11 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
   };
 
   const handleDateChange = (date) => {
-    dispatch({ type: "SET_FIELD", field: "birthday", value: date });
+    if (date === null || isNaN(date.getTime())) {
+      setErrors((prevErrors) => ({ ...prevErrors, birthdate: "Invalid date" }));
+      return;
+    }
+    dispatch({ type: "SET_FIELD", field: "birthdate", value: date });
     setErrors((prevErrors) => ({ ...prevErrors, birthdate: "" }));
   };
 
@@ -49,9 +55,9 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
         "http://localhost:5001/user/profile/edit-profile",
         {
           method: "GET",
+          credentials: "include",
         }
       );
-
       if (response.ok) {
         const profile = await response.json();
         dispatch({
@@ -63,9 +69,13 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
             email: profile.email,
             city: profile.city,
             state: profile.state,
-            birthday: new Date(profile.birthday),
+            birthdate: new Date(
+              new Date(profile.birthdate).getTime() +
+                new Date(profile.birthdate).getTimezoneOffset() * 60000
+            ),
           },
         });
+        displayPicture(profile.email);
       } else {
         console.error("Failed to fetch profile.");
       }
@@ -79,6 +89,26 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
     fetchProfile();
   }, []);
 
+  const displayPicture = async (email) => {
+    try {
+      const response = await fetch(
+        "http://localhost:5001/profile/profile-pic",
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+      if (response.ok) {
+        const profilePicUrl = URL.createObjectURL(await response.blob());
+        setProfilePic(profilePicUrl);
+      } else {
+        console.error("Failled to fetch profile picture.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile picture:", error);
+    }
+  };
+
   const saveProfile = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -90,6 +120,7 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({
             firstName: state.firstName,
             lastName: state.lastName,
@@ -97,7 +128,7 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
             email: state.email,
             city: state.city,
             state: state.state,
-            birthdate: state.birthday,
+            birthdate: state.birthdate,
           }),
         }
       );
@@ -107,6 +138,7 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
         setErrors(errorData.errors || "");
         console.error("Failed to update profile.");
       } else {
+        fetchProfile();
         console.log("Successfully updated profile.");
       }
     } catch (error) {
@@ -229,10 +261,10 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
           </div>
 
           <div className="form-group">
-            <label>Birthday</label>
+            <label>Birthdate</label>
             <DatePicker
-              id="birthday"
-              selected={state.birthday}
+              id="birthdate"
+              selected={state.birthdate || null}
               onChange={handleDateChange}
               dateFormat="MM/dd/yyyy"
               className={`form-control ${errors.birthdate ? "is-invalid" : ""}`}

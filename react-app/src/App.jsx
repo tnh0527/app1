@@ -1,6 +1,7 @@
 import "./App.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import Login from "./components/Login/Login";
+import ProtectedRoute from "./utils/ProtectedRoute";
+import Login from "./pages/Login/Login";
 import SidebarProvider from "./layout/Sidebar/SidebarProvider";
 import Dashboard from "./layout/Dashboard/Dashboard";
 import Account from "./layout/Account/AccountContent";
@@ -13,22 +14,26 @@ function App() {
       element: <Login />,
     },
     {
-      path: "/home",
+      path: "/home/*",
       element: (
-        <div className="app">
-          <SidebarProvider />
-          <Dashboard />
-        </div>
+        <ProtectedRoute
+          element={
+            <div className="app">
+              <SidebarProvider />
+              <Dashboard />
+            </div>
+          }
+        />
       ),
     },
     {
       path: "/schedule/*",
-      element: <ScheduleContent />,
+      element: <ProtectedRoute element={<ScheduleContent />} />,
     },
 
     {
       path: "/account/*",
-      element: <Account />,
+      element: <ProtectedRoute element={<Account />} />,
     },
   ]);
 

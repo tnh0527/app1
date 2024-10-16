@@ -2,6 +2,7 @@ import "./Schedule.css";
 import { useState, useEffect } from "react";
 import ScheduleNav from "./ScheduleNav";
 import RenderCalendar from "./RenderCalendar";
+import { PulseLoader } from "react-spinners";
 
 const Schedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -22,6 +23,7 @@ const Schedule = () => {
     setSelectedDate(day);
     setIsModalOpen(true);
   };
+
   const handleAddEvent = async () => {
     const formattedDate = new Date(
       currentDate.getFullYear(),
@@ -53,10 +55,13 @@ const Schedule = () => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(e),
     });
     if (!response.ok) {
       throw new Error("Backend: Failed to save event.");
+    } else {
+      displayEvents();
     }
   };
 
@@ -65,15 +70,17 @@ const Schedule = () => {
     try {
       const response = await fetch("http://localhost:5001/events/schedule", {
         method: "GET",
+        credentials: "include",
       });
+      const data = await response.json();
       if (response.ok) {
-        let events = await response.json();
-        events = events.map((event) => ({
+        let events = data.map((event) => ({
           ...event,
           date: new Date(event.date),
         }));
+        setEvents(events);
       } else {
-        console.error("Failed to fetch events:", response.status);
+        console.error("Error:", data.error);
       }
     } catch (error) {
       console.error("Error to fetch events:", error);
@@ -85,6 +92,31 @@ const Schedule = () => {
   useEffect(() => {
     displayEvents();
   }, []);
+
+  const removeEvent = async (eventId) => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:5001/events/schedule", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ eventId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        console.error("Error:", data.error);
+      }
+      setEvents((prevEvents) =>
+        prevEvents.filter((event) => event.id !== eventId)
+      );
+    } catch (error) {
+      console.error("Error deleting event.", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="schedule-main-content">
@@ -107,6 +139,7 @@ const Schedule = () => {
           currentDate={currentDate}
           events={events}
           onDateClick={handleDateClick}
+          removeEvent={removeEvent}
         />
 
         {isModalOpen && (
@@ -140,12 +173,12 @@ const Schedule = () => {
         <div className="event-list">
           <h3>Up Coming Events</h3>
           {loading ? (
-            <p>Loading events...</p>
+            <PulseLoader loading={loading} size={7} color={"#22D6D6"} />
           ) : events.length > 0 ? (
             <ul>
               {events.map((event) => (
                 <li key={event.id}>
-                  {event.title} - {new Date(event.date).toLocaleString()}
+                  {event.title} - {new Date(event.date).toLocaleDateString()}
                 </li>
               ))}
             </ul>

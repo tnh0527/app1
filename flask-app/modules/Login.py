@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify, session
 import re
+from .Auth import login_required
 
 login_bp = Blueprint("login", __name__)
 
-users = {"tnh0527": {"email": "tuan@gmail.com", "password": "tuanhoang"}}
+users = {"tuan123": {"email": "tuan@gmail.com", "password": "tuanhoang"}}
 
 
 class Users:
@@ -74,7 +75,8 @@ def authenticate():
         if not is_valid:
             return jsonify(errors), 400
 
-        # Store user in the simulated database
+        # users[username] = {"email": email, "password": password}
+
         return jsonify({"msg": "User registered successfully."}), 201
 
     # Handle login
@@ -82,5 +84,15 @@ def authenticate():
     if not is_valid:
         return jsonify(errors), 400
 
-    # Create a session for the logged-in user
+    session["user_id"] = username
+    session.permanent = True
+    print("Logged in, current session:", session.get("user_id"))
     return jsonify({"msg": "Login successful."}), 200
+
+
+@login_bp.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    session.clear()
+    print("Logged out. Session:", session.get("user_id"))
+    return jsonify({"msg": "Logged out successfully!"}), 200

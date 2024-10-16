@@ -3,10 +3,10 @@
   flex-direction: column;
   padding: 36px 20px;
   background-color: var(--clr-secondary);
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
   width: 260px;
   transition: var(--transition-default);
+  min-height: 100vh;
 }
 
 .profile-top-left {
@@ -26,4 +26,25 @@
   align-items: center;
   justify-content: center;
   margin-left: 12px;
+}
+
+@media screen and (max-width: 1200px) {
+  .main-profile-left {
+    width: 72px;
+    align-items: center;
+  }
+  .profile-top-title {
+    display: none;
+  }
+  .profile-top-left {
+    align-items: center;
+    justify-content: center;
+    margin-top: 0px;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .main-profile-left {
+    margin-left: -72px;
+  }
 }
