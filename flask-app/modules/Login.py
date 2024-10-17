@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify, session
 import re
 from .Auth import login_required
+from .db import db
+from werkzeug.security import generate_password_hash, check_password_hash
+from .models import User
 
 login_bp = Blueprint("login", __name__)
-
-users = {"tuan123": {"email": "tuan@gmail.com", "password": "tuanhoang"}}
 
 
 class Users:
@@ -17,34 +18,38 @@ class Users:
     def valid_username(self):
         if not self.username:
             self.errors["username"] = "Username cannot be empty."
-        elif self.username in users:
+        elif self.username_exists():
             self.errors["username"] = "Username already exists."
-        return not "username" in self.errors
+        return not self.errors.get("username")
+
+    def username_exists(self):
+        return User.query.filter_by(username=self.username).first() is not None
 
     def valid_email(self):
         email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
         if not self.email:
             self.errors["email"] = "Email cannot be empty."
-        elif any(user["email"] == self.email for user in users.values()):
+        elif self.email_exists():
             self.errors["email"] = "This email is already registered."
         elif not re.match(email_regex, self.email):
             self.errors["email"] = "Invalid email format."
-        return not "email" in self.errors  # Return True if no error for email
+        return not self.errors.get("email")
+
+    def email_exists(self):
+        return User.query.filter_by(email=self.email).first() is not None
 
     def valid_password(self):
         if not self.password:
             self.errors["password"] = "Password cannot be empty."
         elif len(self.password) < 6:
             self.errors["password"] = "Password must be at least 6 characters."
-        return not "password" in self.errors
+        return not self.errors.get("password")
 
-    def validateUser(self):
+    def validate_user(self):
         self.valid_username()
         self.valid_email()
         self.valid_password()
-        if self.errors:
-            return False, self.errors
-        return True, self.errors
+        return not self.errors, self.errors
 
 
 def valid_login(username, password):
@@ -53,7 +58,8 @@ def valid_login(username, password):
         errors["username"] = "Enter your username."
     if not password:
         errors["password"] = "Enter your password."
-    if username not in users or users[username]["password"] != password:
+    user = User.query.filter_by(username=username).first()
+    if not user or not check_password_hash(user.user_password, password):
         errors["username"] = "Invalid credentials."
         errors["password"] = "Invalid credentials."
     if errors:
@@ -69,16 +75,28 @@ def authenticate():
 
     if "register" in data:
         email = data.get("email")
-        new_user = Users(username, email, password)
-
-        is_valid, errors = new_user.validateUser()
+        new_user = Users(
+            username=username,
+            email=email,
+            password=password,
+        )
+        is_valid, errors = new_user.validate_user()
         if not is_valid:
             return jsonify(errors), 400
 
-        # users[username] = {"email": email, "password": password}
+        try:
+            user = User(
+                username=new_user.username,
+                email=new_user.email,
+                user_password=generate_password_hash(new_user.password),
+            )
+            db.session.add(user)
+            db.session.commit()
+            return jsonify({"msg": "User registered successfully."}), 201
 
-        return jsonify({"msg": "User registered successfully."}), 201
-
+        except Exception as e:
+            print("Error:", e)
+            return jsonify({"error": "Internal server error."}), 500
     # Handle login
     is_valid, errors = valid_login(username, password)
     if not is_valid:

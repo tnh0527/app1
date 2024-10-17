@@ -6,7 +6,7 @@
   padding: 40px;
   color: white;
   overflow: hidden;
-  height: auto;
+  min-height: 50vh;
 }
 .profile-edit-container {
   flex: 1;

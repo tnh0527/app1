@@ -3,9 +3,9 @@
   width: 260px;
   padding: 36px 20px;
   transition: var(--transition-default);
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  height: 100vh;
 }
 
 .user-info {
