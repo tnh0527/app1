@@ -2,6 +2,7 @@ import "./ProfilePicModal.css";
 import { useState } from "react";
 
 const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
 
   const handleFileChange = (e) => {
@@ -11,17 +12,18 @@ const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
       reader.onloadend = () => {
         setSelectedImage(reader.result);
       };
+      setSelectedFile(file);
       reader.readAsDataURL(file);
     }
   };
 
   const handleSave = async () => {
-    if (selectedImage) {
+    if (selectedFile) {
       try {
         const formData = new FormData();
-        formData.append("file", selectedImage);
+        formData.append("file", selectedFile);
         const response = await fetch(
-          "http://localhost:5001/profile/profile-pic",
+          "http://localhost:5001/user/profile/profile-pic",
           {
             method: "PUT",
             credentials: "include",
