@@ -89,16 +89,6 @@ class ProfileSchema(ma.Schema):
             raise ValidationError(errors)
         return data
 
-    @pre_load
-    def validate_birthdate(self, data, **kwargs):
-        if (
-            "birthdate" not in data
-            or data.get("birthdate") is None
-            or data.get("birthdate") == ""
-        ):
-            raise ValidationError({"birthdate": "Birthdate cannot be empty."})
-        return data
-
 
 profile_schema = ProfileSchema()
 
@@ -127,7 +117,6 @@ def profile():
             "city": user.city,
             "birthdate": user.birthdate,
         }
-        print(user_profile)
         return jsonify(user_profile), 200
 
     if request.method == "PUT":
@@ -158,7 +147,6 @@ def profile_pic():
     PROFILE_PIC_FOLDER = os.path.join(
         current_app.root_path, "..", "static", "profile_pics"
     )
-
     if request.method == "GET":
         if user.profile_pic:
             return send_from_directory(PROFILE_PIC_FOLDER, user.profile_pic), 200

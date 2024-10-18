@@ -5,9 +5,11 @@ import { SidebarContext } from "./Context";
 import { useLocation, useNavigate } from "react-router-dom";
 import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
 import { useAuth } from "../../utils/AuthContext";
+import { ProfileContext } from "../../utils/ProfileContext";
 
-const Sidebar = ({ profilePic, setProfilePic }) => {
+const Sidebar = () => {
   const [sidebarClass, setSidebarClass] = useState("");
+  const { profilePic, setProfilePic, profile } = useContext(ProfileContext);
   const { isSidebarOpen } = useContext(SidebarContext);
   const location = useLocation();
   const { logout } = useAuth();
@@ -35,6 +37,18 @@ const Sidebar = ({ profilePic, setProfilePic }) => {
     }
   };
 
+  const getNameBar = () => {
+    if (profile) {
+      const { firstName, lastName, username } = profile;
+      if (firstName && lastName) {
+        return `${firstName} ${lastName}`;
+      } else {
+        return username;
+      }
+    }
+    return "User";
+  };
+
   const activeLinkIdx = (path, children) => {
     if (location.pathname === path) return true;
     if (children) {
@@ -56,7 +70,7 @@ const Sidebar = ({ profilePic, setProfilePic }) => {
         <div className="info-img img-fit-cover">
           <img src={profilePic} alt="profile image" />
         </div>
-        <span className="info-name">Tuan Hoang</span>
+        <span className="info-name">{getNameBar()}</span>
         <ProfilePicModal onUpload={setProfilePic} />
       </div>
 

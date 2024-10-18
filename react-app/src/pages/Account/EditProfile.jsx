@@ -1,10 +1,12 @@
 import "./EditProfile.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useState, useReducer, useEffect } from "react";
+import { useState, useReducer, useEffect, useContext } from "react";
 import { usStates } from "../../data/data";
 import { SyncLoader } from "react-spinners";
 import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
+import { ProfileContext } from "../../utils/ProfileContext";
+import profileImage from "../../assets/images/default-profile.jpg";
 
 const initialState = {
   firstName: "",
@@ -27,13 +29,25 @@ const formReducer = (state, action) => {
   }
 };
 
-const EditProfile = ({ profilePic, setProfilePic }) => {
+const EditProfile = () => {
+  const { profile, setProfile } = useContext(ProfileContext);
+  const { profilePic, setProfilePic } = useContext(ProfileContext);
+
   const [state, dispatch] = useReducer(formReducer, initialState);
   const [initialProfile, setInitialProfile] = useState(initialState);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [savedChanges, setSavedChanges] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      dispatch({ type: "SET_PROFILE", payload: profile });
+      setInitialProfile(profile);
+      setLoading(false);
+    }
+  }, [profile]);
 
   const handleChange = (e) => {
     setHasChanges(true);
@@ -54,14 +68,12 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
   const handleRawDateChange = (e) => {
     setHasChanges(true);
     const { value } = e.target;
-
     const formattedValue = value
       .replace(/\D/g, "")
       .replace(/(\d{2})(\d)/, "$1/$2")
       .replace(/(\d{2})\/(\d{2})(\d)/, "$1/$2/$3")
       .substring(0, 10);
     e.target.value = formattedValue;
-
     dispatch({
       type: "SET_FIELD",
       field: "birthdate",
@@ -69,75 +81,9 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
     });
   };
 
-  const fetchProfile = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        "http://localhost:5001/user/profile/edit-profile",
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      if (response.ok) {
-        const profile = await response.json();
-        setInitialProfile(profile);
-        const birthdate = profile.birthdate
-          ? new Date(
-              new Date(profile.birthdate).getTime() +
-                new Date(profile.birthdate).getTimezoneOffset() * 60000
-            )
-          : null;
-        dispatch({
-          type: "SET_PROFILE",
-          payload: {
-            firstName: profile.firstName,
-            lastName: profile.lastName,
-            username: profile.username,
-            email: profile.email,
-            city: profile.city,
-            state: profile.state,
-            birthdate: birthdate,
-          },
-        });
-        displayPicture();
-      } else {
-        console.error("Failed to fetch profile.");
-      }
-    } catch (error) {
-      console.error("Caught an error:", error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const displayPicture = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:5001/user/profile/profile-pic",
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      if (response.ok) {
-        const profilePicUrl = URL.createObjectURL(await response.blob());
-        setProfilePic(profilePicUrl);
-      } else {
-        console.error("Failled to fetch profile picture.");
-      }
-    } catch (error) {
-      console.error("Error fetching profile picture:", error);
-    }
-  };
-
   const saveProfile = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     const updatedFields = {};
     for (const key in state) {
       if (state[key] !== initialProfile[key]) {
@@ -168,8 +114,8 @@ const EditProfile = ({ profilePic, setProfilePic }) => {
         console.error("Failed to update profile.");
       } else {
         setInitialProfile({ ...initialProfile, ...updatedFields });
-        fetchProfile();
         console.log("Successfully updated profile.");
+        setSavedChanges(!savedChanges);
       }
     } catch (error) {
       console.error("Error updating profile:", error);

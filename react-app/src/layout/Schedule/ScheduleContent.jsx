@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import SidebarProvider from "../Sidebar/SidebarProvider";
 import Schedule from "../../pages/Schedule/Schedule";
+import SidebarProvider from "../Sidebar/SidebarProvider";
 
 const ScheduleContent = () => {
   return (

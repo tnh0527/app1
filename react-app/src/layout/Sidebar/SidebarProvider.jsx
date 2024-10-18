@@ -1,11 +1,12 @@
 import Sidebar from "./Sidebar";
-import { useState } from "react";
-import profileImage from "../../assets/images/default-profile.jpg";
+import { ProfileProvider } from "../../utils/ProfileContext";
 
 const SidebarProvider = () => {
-  const [profilePic, setProfilePic] = useState(profileImage);
-
-  return <Sidebar profilePic={profilePic} setProfilePic={setProfilePic} />;
+  return (
+    <ProfileProvider>
+      <Sidebar />
+    </ProfileProvider>
+  );
 };
 
 export default SidebarProvider;
