@@ -6,11 +6,11 @@ import { usStates } from "../../data/data";
 import { SyncLoader } from "react-spinners";
 import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
 import { ProfileContext } from "../../utils/ProfileContext";
-import profileImage from "../../assets/images/default-profile.jpg";
+import { csrfToken } from "../../data/data";
 
 const initialState = {
-  firstName: "",
-  lastName: "",
+  first_name: "",
+  last_name: "",
   username: "",
   email: "",
   city: "",
@@ -45,8 +45,8 @@ const EditProfile = () => {
     if (profile) {
       dispatch({ type: "SET_PROFILE", payload: profile });
       setInitialProfile(profile);
-      setLoading(false);
     }
+    setLoading(false);
   }, [profile]);
 
   const handleChange = (e) => {
@@ -97,11 +97,12 @@ const EditProfile = () => {
     }
     try {
       const response = await fetch(
-        "http://localhost:5001/user/profile/edit-profile",
+        "http://localhost:8000/profile/edit-profile/",
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
           },
           credentials: "include",
           body: JSON.stringify(updatedFields),
@@ -134,10 +135,10 @@ const EditProfile = () => {
             <div className="form-group">
               <label>First Name</label>
               <input
-                id="firstName"
-                name="firstName"
+                id="first_name"
+                name="first_name"
                 type="text"
-                value={state.firstName}
+                value={state.first_name}
                 onChange={handleChange}
                 onKeyDown={(e) => {
                   if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
@@ -145,19 +146,19 @@ const EditProfile = () => {
                   }
                 }}
                 className={`form-control ${
-                  errors.firstName ? "is-invalid" : ""
+                  errors.first_name ? "is-invalid" : ""
                 }`}
               />
-              <div className="invalid-feedback">{errors.firstName}</div>
+              <div className="invalid-feedback">{errors.first_name}</div>
             </div>
 
             <div className="form-group">
               <label>Last Name</label>
               <input
-                id="lastName"
-                name="lastName"
+                id="last_name"
+                name="last_name"
                 type="text"
-                value={state.lastName}
+                value={state.last_name}
                 onChange={handleChange}
                 onKeyDown={(e) => {
                   if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
@@ -165,10 +166,10 @@ const EditProfile = () => {
                   }
                 }}
                 className={`form-control ${
-                  errors.lastName ? "is-invalid" : ""
+                  errors.last_name ? "is-invalid" : ""
                 }`}
               />
-              <div className="invalid-feedback">{errors.lastName}</div>
+              <div className="invalid-feedback">{errors.last_name}</div>
             </div>
           </div>
 

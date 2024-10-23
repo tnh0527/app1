@@ -1,5 +1,6 @@
 import "./ProfilePicModal.css";
 import { useState } from "react";
+import { csrfToken } from "../../../data/data";
 
 const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,9 +24,12 @@ const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
         const formData = new FormData();
         formData.append("file", selectedFile);
         const response = await fetch(
-          "http://localhost:5001/user/profile/profile-pic",
+          "http://localhost:8000/profile/profile-pic/",
           {
             method: "PUT",
+            headers: {
+              "X-CSRFToken": csrfToken,
+            },
             credentials: "include",
             body: formData,
           }

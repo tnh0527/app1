@@ -8,6 +8,10 @@ import { useAuth } from "../../utils/AuthContext";
 import { ProfileContext } from "../../utils/ProfileContext";
 
 const Sidebar = () => {
+  const csrfToken = document.cookie
+    .split(";")
+    .find((cookie) => cookie.trim().startsWith("csrftoken="))
+    .split("=")[1];
   const [sidebarClass, setSidebarClass] = useState("");
   const { profilePic, setProfilePic, profile } = useContext(ProfileContext);
   const { isSidebarOpen } = useContext(SidebarContext);
@@ -25,9 +29,9 @@ const Sidebar = () => {
   }, [isSidebarOpen]);
 
   const handleLogout = async () => {
-    const response = await fetch("http://localhost:5001/auth/logout", {
+    const response = await fetch("http://localhost:8000/auth/logout/", {
       method: "POST",
-      credentials: "include",
+      "X-CSRFToken": csrfToken,
     });
     if (response.ok) {
       logout();
@@ -39,9 +43,9 @@ const Sidebar = () => {
 
   const getNameBar = () => {
     if (profile) {
-      const { firstName, lastName, username } = profile;
-      if (firstName && lastName) {
-        return `${firstName} ${lastName}`;
+      const { first_name, last_name, username } = profile;
+      if (first_name && last_name) {
+        return `${first_name} ${last_name}`;
       } else {
         return username;
       }

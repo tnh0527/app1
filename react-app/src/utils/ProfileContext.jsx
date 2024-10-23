@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import profileImage from "../assets/images/default-profile.jpg";
+import { csrfToken } from "../data/data";
 export const ProfileContext = createContext();
 
 export const ProfileProvider = ({ children }) => {
@@ -9,9 +10,10 @@ export const ProfileProvider = ({ children }) => {
   const fetchProfile = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5001/user/profile/edit-profile",
+        "http://localhost:8000/profile/edit-profile/",
         {
           method: "GET",
+          "X-CSRFToken": csrfToken,
           credentials: "include",
         }
       );
@@ -35,9 +37,12 @@ export const ProfileProvider = ({ children }) => {
   const fetchProfilePic = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5001/user/profile/profile-pic",
+        "http://localhost:8000/profile/profile-pic/",
         {
           method: "GET",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
           credentials: "include",
         }
       );

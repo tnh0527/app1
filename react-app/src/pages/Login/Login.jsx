@@ -3,6 +3,7 @@ import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { useAuth } from "../../utils/AuthContext";
+import { csrfToken } from "../../data/data";
 
 const Login = () => {
   const [isActive, setIsActive] = useState(false);
@@ -21,29 +22,35 @@ const Login = () => {
     setErrors((prev) => ({ ...prev, [type]: {} }));
     setLoading(true);
 
+    const url =
+      type === "register"
+        ? "http://localhost:8000/auth/register/"
+        : "http://localhost:8000/auth/login/";
+
     const userData =
       type === "register"
         ? {
             username: newUsername,
             email: newEmail,
             password: newPassword,
-            register: true,
           }
         : { username, password };
 
     try {
-      const response = await fetch("http://localhost:5001/auth/", {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
+        "X-CSRFToken": csrfToken,
         body: JSON.stringify(userData),
       });
 
       if (!response.ok) {
         const responseData = await response.json();
+        console.log("Error response data:", responseData);
         setErrors((prev) => ({ ...prev, [type]: responseData }));
+        setPassword("");
       } else {
         if (type === "register") {
           setIsActive(false);

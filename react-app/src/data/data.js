@@ -208,3 +208,11 @@ export const usStates = [
   { name: "Wisconsin", abbreviation: "WI" },
   { name: "Wyoming", abbreviation: "WY" },
 ];
+
+export const csrfToken = (() => {
+  const cookie = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith("csrftoken="));
+
+  return cookie ? cookie.split("=")[1] : null;
+})();
