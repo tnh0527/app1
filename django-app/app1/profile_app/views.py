@@ -7,19 +7,40 @@ from .serializers import ProfileSerializer
 from django.conf import settings
 from django.core.files.storage import default_storage
 import os
+from datetime import datetime
+
+
+def date_format(birthdate_str):
+    try:
+        date_obj = datetime.strptime(birthdate_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+        print("Formatted Date:", date_obj.date())
+        return date_obj.date()
+    except ValueError:
+        raise ValueError("Date must be in MM/DD/YYYY format.")
 
 
 @api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
 def profile(request):
-    print(f"Received request: {request.method} for user: {request.user.username}")
+    # print(f"Received request: {request.method} for user: {request.user.username}")
     user = request.user
+    # print("Profile:", user.birthdate)
     if request.method == "GET":
         serializer = ProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method == "PUT":
-        serializer = ProfileSerializer(user, data=request.data, partial=True)
+        data = request.data.copy()
+        if "birthdate" in data:
+            try:
+                data["birthdate"] = date_format(data["birthdate"])
+            except ValueError as e:
+                return Response(
+                    {"errors": {"birthdate": str(e)}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        serializer = ProfileSerializer(user, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(

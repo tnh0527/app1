@@ -56,15 +56,6 @@ const EditProfile = () => {
     setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
   };
 
-  const handleDateChange = (date) => {
-    setHasChanges(true);
-    if (date === null || isNaN(date.getTime())) {
-      setErrors((prevErrors) => ({ ...prevErrors, birthdate: "Invalid date" }));
-      return;
-    }
-    dispatch({ type: "SET_FIELD", field: "birthdate", value: date });
-    setErrors((prevErrors) => ({ ...prevErrors, birthdate: "" }));
-  };
   const handleRawDateChange = (e) => {
     setHasChanges(true);
     const { value } = e.target;
@@ -73,12 +64,40 @@ const EditProfile = () => {
       .replace(/(\d{2})(\d)/, "$1/$2")
       .replace(/(\d{2})\/(\d{2})(\d)/, "$1/$2/$3")
       .substring(0, 10);
+
+    const isValidDateFormat =
+      /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/.test(formattedValue);
+
+    if (isValidDateFormat) {
+      const parts = formattedValue.split("/");
+      const month = parseInt(parts[0], 10);
+      const day = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      const date = new Date(year, month - 1, day);
+      if (
+        !isNaN(date.getTime()) &&
+        date.getDate() === day &&
+        date.getMonth() === month - 1
+      ) {
+        dispatch({
+          type: "SET_FIELD",
+          field: "birthdate",
+          value: date,
+        });
+        setErrors((prevErrors) => ({ ...prevErrors, birthdate: "" }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          birthdate: "Invalid date",
+        }));
+      }
+    } else {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        birthdate: "Invalid date format",
+      }));
+    }
     e.target.value = formattedValue;
-    dispatch({
-      type: "SET_FIELD",
-      field: "birthdate",
-      value: formattedValue,
-    });
   };
 
   const saveProfile = async (e) => {
@@ -242,15 +261,13 @@ const EditProfile = () => {
             <label>Birthdate</label>
             <DatePicker
               id="birthdate"
-              selected={state.birthdate || null}
-              onChange={handleDateChange}
-              onKeyDown={(e) => {
-                if (!/^[0-9/]$/.test(e.key) && e.key !== "Backspace") {
-                  e.preventDefault();
-                }
-              }}
+              selected={state.birthdate ? new Date(state.birthdate) : null}
               onChangeRaw={handleRawDateChange}
+              onFocus={(e) => {
+                setErrors((prevErrors) => ({ ...prevErrors, birthdate: "" }));
+              }}
               dateFormat="MM/dd/yyyy"
+              open={false}
               className={`form-control ${errors.birthdate ? "is-invalid" : ""}`}
             />
             <div className="invalid-feedback">{errors.birthdate}</div>

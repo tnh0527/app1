@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from auth_app.models import User
-from datetime import datetime
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -25,8 +24,3 @@ class ProfileSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
-
-    def validate_birthdate(self, value):
-        if isinstance(value, int):
-            value = datetime.fromtimestamp(value / 1000).date()
-        return value

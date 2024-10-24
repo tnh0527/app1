@@ -13,7 +13,9 @@ export const ProfileProvider = ({ children }) => {
         "http://localhost:8000/profile/edit-profile/",
         {
           method: "GET",
-          "X-CSRFToken": csrfToken,
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
           credentials: "include",
         }
       );

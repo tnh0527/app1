@@ -89,19 +89,16 @@ WSGI_APPLICATION = "app1.wsgi.application"
 
 from decouple import config
 
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": config("DB_NAME"),
         "USER": config("DB_USER"),
         "PASSWORD": config("DB_PASSWORD"),
         "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="3306"),
-        "OPTIONS": {
-            "ssl": {
-                "ca": "C:/Users/Tuan Hoang/OneDrive/Documents/GitHub/app1/django-app/app1/app1/ultils/us-east-2-bundle.pem"
-            }
-        },
+        "PORT": config("DB_PORT", default="5432"),
     }
 }
 AUTH_USER_MODEL = "auth_app.User"
