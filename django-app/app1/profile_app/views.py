@@ -13,7 +13,7 @@ from datetime import datetime
 def date_format(birthdate_str):
     try:
         date_obj = datetime.strptime(birthdate_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-        print("Formatted Date:", date_obj.date())
+        # print("Formatted Date:", date_obj.date())
         return date_obj.date()
     except ValueError:
         raise ValueError("Date must be in MM/DD/YYYY format.")
@@ -59,7 +59,7 @@ def profile_pic(request):
 
     if request.method == "GET":
         if user.profile_pic:
-            print("picture:", user.profile_pic)
+            # print("picture:", user.profile_pic)
             profile_pic_path = os.path.join(
                 settings.MEDIA_ROOT, "profile_pics", user.profile_pic
             )
@@ -67,7 +67,7 @@ def profile_pic(request):
                 with open(profile_pic_path, "rb") as pic_file:
                     return HttpResponse(pic_file.read(), content_type="image/jpeg")
             else:
-                print(f"File does not exist at path: {profile_pic_path}")
+                # print(f"File does not exist at path: {profile_pic_path}")
                 return Response(
                     {"error": "No profile picture found."},
                     status=status.HTTP_404_NOT_FOUND,

@@ -27,3 +27,6 @@ def create_app():
     app.register_blueprint(schedule_bp, url_prefix="/events")
 
     return app
+
+
+# Deprecated

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import ScheduleNav from "./ScheduleNav";
 import RenderCalendar from "./RenderCalendar";
 import { PulseLoader } from "react-spinners";
+import { csrfToken } from "../../data/data";
 
 const Schedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -31,14 +32,13 @@ const Schedule = () => {
       selectedDate
     );
     const newEvent = {
-      id: new Date().getTime(),
       title: eventTitle,
       date: formattedDate,
     };
     try {
-      await saveEvent(newEvent);
+      const savedEvent = await saveEvent(newEvent);
 
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
+      setEvents((prevEvents) => [...prevEvents, savedEvent]);
       resetModal();
     } catch (error) {
       console.error("Failed to save event:", error);
@@ -50,29 +50,34 @@ const Schedule = () => {
   };
 
   const saveEvent = async (e) => {
-    const response = await fetch("http://localhost:5001/events/schedule", {
+    const response = await fetch("http://localhost:8000/events/schedule/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
       },
       credentials: "include",
       body: JSON.stringify(e),
     });
     if (!response.ok) {
       throw new Error("Backend: Failed to save event.");
-    } else {
-      displayEvents();
     }
+    displayEvents();
+    return await response.json();
   };
 
   const displayEvents = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/events/schedule", {
+      const response = await fetch("http://localhost:8000/events/schedule/", {
         method: "GET",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
         credentials: "include",
       });
       const data = await response.json();
+      console.log("Events data:", data);
       if (response.ok) {
         let events = data.map((event) => ({
           ...event,
@@ -96,13 +101,14 @@ const Schedule = () => {
   const removeEvent = async (eventId) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/events/schedule", {
+      const response = await fetch("http://localhost:8000/events/schedule/", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
         },
         credentials: "include",
-        body: JSON.stringify({ eventId }),
+        body: JSON.stringify({ event_id: eventId }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -117,6 +123,20 @@ const Schedule = () => {
       setLoading(false);
     }
   };
+
+  // Upcoming events display
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to midnight
+
+  const twoWeeksFromNow = new Date(today);
+  twoWeeksFromNow.setDate(today.getDate() + 14); // Set to two weeks from today
+
+  // Filter events to include only those within the next two weeks
+  const upcomingEvents = events.filter((event) => {
+    const eventDate = new Date(event.date);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate >= today && eventDate <= twoWeeksFromNow;
+  });
 
   return (
     <div className="schedule-main-content">
@@ -171,13 +191,13 @@ const Schedule = () => {
         )}
 
         <div className="event-list">
-          <h3>Up Coming Events</h3>
+          <h3 className="upcoming-event-h3">Up Coming Events</h3>
           {loading ? (
             <PulseLoader loading={loading} size={7} color={"#22D6D6"} />
           ) : events.length > 0 ? (
             <ul>
-              {events.map((event) => (
-                <li key={event.id}>
+              {upcomingEvents.map((event, index) => (
+                <li key={event.event_id || index}>
                   {event.title} - {new Date(event.date).toLocaleDateString()}
                 </li>
               ))}

@@ -50,7 +50,6 @@ export const ProfileProvider = ({ children }) => {
       );
       if (response.ok) {
         const profilePicUrl = URL.createObjectURL(await response.blob());
-        console.log("Profile picture fetched:", profilePicUrl);
         setProfilePic(profilePicUrl);
       } else {
         setProfilePic(profileImage);

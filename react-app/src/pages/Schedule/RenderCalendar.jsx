@@ -14,6 +14,7 @@ const RenderCalendar = ({ currentDate, events, onDateClick, removeEvent }) => {
 
     const today = new Date();
 
+    // Create an array to hold empty days for proper alignment
     const days = Array.from({ length: firstDay }, (_, index) => (
       <div className="day empty" key={`empty-${index}`} />
     ));
@@ -23,9 +24,12 @@ const RenderCalendar = ({ currentDate, events, onDateClick, removeEvent }) => {
       const isPast =
         date < today && date.toDateString() !== today.toDateString();
       const isToday = date.toDateString() === today.toDateString();
-      const dayEvents = events.filter(
-        (event) => event.date.toDateString() === date.toDateString()
-      );
+
+      // Convert event dates from database format to Date objects
+      const dayEvents = events.filter((event) => {
+        const eventDate = new Date(event.date); // Parse the date from the database
+        return eventDate.toDateString() === date.toDateString();
+      });
 
       days.push(
         <div
@@ -37,25 +41,36 @@ const RenderCalendar = ({ currentDate, events, onDateClick, removeEvent }) => {
             {day}
             {isToday && <span className="today-label"> Today</span>}
           </div>
-          {dayEvents.map((event) => (
-            <div
-              key={event.id}
-              className="event"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {event.title}
-              <button
-                type="button"
-                className="delete-event"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeEvent(event.id);
-                }}
+          {dayEvents.map((event) => {
+            // Determine if the event is a birthday
+            const isBirthday = event.title === "Your Birthday";
+            return (
+              <div
+                key={event.id}
+                className={`event ${isBirthday ? "birthday-event" : ""}`}
+                onClick={(e) => e.stopPropagation()}
               >
-                <i className="bi bi-trash"></i>
-              </button>
-            </div>
-          ))}
+                {event.title}
+                {isBirthday ? (
+                  <i
+                    className="bi bi-cake2-fill"
+                    style={{ marginLeft: "5px", fontSize: "1.2em" }}
+                  ></i>
+                ) : (
+                  <button
+                    type="button"
+                    className="delete-event"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeEvent(event.id);
+                    }}
+                  >
+                    <i className="bi bi-trash"></i>
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       );
     }
