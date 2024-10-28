@@ -49,7 +49,7 @@
 }
 
 .cancel-button {
-  background-color: #f44336;
+  background-color: var(--clr-scarlet-v1);
   color: white;
   border: none;
   border-radius: 8px;

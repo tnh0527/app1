@@ -77,7 +77,6 @@ const Schedule = () => {
         credentials: "include",
       });
       const data = await response.json();
-      console.log("Events data:", data);
       if (response.ok) {
         let events = data.map((event) => ({
           ...event,

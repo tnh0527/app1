@@ -2,7 +2,7 @@ import "./Sidebar.css";
 import { navigationLinks } from "../../data/data";
 import { useState, useContext, useEffect } from "react";
 import { SidebarContext } from "./Context";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
 import { useAuth } from "../../utils/AuthContext";
 import { ProfileContext } from "../../utils/ProfileContext";
@@ -43,10 +43,8 @@ const Sidebar = () => {
 
   const getNameBar = () => {
     if (profile) {
-      const { first_name, last_name, username } = profile;
-      if (first_name && last_name) {
-        return `${first_name} ${last_name}`;
-      } else {
+      const { username } = profile;
+      if (username) {
         return username;
       }
     }
@@ -72,7 +70,9 @@ const Sidebar = () => {
     <div className={`sidebar ${sidebarClass}`}>
       <div className="user-info">
         <div className="info-img img-fit-cover">
-          <img src={profilePic} alt="profile image" />
+          <Link to="/account/edit-profile">
+            <img src={profilePic} alt="profile image" />
+          </Link>
         </div>
         <span className="info-name">{getNameBar()}</span>
         <ProfilePicModal onUpload={setProfilePic} />

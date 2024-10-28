@@ -7,19 +7,15 @@
 }
 
 :root {
-  /* --clr-primary: #29221d; */
-  --clr-primary: #032d46;
-
+  --clr-primary: #031622;
   --clr-primary-light: #065481;
-
-  /* --clr-secondary: #1e1611; */
-  --clr-secondary: #051831;
+  --clr-secondary: #020213;
+  --clr-tertiary: rgba(5, 14, 46, 0.61);
 
   --clr-white: #fff;
   --clr-black: #000;
 
-  /* --clr-pumpkin: #fe6c00; */
-  --clr-pumpkin: rgb(46, 190, 190);
+  --clr-pumpkin: rgb(32, 133, 133);
 
   --clr-silver: #a8a5a6;
   --clr-silver-v1: #bdbabb;
@@ -28,10 +24,8 @@
   --clr-green: #00fe93;
   --clr-yellow: #fec80a;
 
-  /* --clr-jet: #302924; */
-  --clr-jet: #233852;
+  --clr-jet: #2f3741a2;
 
-  /* --clr-peach: #ffc397; */
   --clr-peach: white;
 
   --font-family-bai: "Bai Jamjuree", sans-serif;
@@ -40,6 +34,7 @@
 
 body {
   font-family: var(--font-family-bai);
+  overflow-x: hidden;
 }
 
 ul {
@@ -111,6 +106,19 @@ button {
 }
 .grid-c-title-icon img {
   width: 24px;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus input:-webkit-autofill,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: white;
+  -webkit-box-shadow: 0 0 0px 1000px var(--clr-secondary) inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 @media screen and (max-width: 1400px) {

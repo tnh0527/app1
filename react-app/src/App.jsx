@@ -6,6 +6,7 @@ import SidebarProvider from "./layout/Sidebar/SidebarProvider";
 import Dashboard from "./layout/Dashboard/Dashboard";
 import Account from "./layout/Account/AccountContent";
 import ScheduleContent from "./layout/Schedule/ScheduleContent";
+import WeatherContent from "./layout/Weather/WeatherContent";
 
 function App() {
   const route = createBrowserRouter([
@@ -29,6 +30,11 @@ function App() {
     {
       path: "/schedule/*",
       element: <ProtectedRoute element={<ScheduleContent />} />,
+    },
+
+    {
+      path: "/Weather/*",
+      element: <ProtectedRoute element={<WeatherContent />} />,
     },
 
     {

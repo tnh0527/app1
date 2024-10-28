@@ -18,7 +18,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background-color: rgb(46, 190, 190);
+  background-color: var(--clr-pumpkin);
   color: white;
 }
 
@@ -48,7 +48,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #233852;
+  background-color: var(--clr-jet);
   cursor: default;
   font-weight: bold;
   font-size: 17px;
@@ -58,7 +58,7 @@
 }
 
 .days-of-week .day:hover {
-  background-color: #233852;
+  background-color: var(--clr-jet);
 }
 
 .day {
@@ -75,7 +75,7 @@
 }
 
 .day:hover {
-  background-color: #233852;
+  background-color: var(--clr-jet);
 }
 
 .days {
@@ -135,7 +135,7 @@
   cursor: pointer;
 }
 .event-cancel-button {
-  background-color: red;
+  background-color: var(--clr-scarlet-v1);
 }
 .add-event-button {
   background-color: green;
@@ -149,16 +149,19 @@
   margin-top: 20px;
   padding: 10px;
   border-top: 1px solid #ccc;
-  background-color: white;
+  background-color: var(--clr-primary);
   height: auto;
+  color: #aaa;
+  font-style: italic;
 }
 
 .upcoming-event-h3 {
   margin-bottom: 5px;
+  color: crimson;
 }
 
 .day .event {
-  background-color: rgba(0, 255, 255, 0.75);
+  background-color: rgba(0, 255, 255, 0.493);
   font-weight: bold;
   border-radius: 4px;
   padding: 5px;

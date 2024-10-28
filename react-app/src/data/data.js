@@ -18,13 +18,10 @@ export const profileNavLink = [
 ];
 export const navigationLinks = [
   { id: 1, title: "Home", image: iconsImgs.home, path: "/home" },
-  { id: 2, title: "Budget", image: iconsImgs.budget },
-  { id: 3, title: "Transactions", image: iconsImgs.plane },
-  { id: 4, title: "Schedule", image: iconsImgs.calendar, path: "/schedule" },
-  { id: 5, title: "Loans", image: iconsImgs.bills },
-  { id: 6, title: "Reports", image: iconsImgs.report },
-  { id: 7, title: "Savings", image: iconsImgs.savings },
-  { id: 8, title: "Financial Advice", image: iconsImgs.wealth },
+
+  { id: 2, title: "Schedule", image: iconsImgs.calendar, path: "/schedule" },
+
+  { id: 3, title: "Weather", image: iconsImgs.weather, path: "/weather" },
   {
     id: 9,
     title: "Account",
@@ -216,3 +213,13 @@ export const csrfToken = (() => {
 
   return cookie ? cookie.split("=")[1] : null;
 })();
+
+export const forecastData = [
+  { day: "Today", icon: "rain-icon.png", temperature: "28°C" },
+  { day: "Monday", icon: "sunny-icon.png", temperature: "30°C" },
+  { day: "Tuesday", icon: "cloudy-icon.png", temperature: "26°C" },
+  { day: "Wednesday", icon: "rain-icon.png", temperature: "27°C" },
+  { day: "Thursday", icon: "sunny-icon.png", temperature: "29°C" },
+  { day: "Friday", icon: "cloudy-icon.png", temperature: "25°C" },
+  { day: "Saturday", icon: "rain-icon.png", temperature: "28°C" },
+];
