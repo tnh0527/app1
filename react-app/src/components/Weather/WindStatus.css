@@ -1,0 +1,110 @@
+.wind-status {
+  width: 100%;
+  padding-right: 2%;
+  box-sizing: border-box;
+  padding-bottom: 0;
+}
+
+.wind-line-chart {
+  width: 100%;
+  height: auto;
+}
+
+.wind-chart {
+  margin-bottom: -40px;
+}
+
+.wind-bars rect {
+  transform: translateY(8px);
+}
+
+.wind-data {
+  margin-top: 8px;
+  text-align: left;
+  position: relative;
+}
+
+.wind-speed {
+  font-size: calc(1.1em + 0.4vw);
+  position: absolute;
+  margin: 10px 0;
+}
+
+.wind-speed span {
+  font-size: calc(0.3em + 0.2vw);
+}
+
+.wind-time {
+  font-size: calc(0.55em + 0.25vw);
+  color: #aaa;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
+.wind-data {
+  padding-top: 3px;
+}
+
+.wind-speed-highlight {
+  font-size: calc(14px + 0.9vw);
+  text-align: left;
+  padding-left: 10px;
+}
+
+@media (max-width: 768px) {
+  .wind-status {
+    padding-top: 8%;
+    padding-right: 4%;
+  }
+
+  .wind-speed {
+    font-size: calc(0.9em + 0.4vw);
+  }
+
+  .wind-speed-highlight {
+    font-size: calc(12px + 0.8vw);
+  }
+
+  .wind-time {
+    font-size: calc(0.45em + 0.25vw);
+  }
+}
+
+@media (max-width: 480px) {
+  .wind-status {
+    padding-top: 10%;
+    padding-right: 4%;
+  }
+
+  .wind-speed {
+    font-size: calc(0.7em + 0.4vw);
+  }
+
+  .wind-speed-highlight {
+    font-size: calc(10px + 0.8vw);
+  }
+
+  .wind-time {
+    font-size: calc(0.35em + 0.25vw);
+  }
+}
+
+@media (max-width: 360px) {
+  .wind-status {
+    padding-top: 12%;
+    padding-right: 3%;
+  }
+
+  .wind-speed {
+    font-size: calc(0.6em + 0.3vw);
+  }
+
+  .wind-speed-highlight {
+    font-size: calc(9px + 0.7vw);
+  }
+
+  .wind-time {
+    font-size: calc(0.3em + 0.2vw);
+  }
+}

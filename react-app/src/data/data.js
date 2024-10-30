@@ -1,5 +1,6 @@
 import { iconsImgs } from "../utils/images";
 import { personsImgs } from "../utils/images";
+import { weatherImgs } from "../utils/images";
 
 export const profileNavLink = [
   {
@@ -215,11 +216,14 @@ export const csrfToken = (() => {
 })();
 
 export const forecastData = [
-  { day: "Today", icon: "rain-icon.png", temperature: "28°C" },
-  { day: "Monday", icon: "sunny-icon.png", temperature: "30°C" },
-  { day: "Tuesday", icon: "cloudy-icon.png", temperature: "26°C" },
-  { day: "Wednesday", icon: "rain-icon.png", temperature: "27°C" },
-  { day: "Thursday", icon: "sunny-icon.png", temperature: "29°C" },
-  { day: "Friday", icon: "cloudy-icon.png", temperature: "25°C" },
-  { day: "Saturday", icon: "rain-icon.png", temperature: "28°C" },
+  { day: "Today", icon: weatherImgs.cloudy, temperature: "28°C" },
+  { day: "Monday", icon: weatherImgs.slight_rain, temperature: "30°C" },
+  { day: "Tuesday", icon: weatherImgs.rainy, temperature: "26°C" },
+  { day: "Wednesday", icon: weatherImgs.sunny, temperature: "27°C" },
+  { day: "Thursday", icon: weatherImgs.sunny, temperature: "29°C" },
+  { day: "Friday", icon: weatherImgs.sunny, temperature: "25°C" },
+  { day: "Saturday", icon: weatherImgs.sunny, temperature: "28°C" },
+  { day: "Sunday", icon: weatherImgs.partly_cloudy, temperature: "28°C" },
+  { day: "Monday", icon: weatherImgs.snowy, temperature: "28°C" },
+  { day: "Tuesday", icon: weatherImgs.storm, temperature: "28°C" },
 ];

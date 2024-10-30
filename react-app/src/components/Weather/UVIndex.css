@@ -1,0 +1,56 @@
+.index-gauge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.index-gauge .percent {
+  position: relative;
+}
+.index-gauge svg {
+  position: relative;
+  max-width: 250px;
+  height: auto;
+  transform: rotate(-90deg);
+}
+.index-gauge svg circle {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-width: 20;
+  stroke-linecap: round;
+}
+.index-gauge .bg-circle {
+  stroke: #505a6ba2;
+}
+.index-gauge .fill-circle {
+  stroke: var(--stroke-color);
+  stroke-dasharray: 408px;
+  stroke-dashoffset: calc(408px - (408px * var(--percent)) / 100);
+  stroke-width: 22;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s ease;
+}
+.index-gauge .number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.index-gauge .number h3 {
+  font-size: 38px;
+  font-weight: bold;
+  margin: 0;
+}
+.index-gauge .number h3 span {
+  font-size: 15px;
+}
+.uv-level {
+  transition: color 0.3s ease;
+  color: yellow;
+}
+
+.number h2 {
+  font-weight: 100;
+  font-size: 12px;
+  font-style: italic;
+}

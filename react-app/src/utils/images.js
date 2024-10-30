@@ -27,6 +27,14 @@ import Minji from "../assets/images/minji_id.jpg";
 import person_three from "../assets/images/person_three.jpg";
 import person_four from "../assets/images/person_four.jpg";
 
+import cloudy from "../assets/weather/cloudy-icon.png";
+import partly_cloudy from "../assets/weather/partly-cloudy-icon.png";
+import rainy from "../assets/weather/rainy-icon.png";
+import slight_rain from "../assets/weather/slight-rain-icon.png";
+import snowy from "../assets/weather/snowy-icon.png";
+import sunny from "../assets/weather/sunny-icon.png";
+import storm from "../assets/weather/storm-icon.png";
+
 export const iconsImgs = {
   alert,
   bell,
@@ -57,4 +65,14 @@ export const personsImgs = {
   Minji,
   person_three,
   person_four,
+};
+
+export const weatherImgs = {
+  cloudy,
+  partly_cloudy,
+  rainy,
+  slight_rain,
+  snowy,
+  storm,
+  sunny,
 };

@@ -79,50 +79,54 @@ const Sidebar = () => {
       </div>
 
       <nav className="navigation">
-        <ul className="nav-list top-links">
-          {navigationLinks.slice(0, -2).map((navigationLink) => (
-            <li className="nav-item" key={navigationLink.id}>
-              <a
-                className={`nav-link ${
-                  activeLinkIdx(navigationLink.path, navigationLink.children)
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() => handleLinkClick(navigationLink)}
-              >
-                <img
-                  src={navigationLink.image}
-                  className="nav-link-icon"
-                  alt={navigationLink.title}
-                />
-                <span className="nav-link-text">{navigationLink.title}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="top-links">
+          <ul className="nav-list">
+            {navigationLinks.slice(0, -2).map((navigationLink) => (
+              <li className="nav-item" key={navigationLink.id}>
+                <a
+                  className={`nav-link ${
+                    activeLinkIdx(navigationLink.path, navigationLink.children)
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() => handleLinkClick(navigationLink)}
+                >
+                  <img
+                    src={navigationLink.image}
+                    className="nav-link-icon"
+                    alt={navigationLink.title}
+                  />
+                  <span className="nav-link-text">{navigationLink.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* Bottom links placed after the main navigation */}
-        <ul className="nav-list bottom-links">
-          {navigationLinks.slice(-2).map((navigationLink) => (
-            <li className="nav-item" key={navigationLink.id}>
-              <a
-                className={`nav-link ${
-                  activeLinkIdx(navigationLink.path, navigationLink.children)
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() => handleLinkClick(navigationLink)}
-              >
-                <img
-                  src={navigationLink.image}
-                  className="nav-link-icon"
-                  alt={navigationLink.title}
-                />
-                <span className="nav-link-text">{navigationLink.title}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="bottom-links">
+          <ul className="nav-list">
+            {navigationLinks.slice(-2).map((navigationLink) => (
+              <li className="nav-item" key={navigationLink.id}>
+                <a
+                  className={`nav-link ${
+                    activeLinkIdx(navigationLink.path, navigationLink.children)
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() => handleLinkClick(navigationLink)}
+                >
+                  <img
+                    src={navigationLink.image}
+                    className="nav-link-icon"
+                    alt={navigationLink.title}
+                  />
+                  <span className="nav-link-text">{navigationLink.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </nav>
     </div>
   );

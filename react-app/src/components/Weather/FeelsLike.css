@@ -1,0 +1,29 @@
+.feels-like {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.feels-like-content {
+  display: flex;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.feels-like-icon {
+  font-size: 2rem;
+  margin-right: 10px;
+}
+
+.feels-like-temp {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.feels-like-description {
+  font-size: 0.9rem;
+  margin-left: 20px;
+  color: #b0b0b0;
+  flex: 1;
+  text-align: center;
+}
