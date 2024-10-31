@@ -85,22 +85,25 @@ const SunriseSunset = ({
   }
 
   return (
-    <div className="card sunrise-sunset">
-      <div className="sunrise-sunset-visual">
-        <div className="arc">
-          <div className={`moon ${isNightTime ? "" : "hidden"}`} />
-          <p className="time-until-event">{timeUntilEvent}</p>
-          {!isNightTime && <div className="sun" style={sunStyle} />}
+    <div className="highlight">
+      <h4>Sunrise & Sunset</h4>
+      <div className="card sunrise-sunset">
+        <div className="sunrise-sunset-visual">
+          <div className="arc">
+            <div className={`moon ${isNightTime ? "" : "hidden"}`} />
+            <p className="time-until-event">{timeUntilEvent}</p>
+            {!isNightTime && <div className="sun" style={sunStyle} />}
+          </div>
         </div>
-      </div>
-      <div className="time-info">
-        <div className="time sunrise-time">
-          <p>Sunrise</p>
-          <p>{sunriseTime}</p>
-        </div>
-        <div className="time sunset-time">
-          <p>Sunset</p>
-          <p>{sunsetTime}</p>
+        <div className="time-info">
+          <div className="time sunrise-time">
+            <p>Sunrise</p>
+            <p>{sunriseTime}</p>
+          </div>
+          <div className="time sunset-time">
+            <p>Sunset</p>
+            <p>{sunsetTime}</p>
+          </div>
         </div>
       </div>
     </div>

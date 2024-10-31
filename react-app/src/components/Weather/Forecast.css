@@ -1,0 +1,97 @@
+.forecast {
+  grid-column: 1 / span 2;
+  background-color: var(--clr-primary);
+  padding: 20px;
+  border-radius: 15px;
+}
+
+@media (max-width: 768px) {
+  .forecast {
+    grid-column: 1 / span 1;
+  }
+}
+
+.forecast-cards {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .forecast-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .forecast-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .forecast-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.forecast-card {
+  background-color: var(--clr-jet);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .forecast-card {
+    height: auto;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .forecast-card {
+    padding: 10px;
+  }
+}
+
+.forecast-icon {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.forecast-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+.forecast-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.forecast-day {
+  color: #aaa;
+}
+.forecast-dayMonth {
+  color: cyan;
+}
+.forecast-info {
+  align-self: center;
+}
+
+.forecast-info p {
+  color: white;
+  font-weight: bold;
+  font-size: 22px;
+}

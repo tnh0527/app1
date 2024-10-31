@@ -215,15 +215,95 @@ export const csrfToken = (() => {
   return cookie ? cookie.split("=")[1] : null;
 })();
 
-export const forecastData = [
-  { day: "Today", icon: weatherImgs.cloudy, temperature: "28°C" },
-  { day: "Monday", icon: weatherImgs.slight_rain, temperature: "30°C" },
-  { day: "Tuesday", icon: weatherImgs.rainy, temperature: "26°C" },
-  { day: "Wednesday", icon: weatherImgs.sunny, temperature: "27°C" },
-  { day: "Thursday", icon: weatherImgs.sunny, temperature: "29°C" },
-  { day: "Friday", icon: weatherImgs.sunny, temperature: "25°C" },
-  { day: "Saturday", icon: weatherImgs.sunny, temperature: "28°C" },
-  { day: "Sunday", icon: weatherImgs.partly_cloudy, temperature: "28°C" },
-  { day: "Monday", icon: weatherImgs.snowy, temperature: "28°C" },
-  { day: "Tuesday", icon: weatherImgs.storm, temperature: "28°C" },
+export const sampleForecast = [
+  {
+    day: "Today",
+    icon: weatherImgs.cloudy,
+    tempMax: "28°C",
+    date: {
+      weekday: "Sunday",
+      dayMonth: "04 Aug",
+    },
+  },
+  {
+    day: "Monday",
+    icon: weatherImgs.slight_rain,
+    tempMax: "30°C",
+    date: {
+      weekday: "Monday",
+      dayMonth: "05 Aug",
+    },
+  },
+  {
+    day: "Tuesday",
+    icon: weatherImgs.rainy,
+    tempMax: "26°C",
+    date: {
+      weekday: "Tuesday",
+      dayMonth: "06 Aug",
+    },
+  },
+  {
+    day: "Wednesday",
+    icon: weatherImgs.sunny,
+    tempMax: "27°C",
+    date: {
+      weekday: "Wednesday",
+      dayMonth: "07 Aug",
+    },
+  },
+  {
+    day: "Thursday",
+    icon: weatherImgs.sunny,
+    tempMax: "29°C",
+    date: {
+      weekday: "Thursday",
+      dayMonth: "08 Aug",
+    },
+  },
+  {
+    day: "Friday",
+    icon: weatherImgs.sunny,
+    tempMax: "25°C",
+    date: {
+      weekday: "Friday",
+      dayMonth: "09 Aug",
+    },
+  },
+  {
+    day: "Saturday",
+    icon: weatherImgs.sunny,
+    tempMax: "28°C",
+    date: {
+      weekday: "Saturday",
+      dayMonth: "10 Aug",
+    },
+  },
+  {
+    day: "Sunday",
+    icon: weatherImgs.partly_cloudy,
+    tempMax: "28°C",
+    date: {
+      weekday: "Sunday",
+      dayMonth: "11 Aug",
+    },
+  },
+  {
+    day: "Monday",
+    icon: weatherImgs.snowy,
+    tempMax: "28°C",
+    date: {
+      weekday: "Monday",
+      dayMonth: "12 Aug",
+    },
+  },
+  {
+    day: "Tuesday",
+    icon: weatherImgs.storm,
+    tempMax: "28°C",
+    date: {
+      weekday: "Tuesday",
+      dayMonth: "13 Aug",
+    },
+  },
 ];

@@ -34,6 +34,9 @@ import slight_rain from "../assets/weather/slight-rain-icon.png";
 import snowy from "../assets/weather/snowy-icon.png";
 import sunny from "../assets/weather/sunny-icon.png";
 import storm from "../assets/weather/storm-icon.png";
+import clear_night from "../assets/weather/clear-night-icon.png";
+import clear_day from "../assets/weather/clear-day-icon.png";
+import undefined from "../assets/weather/unknown-icon.png";
 
 export const iconsImgs = {
   alert,
@@ -75,4 +78,7 @@ export const weatherImgs = {
   snowy,
   storm,
   sunny,
+  clear_day,
+  clear_night,
+  undefined,
 };
