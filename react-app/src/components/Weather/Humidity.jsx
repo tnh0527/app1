@@ -1,24 +1,54 @@
 import "./Humidity.css";
+import { useState, useEffect } from "react";
 
-const Humidity = () => {
+const Humidity = ({ humidDewData }) => {
+  const [currentHumidity, setCurrentHumidity] = useState(null);
+  const [currentDewpoint, setCurrentDewpoint] = useState(null);
+  // console.log("Humid", humidDewData);
+
+  useEffect(() => {
+    const updateLevel = () => {
+      const currentHour = new Date().getHours();
+      const currentData = humidDewData.find((hourData) => {
+        const hour = parseInt(hourData.time.split(":")[0], 10);
+        return hour === currentHour;
+      });
+      if (currentData) {
+        setCurrentHumidity(Math.round(currentData.humidity * 10) / 10);
+        setCurrentDewpoint(currentData.dewpoint);
+      }
+    };
+    updateLevel();
+    const interval = setInterval(() => {
+      updateLevel();
+    }, 3600000);
+    return () => clearInterval(interval);
+  }, [humidDewData]);
+
   return (
-    <div className="highlight">
+    <div
+      className={`highlight ${
+        !currentHumidity || !currentDewpoint ? "skeleton" : ""
+      }`}
+    >
       <h4>Humidity</h4>
-      <div className="humidity-card">
-        <div className="humidity-content">
-          <div className="humidity-info">
-            <div className="humidity-value-percentage">
-              <span className="humidity-value">84</span>
-              <span className="humidity-percentage">%</span>
+      {!currentHumidity || !currentDewpoint ? null : (
+        <div className="card humidity">
+          <div className="humidity-content">
+            <div className="humidity-info">
+              <div className="humidity-value-percentage">
+                <span className="humidity-value">{currentHumidity}</span>
+                <span className="humidity-percentage">%</span>
+              </div>
+            </div>
+
+            <div className="dew-point">
+              <i className="bi bi-droplet-half"></i>The dew point is{" "}
+              {currentDewpoint}° right now.
             </div>
           </div>
-
-          <div className="dew-point">
-            <i className="bi bi-droplet-half"></i>The dew point is 27° right
-            now.
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

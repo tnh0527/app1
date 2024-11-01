@@ -1,32 +1,57 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import "./AirQuality.css";
 
-const AirQuality = ({ airQuality = 66 }) => {
-  const airDescription =
-    airQuality <= 50
+const AirQuality = ({ airQuality }) => {
+  const [currentAQI, setCurrentAQI] = useState(null);
+
+  useEffect(() => {
+    const updateAQI = () => {
+      const currentHour = new Date().getHours();
+      const currentData = airQuality.find((hourData) => {
+        const hour = parseInt(hourData.time.split(":")[0], 10);
+        return hour === currentHour;
+      });
+      setCurrentAQI(currentData);
+      console.log("AQI:", currentData);
+    };
+    updateAQI();
+    const interval = setInterval(() => {
+      updateAQI();
+    }, 3600000); // Update every hour
+    return () => clearInterval(interval);
+  }, [airQuality]);
+
+  const airDescription = (aqi) => {
+    return aqi <= 50
       ? "Good"
-      : airQuality <= 100
+      : aqi <= 100
       ? "Moderate"
-      : airQuality <= 150
+      : aqi <= 150
       ? "Unhealthy for Sensitive Groups"
-      : airQuality <= 200
+      : aqi <= 200
       ? "Unhealthy"
-      : airQuality <= 300
+      : aqi <= 300
       ? "Very Unhealthy"
-      : "Hardzardous";
+      : "Hazardous";
+  };
 
   return (
-    <div className="highlight">
+    <div className={`highlight ${!currentAQI ? "skeleton" : ""}`}>
       <h4>Air Quality</h4>
-      <div className="card air-quality">
-        <div className="air-quality-info">
-          <span className="air-quality-value">{airQuality}</span>
-          <span className="air-quality-description"> - {airDescription}</span>
+      {currentAQI && (
+        <div className="card air-quality">
+          <div className="air-quality-info">
+            <span className="air-quality-value">{currentAQI}</span>
+            <span className="air-quality-description">
+              {" "}
+              - {airDescription(currentAQI)}
+            </span>
+          </div>
+          <div className="air-quality-bar">
+            <div className="air-quality-level" style={{ left: "25%" }}></div>
+          </div>
         </div>
-        <div className="air-quality-bar">
-          <div className="air-quality-level" style={{ left: "25%" }}></div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

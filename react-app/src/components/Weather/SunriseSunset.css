@@ -103,3 +103,11 @@
 .sunset-time p:last-child {
   margin: 0;
 }
+
+.local-time {
+  position: absolute;
+  margin-top: 20px;
+  text-align: center;
+  bottom: 12px;
+  color: #aaa;
+}

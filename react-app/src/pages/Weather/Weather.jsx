@@ -26,6 +26,12 @@ const Weather = () => {
     video: "/videos/snowy.mp4",
   });
   const [forecastData, setForecastData] = useState([]);
+  const [sunriseSunset, setSunriseSunset] = useState([]);
+  const [uvData, setUvData] = useState([]);
+  const [feelsLikeData, setFeelsLikeData] = useState([]);
+  const [humidData, setHumidData] = useState([]);
+  const [windData, setWindData] = useState([]);
+  const [AQI, setAQI] = useState([]);
   const [mapData, setMapData] = useState([]);
   const [location, setLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -49,12 +55,13 @@ const Weather = () => {
   }, []);
 
   // Determine if it's day or night based on current local time
-  const [timeOfDay, setTimeOfDay] = useState("day");
+  const [timeOfDay, setTimeOfDay] = useState("morning");
   useEffect(() => {
     const currentHour = new Date().getHours();
-    // console.log(currentHour);
-    if (currentHour >= 6 && currentHour < 18) {
-      setTimeOfDay("day");
+    if (currentHour >= 6 && currentHour < 13) {
+      setTimeOfDay("morning"); // Good Morning
+    } else if (currentHour >= 13 && currentHour < 18) {
+      setTimeOfDay("evening");
     } else {
       setTimeOfDay("night");
     }
@@ -66,6 +73,7 @@ const Weather = () => {
     sunny: weatherImgs.sunny,
     "partially cloudy": weatherImgs.partly_cloudy,
     "mostly cloudy": weatherImgs.partly_cloudy,
+    overcast: weatherImgs.cloudy,
     cloudy: weatherImgs.cloudy,
     "rain, partially cloudy": weatherImgs.slight_rain,
     rain: weatherImgs.rainy,
@@ -82,27 +90,34 @@ const Weather = () => {
   // Combined weather icon and video setting effect
   useEffect(() => {
     const condition = currentWeather.weather.toLowerCase();
-
+    console.log("Location condition:", condition);
     // Determine the appropriate icon
     const icon = iconMap[condition] || weatherImgs.undefined;
     // Determine the appropriate video
     let video;
-    if (condition.includes("rain") || condition.includes("showers")) {
+    if (condition.includes("rain, partially cloudy")) {
+      video = "/videos/slight-rain.mp4";
+    } else if (condition.includes("rain") || condition.includes("showers")) {
       video = "/videos/rainy.mp4";
     } else if (condition.includes("snow")) {
       video = "/videos/snowy.mp4";
+    } else if (condition.includes("overcast")) {
+      video = "/videos/cloudy.mp4";
     } else if (condition.includes("storm")) {
       video = "/videos/thunderstorm.mp4";
     } else if (condition.includes("cloudy")) {
       video =
-        timeOfDay === "day" ? "/videos/cloudy.mp4" : "/videos/cloudy-night.mp4";
+        timeOfDay === "night"
+          ? "/videos/cloudy-night.mp4"
+          : "/videos/cloudy.mp4";
     } else if (condition === "clear" || condition === "sunny") {
       video =
-        timeOfDay === "day" ? "/videos/sunny-sky.mp4" : "/videos/night-sky.mp4";
+        timeOfDay === "night"
+          ? "/videos/night-sky.mp4"
+          : "/videos/sunny-sky.mp4";
     } else {
       video = "/videos/snow.mp4"; // Default video
     }
-
     setCurrentWeather((prevWeather) => ({
       ...prevWeather,
       weatherIcon: icon,
@@ -202,6 +217,26 @@ const Weather = () => {
         }
       })
     );
+    // Convert feels like data
+    setFeelsLikeData((prevFeelsLikeData) =>
+      prevFeelsLikeData.map((entry) => ({
+        ...entry,
+        feelsLike:
+          currentWeather.unit === "C"
+            ? convertToFahrenheit(entry.feelsLike)
+            : convertToCelsius(entry.feelsLike),
+      }))
+    );
+    // Convert dew point data
+    setHumidData((prevHumidData) =>
+      prevHumidData.map((entry) => ({
+        ...entry,
+        dewpoint:
+          currentWeather.unit === "C"
+            ? convertToFahrenheit(entry.dewpoint)
+            : convertToCelsius(entry.dewpoint),
+      }))
+    );
   };
 
   const [firstName, setFirstName] = useState("User");
@@ -236,6 +271,7 @@ const Weather = () => {
   }, []);
 
   const apiKey = import.meta.env.VITE_REACT_APP_VISUALCROSSING_API_KEY;
+  const apiKey2 = import.meta.env.VITE_REACT_APP_WAQI_KEY;
   // Fetch from API
   const fetchWeatherData = async (location) => {
     setLoading(true);
@@ -243,14 +279,14 @@ const Weather = () => {
       const response = await fetch(
         `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${encodeURIComponent(
           location
-        )}?unitGroup=metric&key=${apiKey}&contentType=json`
+        )}?unitGroup=metric&key=${apiKey}&contentType=json&aqius`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch weather data");
       }
       const data = await response.json();
-
-      // Prepare data in GeoJSON format for the map
+      console.log("Data:", data);
+      // Prepare data in GeoJSON format for MapBox
       const forecastFeatures = data.days.map((day) => ({
         type: "Feature",
         geometry: {
@@ -271,7 +307,6 @@ const Weather = () => {
         type: "FeatureCollection",
         features: forecastFeatures,
       });
-
       // Update state with fetched data
       setCurrentWeather({
         city: data.resolvedAddress,
@@ -281,11 +316,10 @@ const Weather = () => {
         temperature: data.currentConditions.temp,
         highTemp: data.days[0].tempmax,
         lowTemp: data.days[0].tempmin,
-        weather: data.currentConditions.conditions,
+        weather: data.currentConditions.conditions || "undefined",
         weatherIcon: currentWeather.weatherIcon,
         unit: "C",
       });
-
       // Prepare data for forecast for the next 10 days
       const forecast = data.days.slice(0, 10).map((day) => {
         // Convert day.datetime to a Date object
@@ -308,6 +342,66 @@ const Weather = () => {
         };
       });
       setForecastData(forecast);
+      // Prepare data for highlight cards
+      // Sun
+      const currentDay = data.days[0];
+      const nextDay = data.days[1];
+      const hourlyData = currentDay.hours;
+      setSunriseSunset({
+        sunrise: currentDay.sunrise,
+        sunset: currentDay.sunset,
+      });
+      // UV index
+      const hourlyUV = hourlyData.map((hour) => {
+        return {
+          time: hour.datetime,
+          uvIndex: hour.uvindex,
+        };
+      });
+      console.log("Hourly UV index:", hourlyUV);
+      setUvData(hourlyUV);
+      // Feels like
+      const hourlyFeels = hourlyData.map((hour) => ({
+        time: hour.datetime,
+        feelsLike: hour.feelslike,
+      }));
+      setFeelsLikeData(hourlyFeels);
+      // Humidity
+      const hourlyHumidityDewpoint = hourlyData.map((hour) => ({
+        time: hour.datetime,
+        humidity: hour.humidity,
+        dewpoint: hour.dew,
+      }));
+      setHumidData(hourlyHumidityDewpoint);
+      // Wind status for current and next day
+      const hourlyWindData = [
+        ...hourlyData.map((hour) => ({
+          time: hour.datetime,
+          speed: hour.windspeed,
+        })),
+        ...nextDay.hours.map((hour) => ({
+          time: hour.datetime,
+          speed: hour.windspeed,
+        })),
+      ];
+      setWindData(hourlyWindData);
+      console.log("Hourlydata:");
+
+      // Fetch Air Quality Data from WAQI API
+      const airQualityResponse = await fetch(
+        `https://api.waqi.info/feed/geo:${data.latitude};${data.longitude}/?token=${apiKey2}`
+      );
+      if (!airQualityResponse.ok) {
+        throw new Error("Failed to fetch air quality data");
+      }
+      const airQualityData = await airQualityResponse.json();
+      if (airQualityData.status === "ok") {
+        console.log("Air:", airQualityData);
+        setAqiData(airQualityData.data.aqi);
+        console.log("Air Quality Data:", airQualityData);
+      } else {
+        throw new Error("Failed to fetch valid air quality data");
+      }
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -410,12 +504,15 @@ const Weather = () => {
       <div className="highlights-container">
         <h3>Today's Highlights</h3>
         <div className="highlights">
-          <WindStatus />
-          <UVIndex />
-          <SunriseSunset />
-          <Humidity />
-          <AirQuality />
-          <FeelsLike />
+          <WindStatus windstatusData={windData} />
+          <UVIndex hourlyUVIndex={uvData} />
+          <SunriseSunset sunData={sunriseSunset} />
+          <Humidity humidDewData={humidData} />
+          <AirQuality airQuality={AQI} />
+          <FeelsLike
+            feels={feelsLikeData}
+            actualTemp={currentWeather.temperature}
+          />
         </div>
       </div>
 
