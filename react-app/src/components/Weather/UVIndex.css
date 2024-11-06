@@ -2,6 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 1em;
 }
 .index-gauge .percent {
   position: relative;
@@ -20,7 +21,7 @@
   min-width: 150px;
 }
 .index-gauge .bg-circle {
-  stroke: #505a6ba2;
+  stroke: rgb(64, 64, 64);
 }
 .index-gauge .fill-circle {
   stroke: var(--stroke-color);
@@ -46,7 +47,11 @@
 }
 .uv-level {
   transition: color 0.3s ease;
-  color: yellow;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 0.5em;
 }
 
 .number h2 {
@@ -62,8 +67,30 @@
 
 .peak-uv-description {
   color: #aaa;
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  width: 100%;
+  margin-top: 1em;
+  font-size: 3vw;
+}
+
+@media (min-width: 600px) {
+  .index-gauge .number h3 {
+    font-size: 38px;
+  }
+  .index-gauge .number h3 span {
+    font-size: 15px;
+  }
+  .index-gauge .number h2 {
+    font-size: 12px;
+  }
+  .index-gauge .number h1 {
+    font-size: 14px;
+  }
+  .peak-uv-description {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .uv-level {
+    font-size: 4vw;
+  }
 }

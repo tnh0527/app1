@@ -10,7 +10,7 @@ const Humidity = ({ humidDewData }) => {
     const updateLevel = () => {
       const currentHour = new Date().getHours();
       const currentData = humidDewData.find((hourData) => {
-        const hour = parseInt(hourData.time.split(":")[0], 10);
+        const hour = parseInt(hourData.time.split("T")[1].split(":")[0], 10);
         return hour === currentHour;
       });
       if (currentData) {
@@ -43,8 +43,8 @@ const Humidity = ({ humidDewData }) => {
             </div>
 
             <div className="dew-point">
-              <i className="bi bi-droplet-half"></i>The dew point is{" "}
-              {currentDewpoint}° right now.
+              <i className="bi bi-droplet-half"></i>The current dew point is{" "}
+              {currentDewpoint}°.
             </div>
           </div>
         </div>

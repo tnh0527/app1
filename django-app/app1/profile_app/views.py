@@ -22,7 +22,6 @@ def date_format(birthdate_str):
 @api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
 def profile(request):
-    # print(f"Received request: {request.method} for user: {request.user.username}")
     user = request.user
     # print("Profile:", user.birthdate)
     if request.method == "GET":

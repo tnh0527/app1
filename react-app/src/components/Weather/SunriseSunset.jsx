@@ -3,85 +3,74 @@ import { useState, useEffect } from "react";
 
 const SunriseSunset = ({ sunData }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  // console.log("Sun data", sunData);
 
   useEffect(() => {
     // Set interval to update the current time every minute
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // 60000 ms = 1 minute
-    // Update the time initially
+    }, 60000);
     setCurrentTime(new Date());
-    // Cleanup interval on component unmount
     return () => clearInterval(interval);
   }, []);
-  // console.log("Local time:", currentTime);
 
   const parseTime = (timeString) => {
-    if (!timeString) return { hours: 0, minutes: 0 }; // Handle undefined time strings
-
-    const [hours, minutes] = timeString.split(/:| /);
-    const isPM = timeString.toLowerCase().includes("pm");
-    return {
-      hours: parseInt(hours) + (isPM && hours !== "12" ? 12 : 0),
-      minutes: parseInt(minutes),
-    };
+    if (!timeString) return null; // Handle undefined time strings
+    return new Date(timeString);
   };
-
-  // Format current time as HH:MM
-  const formattedTime = currentTime.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  // Helper function to convert time to minutes since midnight
-  const timeToMinutes = (time) => time.hours * 60 + time.minutes;
 
   // Function to calculate sun position based on current time, sunrise, and sunset
   const calculateSunPosition = () => {
     const sunrise = parseTime(sunData.sunrise);
     const sunset = parseTime(sunData.sunset);
-    const current = {
-      hours: currentTime.getHours(),
-      minutes: currentTime.getMinutes(),
-    };
+    const current = currentTime;
 
-    const totalMinutes = timeToMinutes(sunset) - timeToMinutes(sunrise);
-    const elapsedMinutes = timeToMinutes(current) - timeToMinutes(sunrise);
+    if (!sunrise || !sunset || !current) {
+      return null;
+    }
 
-    if (elapsedMinutes < 0 || elapsedMinutes > totalMinutes) {
+    const totalDaylightMinutes = (sunset - sunrise) / (1000 * 60);
+    const elapsedMinutes = (current - sunrise) / (1000 * 60);
+
+    if (elapsedMinutes < 0 || elapsedMinutes > totalDaylightMinutes) {
       return null; // The sun is not visible if the current time is not in range
     }
-    return Math.max(0, Math.min(100, (elapsedMinutes / totalMinutes) * 100));
+
+    return Math.max(
+      0,
+      Math.min(100, (elapsedMinutes / totalDaylightMinutes) * 100)
+    );
   };
 
   // Function to calculate time until next sunrise or sunset
   const calculateTimeUntilEvent = () => {
-    const current = {
-      hours: currentTime.getHours(),
-      minutes: currentTime.getMinutes(),
-    };
+    const current = currentTime;
     const sunrise = parseTime(sunData.sunrise);
     const sunset = parseTime(sunData.sunset);
 
-    const currentMinutes = timeToMinutes(current);
-    const sunriseMinutes = timeToMinutes(sunrise);
-    const sunsetMinutes = timeToMinutes(sunset);
+    if (!sunrise || !sunset || !current) {
+      return "";
+    }
 
-    if (currentMinutes < sunriseMinutes) {
+    if (current < sunrise) {
       // Time until sunrise
-      const minutesUntilSunrise = sunriseMinutes - currentMinutes;
+      const diff = sunrise - current;
+      const minutesUntilSunrise = Math.floor(diff / (1000 * 60));
       const hours = Math.floor(minutesUntilSunrise / 60);
       const minutes = minutesUntilSunrise % 60;
       return `Time until sunrise: ${hours}h ${minutes}m`;
-    } else if (currentMinutes > sunsetMinutes) {
+    } else if (current > sunset) {
       // Time until next sunrise (next day)
-      const minutesUntilNextSunrise = 24 * 60 - currentMinutes + sunriseMinutes;
+      const tomorrowSunrise = new Date(sunrise.getTime() + 24 * 60 * 60 * 1000);
+      const diff = tomorrowSunrise - current;
+      const minutesUntilNextSunrise = Math.floor(diff / (1000 * 60));
       const hours = Math.floor(minutesUntilNextSunrise / 60);
       const minutes = minutesUntilNextSunrise % 60;
       return `Time until sunrise: ${hours}h ${minutes}m`;
     } else {
       // Time until sunset
-      const minutesUntilSunset = sunsetMinutes - currentMinutes;
+      const diff = sunset - current;
+      const minutesUntilSunset = Math.floor(diff / (1000 * 60));
       const hours = Math.floor(minutesUntilSunset / 60);
       const minutes = minutesUntilSunset % 60;
       return `Time until sunset: ${hours}h ${minutes}m`;
@@ -98,14 +87,15 @@ const SunriseSunset = ({ sunData }) => {
   // Calculate sun position styling for visual representation
   let sunStyle = {};
   if (!isNightTime) {
-    // Calculate the angle for the sun along the arc
-    // Convert percentage to radians (0 to π for the arc)
     const angle = (sunPosition / 100) * Math.PI;
 
     // Calculate x and y positions based on angle
-    const radius = 100; // Assuming the arc has a radius of 100px
-    const left = radius + radius * Math.cos(angle - Math.PI); // Calculate horizontal position
-    const top = radius - radius * Math.sin(angle); // Calculate vertical position
+    const radius = 110; // Assuming the arc has a radius of 110px
+    const centerX = radius; // Center of the arc along x-axis
+    const centerY = radius; // Center of the arc along y-axis
+
+    const left = centerX + radius * Math.cos(angle - Math.PI); // Calculate horizontal position
+    const top = centerY - radius * Math.sin(angle); // Calculate vertical position
 
     sunStyle = {
       left: `${left}px`,
@@ -115,10 +105,7 @@ const SunriseSunset = ({ sunData }) => {
 
   // Convert sunrise and sunset times to AM/PM format
   const formatToAmPm = (timeString) => {
-    const date = new Date();
-    const [hours, minutes] = timeString.split(":");
-    date.setHours(parseInt(hours));
-    date.setMinutes(parseInt(minutes));
+    const date = new Date(timeString);
     return date.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
@@ -148,17 +135,20 @@ const SunriseSunset = ({ sunData }) => {
             </div>
             <div className="time-info">
               <div className="time sunrise-time">
-                <p>Sunrise</p>
+                <i className="bi bi-sunrise"></i>
+                <p style={{ color: "#aaa", fontSize: "15px" }}>Sunrise</p>
                 <p>{formattedSunrise}</p>
               </div>
+
               <div className="time sunset-time">
-                <p>Sunset</p>
+                <i className="bi bi-sunset"></i>
+                <p style={{ color: "#aaa", fontSize: "15px" }}>Sunset</p>
                 <p>{formattedSunset}</p>
               </div>
             </div>
           </div>
           <div className="local-time">
-            <p>Local time: {formatToAmPm(formattedTime)}</p>
+            <p>Local time: {formatToAmPm(currentTime)}</p>
           </div>
         </>
       )}

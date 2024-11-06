@@ -1,0 +1,120 @@
+.search-bar {
+  grid-column: 2 / 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 10px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #aaa;
+  pointer-events: none;
+}
+
+.search-input {
+  padding: 10px 10px 10px 40px;
+  background: linear-gradient(to right, #000000, #001e3b);
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  transition: background-color 0.3s;
+  padding-right: 10px;
+  width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 500px;
+}
+
+.search-input:focus {
+  outline: 2px solid cyan;
+}
+
+.search-input::placeholder {
+  font-style: italic;
+}
+
+.suggestions-list {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 3px;
+  background: linear-gradient(to right, #000000, #001e3b);
+  border-radius: 8px;
+  position: absolute;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.suggestions-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.suggestions-list::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 18px;
+}
+
+.suggestions-list::-webkit-scrollbar-thumb {
+  background-color: var(--clr-pumpkin);
+  border-radius: 18px;
+}
+
+.suggestions-list li {
+  height: 100%;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px 14px;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+  transition: var(--transition-default);
+  margin-bottom: 5px;
+  margin-right: 4px;
+}
+
+.suggestions-list li:hover {
+  border: 3px solid var(--clr-primary-light);
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .search-bar {
+    grid-column: 1 / span 1;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .search-input-wrapper {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-input {
+    font-size: 14px;
+    padding: 8px 8px 8px 35px;
+  }
+  .temp-info h1 {
+    font-size: 36px;
+  }
+  .high-low-temp {
+    font-size: 14px;
+  }
+}

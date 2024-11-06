@@ -8,11 +8,11 @@ const AirQuality = ({ airQuality }) => {
     const updateAQI = () => {
       const currentHour = new Date().getHours();
       const currentData = airQuality.find((hourData) => {
-        const hour = parseInt(hourData.time.split(":")[0], 10);
+        const hour = parseInt(hourData.time.split("T")[1].split(":")[0], 10);
         return hour === currentHour;
       });
       setCurrentAQI(currentData);
-      console.log("AQI:", currentData);
+      // console.log("AQI:", currentData);
     };
     updateAQI();
     const interval = setInterval(() => {
@@ -32,7 +32,41 @@ const AirQuality = ({ airQuality }) => {
       ? "Unhealthy"
       : aqi <= 300
       ? "Very Unhealthy"
-      : "Hazardous";
+      : aqi <= 500
+      ? "Hazardous"
+      : "Fatal";
+  };
+  // position on AQI bar
+  const getAQILevelPosition = (aqi) => {
+    if (aqi <= 50) {
+      return "10%";
+    } else if (aqi <= 100) {
+      return "30%";
+    } else if (aqi <= 150) {
+      return "50%";
+    } else if (aqi <= 200) {
+      return "70%";
+    } else if (aqi <= 300) {
+      return "85%";
+    } else {
+      return "95%";
+    }
+  };
+
+  const getAQIColor = (aqi) => {
+    if (aqi <= 50) {
+      return "#00e400";
+    } else if (aqi <= 100) {
+      return "#ffff00";
+    } else if (aqi <= 150) {
+      return "#ff7e00";
+    } else if (aqi <= 200) {
+      return "#ff0000";
+    } else if (aqi <= 300) {
+      return "#99004c";
+    } else {
+      return "#7e0023";
+    }
   };
 
   return (
@@ -40,16 +74,31 @@ const AirQuality = ({ airQuality }) => {
       <h4>Air Quality</h4>
       {currentAQI && (
         <div className="card air-quality">
-          <div className="air-quality-info">
-            <span className="air-quality-value">{currentAQI}</span>
-            <span className="air-quality-description">
+          <div
+            className="air-quality-info"
+            style={{ color: getAQIColor(currentAQI.us_aqi) }}
+          >
+            <span className="air-quality-value">{currentAQI.us_aqi}</span>
+            <span
+              className="air-quality-description"
+              style={{ fontStyle: "italic" }}
+            >
               {" "}
-              - {airDescription(currentAQI)}
+              - {airDescription(currentAQI.us_aqi)}
             </span>
           </div>
           <div className="air-quality-bar">
-            <div className="air-quality-level" style={{ left: "25%" }}></div>
+            <div
+              className="air-quality-level"
+              style={{ left: getAQILevelPosition(currentAQI.us_aqi) }}
+            ></div>
           </div>
+          <span
+            style={{ fontSize: "12px", color: "#aaa", fontStyle: "italic" }}
+          >
+            {" "}
+            AQI{" "}
+          </span>
         </div>
       )}
     </div>

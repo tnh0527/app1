@@ -5,19 +5,27 @@
   margin: 10px 0;
   margin-bottom: 40px;
 }
+.wind-visual,
+.wind-chart {
+  overflow: visible;
+}
 
 .wind-line-chart,
 .wind-bar-chart {
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .wind-chart {
-  margin-bottom: -70px;
+  margin-bottom: 0;
 }
 
 .wind-bars rect {
   transform: translateY(8px);
+  transition: fill 0.3s ease;
+}
+.wind-bars rect:hover {
+  fill: rgb(200, 255, 255);
 }
 
 .wind-speed-info {
@@ -42,9 +50,9 @@
 .speed-unit {
   font-size: 1rem;
   margin-left: 5px;
+  font-style: italic;
 }
 
-/* Position time in the bottom right */
 .wind-time-data {
   position: absolute;
   font-size: 13px;
@@ -53,4 +61,17 @@
   text-align: right;
   width: 30%;
   color: #aaa;
+  font-style: italic;
+}
+
+.tooltip {
+  position: fixed;
+  background-color: var(--clr-primary);
+  color: #fff;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
 }

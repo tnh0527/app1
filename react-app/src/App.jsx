@@ -7,6 +7,7 @@ import Dashboard from "./layout/Dashboard/Dashboard";
 import Account from "./layout/Account/AccountContent";
 import ScheduleContent from "./layout/Schedule/ScheduleContent";
 import WeatherContent from "./layout/Weather/WeatherContent";
+import { ProfileProvider } from "./utils/ProfileContext";
 
 function App() {
   const route = createBrowserRouter([
@@ -45,7 +46,9 @@ function App() {
 
   return (
     <div className="App">
-      <RouterProvider router={route} />
+      <ProfileProvider>
+        <RouterProvider router={route} />
+      </ProfileProvider>
     </div>
   );
 }

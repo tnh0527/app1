@@ -8,17 +8,26 @@ const UVIndex = ({ hourlyUVIndex }) => {
 
   useEffect(() => {
     const updateUVIndex = () => {
+      if (!hourlyUVIndex) return;
       const currentHour = new Date().getHours();
       const currentData = hourlyUVIndex.find((hourData) => {
-        const hour = parseInt(hourData.time.split(":")[0], 10);
+        const hour = parseInt(hourData.time.split("T")[1].split(":")[0], 10);
         return hour === currentHour;
       });
-      // console.log("Hour:", currentHour);
-      // console.log("UV:", currentData);
+      if (currentData) {
+        currentData.uv_index = (
+          Math.ceil(currentData.uv_index * 10) / 10
+        ).toFixed(1);
+      }
       setCurrentUVIndex(currentData);
+      // console.log("UV:", currentData);
+
       const peakData = hourlyUVIndex.reduce((prev, curr) => {
-        return curr.uvIndex > prev.uvIndex ? curr : prev;
+        return curr.uv_index > prev.uv_index ? curr : prev;
       }, hourlyUVIndex[0]);
+      if (peakData) {
+        peakData.uv_index = (Math.ceil(peakData.uv_index * 10) / 10).toFixed(1);
+      }
       setPeakUVData(peakData);
     };
     updateUVIndex();
@@ -30,9 +39,8 @@ const UVIndex = ({ hourlyUVIndex }) => {
   }, [hourlyUVIndex]);
 
   const peakUVTime = peakUVData
-    ? // Placeholder date for format
-      new Date(`1970-01-01T${peakUVData.time}`).toLocaleTimeString([], {
-        hour: "2-digit",
+    ? new Date(peakUVData.time).toLocaleTimeString([], {
+        hour: "numeric",
         minute: "2-digit",
         hour12: true,
       })
@@ -58,8 +66,8 @@ const UVIndex = ({ hourlyUVIndex }) => {
                   r="105"
                   className="fill-circle"
                   style={{
-                    "--percent": (currentUVIndex.uvIndex / maxUVIndex) * 100,
-                    "--stroke-color": uvLevelColor(currentUVIndex.uvIndex),
+                    "--percent": (currentUVIndex.uv_index / maxUVIndex) * 100,
+                    "--stroke-color": uvLevelColor(currentUVIndex.uv_index),
                   }}
                 ></circle>
               </svg>
@@ -67,11 +75,10 @@ const UVIndex = ({ hourlyUVIndex }) => {
                 <h1>
                   <span> Current </span>
                 </h1>
-                <h3>
-                  {currentUVIndex.uvIndex}
-                  <span> UV</span>
-                </h3>
+                <h3>{currentUVIndex.uv_index}</h3>
+
                 <h2>
+                  <span> UV</span>
                   <span> Index </span>
                 </h2>
               </div>
@@ -80,12 +87,12 @@ const UVIndex = ({ hourlyUVIndex }) => {
 
           <div
             className="uv-level"
-            style={{ color: uvLevelColor(currentUVIndex.uvIndex) }}
+            style={{ color: uvLevelColor(currentUVIndex.uv_index) }}
           >
-            <h2>{uvLevelText(currentUVIndex.uvIndex)}</h2>
+            <h2>{uvLevelText(currentUVIndex.uv_index)}</h2>
             {peakUVData && (
               <p className="peak-uv-description">
-                Peak UV Index: {peakUVData.uvIndex} at {peakUVTime}
+                Peak UV Index: {peakUVData.uv_index} at {peakUVTime}
               </p>
             )}
           </div>

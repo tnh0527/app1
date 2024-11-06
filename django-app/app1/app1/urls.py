@@ -23,4 +23,5 @@ urlpatterns = [
     path("auth/", include("auth_app.urls")),
     path("profile/", include("profile_app.urls")),
     path("events/", include("schedule_app.urls")),
+    path("api/", include("weather_app.urls")),
 ]

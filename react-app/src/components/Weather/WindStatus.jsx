@@ -1,17 +1,23 @@
 import "./WindStatus.css";
 import { useState, useEffect } from "react";
 
-const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
+const WindStatus = ({ windstatusData = [] }) => {
   // console.log("Wind", windstatusData);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    value: 0,
+    x: 0,
+    y: 0,
+  });
 
   useEffect(() => {
-    // Check if windstatusData and nextDayWindstatusData have enough data
-    if (windstatusData.length >= 6 || nextDayWindstatusData.length >= 5) {
+    // Check if windstatusData has enough data (48 points for two days)
+    if (windstatusData.length >= 48) {
       setIsLoading(false);
     }
-  }, [windstatusData, nextDayWindstatusData]);
+  }, [windstatusData]);
 
   const currentHour = new Date().getHours();
   const currentIndex = 5; // Middle index for the current wind speed
@@ -22,24 +28,18 @@ const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
     currentHour
   );
   const currentData = windstatusData[currentHour] || {
-    speed: 0,
+    windspeed: 0,
     height: 0,
     time: `${currentHour}:00`,
   };
 
-  // Get future data with fallback to the next day's data if out of bounds
-  const futureData = [
-    ...windstatusData.slice(currentHour + 1),
-    ...nextDayWindstatusData.slice(
-      0,
-      Math.max(0, 6 - (windstatusData.length - currentHour - 1))
-    ),
-  ].slice(0, 5); // Limit future data to 5 points
+  // Get future data directly from windstatusData, using data from the next 5 hours
+  const futureData = windstatusData.slice(currentHour + 1, currentHour + 6);
 
   // Fill past and future data if they have less than 5 points
   const windData = [
     ...Array(Math.max(0, 5 - pastData.length)).fill({
-      speed: 0,
+      windspeed: 0,
       height: 0,
       time: "",
     }),
@@ -47,20 +47,20 @@ const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
     currentData,
     ...futureData,
     ...Array(Math.max(0, 5 - futureData.length)).fill({
-      speed: 0,
+      windspeed: 0,
       height: 0,
       time: "",
     }),
   ].map((data, index) => ({
     ...data,
-    height: data.speed,
+    height: data.windspeed * 1.2,
     time: `${(currentHour - currentIndex + index + 24) % 24}:00`, // Local hour for each point
   }));
 
   const pathData = windData
     .map((data, index) => {
       const x = 5 + index * 10;
-      const y = 30 - data.height;
+      const y = Math.max(0, 20 - data.height * 0.6); // adjusting line height within view
       return [x, y];
     })
     .reduce((acc, point, index, array) => {
@@ -88,6 +88,20 @@ const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
     });
   };
 
+  const handleMouseEnter = (e, value) => {
+    const { clientX, clientY } = e;
+    setTooltip({
+      visible: true,
+      value,
+      x: clientX,
+      y: clientY,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip({ visible: false, value: 0, x: 0, y: 0 });
+  };
+
   return (
     <div className={`highlight ${isLoading ? "skeleton" : ""}`}>
       <h4>Wind Status</h4>
@@ -95,7 +109,7 @@ const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
         <div className="card wind-status">
           <div className="wind-visual">
             <div className="wind-chart">
-              <svg viewBox="0 0 111 40" className="wind-line-chart">
+              <svg viewBox="-2 0 111 20" className="wind-line-chart">
                 <defs>
                   <linearGradient
                     id="lineGradient"
@@ -109,15 +123,15 @@ const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
                       style={{ stopColor: "#404040", stopOpacity: 0.2 }}
                     />
                     <stop
-                      offset="43%"
+                      offset="41%"
                       style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
                     />
                     <stop
-                      offset="53%"
+                      offset="51%"
                       style={{ stopColor: "#FFFFFF", stopOpacity: 1 }}
                     />
                     <stop
-                      offset="63%"
+                      offset="61%"
                       style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
                     />
                     <stop
@@ -141,7 +155,7 @@ const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
                   <rect
                     key={index}
                     x={5 + index * 10}
-                    y={30 - data.height}
+                    y={25 - data.height}
                     width="5"
                     height={data.height}
                     rx="2"
@@ -154,14 +168,30 @@ const WindStatus = ({ windstatusData = [], nextDayWindstatusData = [] }) => {
                         ? "#005f69"
                         : "#404040"
                     }
+                    onMouseEnter={(e) => handleMouseEnter(e, data.windspeed)}
+                    onMouseLeave={handleMouseLeave}
                   />
                 ))}
               </svg>
             </div>
           </div>
+          {tooltip.visible && (
+            <div
+              className="tooltip"
+              style={{
+                top: tooltip.y + "px",
+                left: tooltip.x + "px",
+                transform: "translate(-50%, -100%)",
+              }}
+            >
+              {tooltip.value}
+            </div>
+          )}
           <div className="wind-speed-info">
             <div className="wind-data-unit">
-              <span className="wind-speed">{windData[currentIndex].speed}</span>
+              <span className="wind-speed">
+                {windData[currentIndex].windspeed}
+              </span>
               <span className="speed-unit">km/h</span>
             </div>
           </div>

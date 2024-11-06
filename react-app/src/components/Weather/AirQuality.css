@@ -3,8 +3,8 @@
 }
 
 .air-quality-info {
-  margin-bottom: 10px;
-  margin-top: 18px;
+  margin-bottom: 7px;
+  margin-top: 16px;
 }
 .air-quality-value {
   font-weight: bold;
@@ -14,7 +14,15 @@
 .air-quality-bar {
   position: relative;
   height: 10px;
-  background: linear-gradient(to right, green, yellow, orange, magenta, red);
+  background: linear-gradient(
+    to right,
+    #00e400 0%,
+    #ffff00 20%,
+    #ff7e00 40%,
+    #ff0000 60%,
+    #99004c 80%,
+    #7e0023 100%
+  );
   border-radius: 5px;
   overflow: hidden;
   margin-left: 5%;

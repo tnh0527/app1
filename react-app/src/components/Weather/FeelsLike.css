@@ -27,3 +27,19 @@
   flex: 1;
   text-align: center;
 }
+
+.hot {
+  color: #ff4500;
+}
+
+.warm {
+  color: #ffa500;
+}
+
+.cool {
+  color: #00bfff;
+}
+
+.cold {
+  color: #1e90ff;
+}

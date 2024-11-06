@@ -6,7 +6,6 @@ mapboxgl.accessToken = import.meta.env.VITE_REACT_APP_MAPBOX_ACCESS_TOKEN;
 
 const WeatherMap = ({ mapData }) => {
   const mapContainer = useRef(null);
-  // console.log("Map Data", mapData);
 
   useEffect(() => {
     const centerCoordinates = mapData?.features?.[0]?.geometry?.coordinates || [
@@ -103,7 +102,7 @@ const WeatherMap = ({ mapData }) => {
             data: mapData,
           });
 
-          // Assuming you have aggregated point-based precipitation data
+          // aggregated point-based precipitation data
           map.addLayer({
             id: "precipitation-heatmap",
             type: "heatmap",
@@ -114,7 +113,7 @@ const WeatherMap = ({ mapData }) => {
                 ["linear"],
                 ["get", "precip"],
                 0,
-                0,
+                0.2,
                 30,
                 1,
               ],
@@ -160,8 +159,31 @@ const WeatherMap = ({ mapData }) => {
       return () => map.remove();
     }
   }, [mapData]);
-
-  return <div ref={mapContainer} className="map-container" />;
+  // Precip map to be implemented later
+  return (
+    <div ref={mapContainer} className="map-container">
+      {/* <div className="mapboxgl-ctrl-bottom-left legend-container legend-bottom-left">
+        <div className="legend-title">Precipitation Legend</div>
+        <div className="legend-bar">
+          <div className="legend-color" style={{ backgroundColor: "#e0f7fa" }}>
+            0
+          </div>
+          <div className="legend-color" style={{ backgroundColor: "#88e0ef" }}>
+            0.2
+          </div>
+          <div className="legend-color" style={{ backgroundColor: "#00a8e8" }}>
+            0.4
+          </div>
+          <div className="legend-color" style={{ backgroundColor: "#007ea7" }}>
+            0.6
+          </div>
+          <div className="legend-color" style={{ backgroundColor: "#003459" }}>
+            1
+          </div>
+        </div>
+      </div> */}
+    </div>
+  );
 };
 
 export default WeatherMap;

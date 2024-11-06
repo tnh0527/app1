@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "auth_app",
     "profile_app",
     "schedule_app",
+    "weather_app",
 ]
 
 MIDDLEWARE = [
@@ -108,6 +109,13 @@ import os
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# APIs
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 
 # Password validation
