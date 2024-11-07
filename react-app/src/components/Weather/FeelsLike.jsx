@@ -22,12 +22,12 @@ const FeelsLike = ({ feels }) => {
   }, [feels]);
 
   const getTemperatureColor = (temperature, unit) => {
-    const temp = unit === "F" ? (temperature - 32) * (5 / 9) : temperature;
-    if (temp >= 30) {
+    const temp = unit === "C" ? (temperature * 9) / 5 + 32 : temperature;
+    if (temp >= 90) {
       return "hot";
-    } else if (temp >= 20) {
+    } else if (temp >= 68) {
       return "warm";
-    } else if (temp >= 10) {
+    } else if (temp >= 50) {
       return "cool";
     } else {
       return "cold";

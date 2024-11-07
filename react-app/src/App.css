@@ -141,7 +141,7 @@ select:-webkit-autofill:focus {
     rgba(3, 22, 34, 0.9) 90%
   );
   background-size: 200% 100%;
-  animation: shimmer 6s infinite linear;
+  animation: shimmer 8s infinite linear;
 }
 
 @keyframes shimmer {

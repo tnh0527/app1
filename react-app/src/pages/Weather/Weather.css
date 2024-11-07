@@ -36,7 +36,7 @@
 }
 
 .highlight {
-  background: radial-gradient(circle, #2f3741a2 0%, rgba(47, 55, 65, 0.3) 100%);
+  background: radial-gradient(circle, #2f3741a2 0%, rgba(47, 55, 65, 0.2) 100%);
   padding: 10px;
   border-radius: 15px;
   text-align: center;

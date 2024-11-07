@@ -27,7 +27,7 @@ const Weather = () => {
   const [currentLocation, setCurrentLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [timeOfDay, setTimeOfDay] = useState();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { profile } = useContext(ProfileContext);
   const { toggleSidebar } = useContext(SidebarContext);
 
@@ -147,6 +147,7 @@ const Weather = () => {
     if (!location) {
       return;
     }
+    setIsLoading(true);
     try {
       const response = await fetch(
         `http://localhost:8000/api/weather/?location=${encodeURIComponent(
@@ -251,6 +252,8 @@ const Weather = () => {
       }
     } catch (error) {
       console.error("Error from data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -291,7 +294,7 @@ const Weather = () => {
         timeOfDay={timeOfDay}
       />
       {/* Today's Highlights */}
-      <div className="highlights-container">
+      <div className={`highlights-container ${isLoading ? "skeleton" : ""}`}>
         <h3>Today's Highlights</h3>
         <div className="highlights">
           <WindStatus windstatusData={windData} />
@@ -306,7 +309,10 @@ const Weather = () => {
         </div>
       </div>
       {/* 10 Day Forecast */}
-      <Forecast forecast={forecastData} />
+      <div className={`forecast ${isLoading ? "skeleton" : ""}`}>
+        <h3>10-Day Forecast</h3>
+        <Forecast forecast={forecastData} />
+      </div>
     </div>
   );
 };

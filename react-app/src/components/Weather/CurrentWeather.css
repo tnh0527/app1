@@ -64,6 +64,10 @@
   z-index: 1;
 }
 
+.current-date {
+  font-weight: bold;
+}
+
 .temperature {
   position: relative;
   display: flex;
@@ -75,8 +79,8 @@
 }
 
 .temperature img {
-  height: 150px;
-  width: 150px;
+  height: 180px;
+  width: 180px;
   margin-left: 65%;
 }
 
@@ -111,7 +115,7 @@
 .high-low-temp {
   font-size: 16px;
   align-self: flex-end;
-  margin-right: 6%;
+  margin-right: 8%;
 }
 
 .weather-map {

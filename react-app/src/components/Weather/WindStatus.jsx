@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 const WindStatus = ({ windstatusData = [] }) => {
   // console.log("Wind", windstatusData);
 
-  const [isLoading, setIsLoading] = useState(true);
   const [tooltip, setTooltip] = useState({
     visible: false,
     value: 0,
@@ -15,18 +14,26 @@ const WindStatus = ({ windstatusData = [] }) => {
   useEffect(() => {
     // Check if windstatusData has enough data (48 points for two days)
     if (windstatusData.length >= 48) {
-      setIsLoading(false);
     }
   }, [windstatusData]);
 
   const currentHour = new Date().getHours();
   const currentIndex = 5; // Middle index for the current wind speed
 
-  // Get past and current day data
-  const pastData = windstatusData.slice(
-    Math.max(0, currentHour - 5),
-    currentHour
-  );
+  // Set past data
+  let pastData = [];
+  if (currentHour >= 5) {
+    // If we have enough hours in the current day, simply slice
+    pastData = windstatusData.slice(currentHour - 5, currentHour);
+  } else {
+    // If not enough hours, combine data from previous day (end of array) and current day
+    const previousHours = 5 - currentHour;
+    pastData = [
+      ...windstatusData.slice(-previousHours),
+      ...windstatusData.slice(0, currentHour),
+    ];
+  }
+  // Set current data
   const currentData = windstatusData[currentHour] || {
     windspeed: 0,
     height: 0,
@@ -103,106 +110,103 @@ const WindStatus = ({ windstatusData = [] }) => {
   };
 
   return (
-    <div className={`highlight ${isLoading ? "skeleton" : ""}`}>
+    <div className="highlight">
       <h4>Wind Status</h4>
-      {isLoading ? null : (
-        <div className="card wind-status">
-          <div className="wind-visual">
-            <div className="wind-chart">
-              <svg viewBox="-2 0 111 20" className="wind-line-chart">
-                <defs>
-                  <linearGradient
-                    id="lineGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="0%"
-                  >
-                    <stop
-                      offset="0%"
-                      style={{ stopColor: "#404040", stopOpacity: 0.2 }}
-                    />
-                    <stop
-                      offset="41%"
-                      style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
-                    />
-                    <stop
-                      offset="51%"
-                      style={{ stopColor: "#FFFFFF", stopOpacity: 1 }}
-                    />
-                    <stop
-                      offset="61%"
-                      style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
-                    />
-                    <stop
-                      offset="100%"
-                      style={{ stopColor: "#404040", stopOpacity: 0.2 }}
-                    />
-                  </linearGradient>
-                </defs>
-                <path
-                  d={pathData}
-                  fill="none"
-                  stroke="url(#lineGradient)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <div className="wind-bars">
-              <svg viewBox="0 0 111 40" className="wind-bar-chart">
-                {windData.map((data, index) => (
-                  <rect
-                    key={index}
-                    x={5 + index * 10}
-                    y={25 - data.height}
-                    width="5"
-                    height={data.height}
-                    rx="2"
-                    ry="2"
-                    fill={
-                      index === currentIndex
-                        ? "#00FFFF"
-                        : index === currentIndex - 1 ||
-                          index === currentIndex + 1
-                        ? "#005f69"
-                        : "#404040"
-                    }
-                    onMouseEnter={(e) => handleMouseEnter(e, data.windspeed)}
-                    onMouseLeave={handleMouseLeave}
+      <div className="card wind-status">
+        <div className="wind-visual">
+          <div className="wind-chart">
+            <svg viewBox="-2 0 111 20" className="wind-line-chart">
+              <defs>
+                <linearGradient
+                  id="lineGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
+                  <stop
+                    offset="0%"
+                    style={{ stopColor: "#404040", stopOpacity: 0.2 }}
                   />
-                ))}
-              </svg>
-            </div>
+                  <stop
+                    offset="41%"
+                    style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
+                  />
+                  <stop
+                    offset="51%"
+                    style={{ stopColor: "#FFFFFF", stopOpacity: 1 }}
+                  />
+                  <stop
+                    offset="61%"
+                    style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
+                  />
+                  <stop
+                    offset="100%"
+                    style={{ stopColor: "#404040", stopOpacity: 0.2 }}
+                  />
+                </linearGradient>
+              </defs>
+              <path
+                d={pathData}
+                fill="none"
+                stroke="url(#lineGradient)"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
-          {tooltip.visible && (
-            <div
-              className="tooltip"
-              style={{
-                top: tooltip.y + "px",
-                left: tooltip.x + "px",
-                transform: "translate(-50%, -100%)",
-              }}
-            >
-              {tooltip.value}
-            </div>
-          )}
-          <div className="wind-speed-info">
-            <div className="wind-data-unit">
-              <span className="wind-speed">
-                {windData[currentIndex].windspeed}
-              </span>
-              <span className="speed-unit">km/h</span>
-            </div>
-          </div>
-
-          <div className="wind-time-data">
-            <span className="wind-time">
-              Last updated: {formatToAmPm(windData[currentIndex].time)}
-            </span>
+          <div className="wind-bars">
+            <svg viewBox="0 0 111 40" className="wind-bar-chart">
+              {windData.map((data, index) => (
+                <rect
+                  key={index}
+                  x={5 + index * 10}
+                  y={25 - data.height}
+                  width="5"
+                  height={data.height}
+                  rx="2"
+                  ry="2"
+                  fill={
+                    index === currentIndex
+                      ? "#00FFFF"
+                      : index === currentIndex - 1 || index === currentIndex + 1
+                      ? "#005f69"
+                      : "#404040"
+                  }
+                  onMouseEnter={(e) => handleMouseEnter(e, data.windspeed)}
+                  onMouseLeave={handleMouseLeave}
+                />
+              ))}
+            </svg>
           </div>
         </div>
-      )}
+        {tooltip.visible && (
+          <div
+            className="tooltip"
+            style={{
+              top: tooltip.y + "px",
+              left: tooltip.x + "px",
+              transform: "translate(-50%, -100%)",
+            }}
+          >
+            {tooltip.value}
+          </div>
+        )}
+        <div className="wind-speed-info">
+          <div className="wind-data-unit">
+            <span className="wind-speed">
+              {windData[currentIndex].windspeed}
+            </span>
+            <span className="speed-unit">km/h</span>
+          </div>
+        </div>
+
+        <div className="wind-time-data">
+          <span className="wind-time">
+            Last updated: {formatToAmPm(windData[currentIndex].time)}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };

@@ -23,6 +23,8 @@ export const navigationLinks = [
   { id: 2, title: "Schedule", image: iconsImgs.calendar, path: "/schedule" },
 
   { id: 3, title: "Weather", image: iconsImgs.weather, path: "/weather" },
+
+  { id: 4, title: "Insight", image: iconsImgs.report, path: "/insight" },
   {
     id: 9,
     title: "Account",

@@ -139,12 +139,12 @@ const CurrentWeather = ({
             Your browser does not support the video tag.
           </video>
           <h2>{location}</h2>
-          <p>{formattedDate}</p>
+          <p className="current-date">{formattedDate}</p>
           <div className="temperature">
             <img src={currentWeather.weatherIcon} alt="weather icon" />
             <div className="temp-info">
               <h1>
-                {currentWeather.temperature}°{currentWeather.unit}
+                {currentWeather.temperature}°{currentWeather.unit || "F"}
               </h1>
               <p>{currentWeather.condition}</p>
             </div>

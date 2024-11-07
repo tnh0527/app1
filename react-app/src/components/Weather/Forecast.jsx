@@ -29,51 +29,42 @@ const Forecast = ({ forecast }) => {
   };
 
   return (
-    <div className="forecast">
-      <h3>10-Day Forecast</h3>
-      <div className="forecast-cards">
-        {data
-          ? data.map((item, index) => {
-              const { weekday, dayMonth } = formatDate(item.date);
+    <div className="forecast-cards">
+      {data
+        ? data.map((item, index) => {
+            const { weekday, dayMonth } = formatDate(item.date);
 
-              const iconData = iconMap[item.condition];
-              const iconSrc =
-                typeof iconData === "object" && iconData.day
-                  ? iconData.day
-                  : iconData || "default-icon.png";
+            const iconData = iconMap[item.condition];
+            const iconSrc =
+              typeof iconData === "object" && iconData.day
+                ? iconData.day
+                : iconData || "default-icon.png";
 
-              return (
-                <div
-                  className={`forecast-card ${loading ? "skeleton" : ""}`}
-                  key={index}
-                >
-                  <div className="forecast-info">
-                    <span className="forecast-day">{weekday}</span>
-                  </div>
-                  <div className="forecast-dayMonth">
-                    {dayMonth || "Sample"}
-                  </div>
-                  <div className="forecast-icon">
-                    <img src={iconSrc} alt={item.condition || "Weather Icon"} />
-                    <p>
-                      <span style={{ fontSize: "0.8em", color: "#aaa" }}>
-                        H:
-                      </span>{" "}
-                      {item.tempMax ? `${roundTemp(item.tempMax)}°` : "Sample"}{" "}
-                      <span style={{ fontSize: "0.8em", color: "#aaa" }}>
-                        L:
-                      </span>{" "}
-                      {item.tempMin ? `${roundTemp(item.tempMin)}°` : "Sample"}
-                    </p>
-                  </div>
+            return (
+              <div
+                className={`forecast-card ${loading ? "skeleton" : ""}`}
+                key={index}
+              >
+                <div className="forecast-info">
+                  <span className="forecast-day">{weekday}</span>
                 </div>
-              );
-            })
-          : [...Array(10)].map((_, index) => (
-              // Placeholder for skeleton loading state
-              <div className="forecast-card skeleton" key={index}></div>
-            ))}
-      </div>
+                <div className="forecast-dayMonth">{dayMonth || "Sample"}</div>
+                <div className="forecast-icon">
+                  <img src={iconSrc} alt={item.condition || "Weather Icon"} />
+                  <p>
+                    <span style={{ fontSize: "0.8em", color: "#aaa" }}>H:</span>{" "}
+                    {item.tempMax ? `${roundTemp(item.tempMax)}°` : "Sample"}{" "}
+                    <span style={{ fontSize: "0.8em", color: "#aaa" }}>L:</span>{" "}
+                    {item.tempMin ? `${roundTemp(item.tempMin)}°` : "Sample"}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        : [...Array(10)].map((_, index) => (
+            // Placeholder for skeleton loading state
+            <div className="forecast-card skeleton" key={index}></div>
+          ))}
     </div>
   );
 };

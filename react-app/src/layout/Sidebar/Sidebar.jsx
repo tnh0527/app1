@@ -6,6 +6,8 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
 import { useAuth } from "../../utils/AuthContext";
 import { ProfileContext } from "../../utils/ProfileContext";
+import { personsImgs } from "../../utils/images";
+import { Tooltip } from "react-tooltip";
 
 const Sidebar = () => {
   const csrfToken = document.cookie
@@ -14,7 +16,7 @@ const Sidebar = () => {
     .split("=")[1];
   const [sidebarClass, setSidebarClass] = useState("");
   const { profilePic, setProfilePic, profile } = useContext(ProfileContext);
-  const { isSidebarOpen } = useContext(SidebarContext);
+  const { isSidebarOpen, toggleSidebar } = useContext(SidebarContext);
   const location = useLocation();
   const { logout } = useAuth();
 
@@ -70,11 +72,32 @@ const Sidebar = () => {
     <div className={`sidebar ${sidebarClass}`}>
       <div className="user-info">
         <div className="info-img img-fit-cover">
-          <Link to="/account/edit-profile">
-            <img src={profilePic} alt="profile image" />
+          <Link
+            to="/account/edit-profile"
+            data-tooltip-id="profile-tooltip"
+            data-tooltip-content="Edit profile"
+            data-tooltip-place="top"
+          >
+            <img src={profilePic} alt={personsImgs.default_user} />
           </Link>
         </div>
         <span className="info-name">{getNameBar()}</span>
+        <button
+          className="toggle-button"
+          onClick={toggleSidebar}
+          data-tooltip-id="sidebar-tooltip"
+          data-tooltip-content="Toggle sidebar"
+          data-tooltip-place="top"
+        >
+          {isSidebarOpen ? (
+            <i className="bi bi-caret-right-fill"></i>
+          ) : (
+            <i className="bi bi-caret-left-fill"></i>
+          )}
+        </button>
+        <Tooltip id="sidebar-tooltip" />
+        <Tooltip id="profile-tooltip" />
+
         <ProfilePicModal onUpload={setProfilePic} />
       </div>
 
@@ -83,21 +106,28 @@ const Sidebar = () => {
           <ul className="nav-list">
             {navigationLinks.slice(0, -2).map((navigationLink) => (
               <li className="nav-item" key={navigationLink.id}>
-                <a
-                  className={`nav-link ${
-                    activeLinkIdx(navigationLink.path, navigationLink.children)
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() => handleLinkClick(navigationLink)}
-                >
-                  <img
-                    src={navigationLink.image}
-                    className="nav-link-icon"
-                    alt={navigationLink.title}
-                  />
-                  <span className="nav-link-text">{navigationLink.title}</span>
-                </a>
+                <div className="profile-icon">
+                  <a
+                    className={`nav-link ${
+                      activeLinkIdx(
+                        navigationLink.path,
+                        navigationLink.children
+                      )
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() => handleLinkClick(navigationLink)}
+                  >
+                    <img
+                      src={navigationLink.image}
+                      className="nav-link-icon"
+                      alt={navigationLink.title}
+                    />
+                    <span className="nav-link-text">
+                      {navigationLink.title}
+                    </span>
+                  </a>
+                </div>
               </li>
             ))}
           </ul>

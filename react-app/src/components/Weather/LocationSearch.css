@@ -23,7 +23,6 @@
   font-size: 16px;
   border: none;
   border-radius: 10px;
-  transition: background-color 0.3s;
   padding-right: 10px;
   width: 100%;
 }
@@ -76,15 +75,14 @@
   justify-content: flex-start;
   padding: 6px 14px;
   letter-spacing: 0.03em;
-  border: 1px solid transparent;
-  transition: var(--transition-default);
-  margin-bottom: 5px;
-  margin-right: 4px;
+  transition: all 0.6s ease;
+  margin: 5px;
 }
 
 .suggestions-list li:hover {
-  border: 3px solid var(--clr-primary-light);
+  border: none;
   cursor: pointer;
+  box-shadow: 0 0 20px cyan;
 }
 
 @media (max-width: 1024px) {

@@ -1,7 +1,6 @@
 .wind-visual {
   position: relative;
-  min-width: 200px;
-  min-height: 100px;
+
   margin: 10px 0;
   margin-bottom: 40px;
 }

@@ -26,6 +26,7 @@ import weather from "../assets/icons/weather.svg";
 import Minji from "../assets/images/minji_id.jpg";
 import person_three from "../assets/images/person_three.jpg";
 import person_four from "../assets/images/person_four.jpg";
+import default_user from "../assets/images/default-profile.jpg";
 
 import cloudy from "../assets/weather/cloudy-icon.png";
 import partly_cloudy from "../assets/weather/partly-cloudy-icon.png";
@@ -70,6 +71,7 @@ export const personsImgs = {
   Minji,
   person_three,
   person_four,
+  default_user,
 };
 
 export const weatherImgs = {
