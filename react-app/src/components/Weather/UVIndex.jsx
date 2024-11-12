@@ -116,7 +116,7 @@ const uvLevelText = (uvIndex) => {
 
 const uvLevelColor = (uvIndex) => {
   return uvIndex <= 2
-    ? "green"
+    ? "#00FF00" // Lime Green
     : uvIndex <= 4
     ? "yellow"
     : uvIndex <= 7

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "profile_app",
     "schedule_app",
     "weather_app",
+    "stocks_app",
 ]
 
 MIDDLEWARE = [
@@ -116,6 +117,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+FMP_API_KEY = os.getenv("FMP_API_KEY")
 
 
 # Password validation

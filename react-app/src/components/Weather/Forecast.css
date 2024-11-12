@@ -25,7 +25,7 @@
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1350px) {
   .forecast-cards {
     grid-template-columns: repeat(4, 1fr);
   }

@@ -193,9 +193,8 @@ input:checked + .slider:before {
   pointer-events: none;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1550px) {
   .current-weather {
-    grid-column: 1 / span 1;
     grid-row: 1 / 2;
   }
 }

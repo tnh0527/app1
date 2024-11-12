@@ -7,6 +7,7 @@ import Dashboard from "./layout/Dashboard/Dashboard";
 import Account from "./layout/Account/AccountContent";
 import ScheduleContent from "./layout/Schedule/ScheduleContent";
 import WeatherContent from "./layout/Weather/WeatherContent";
+import InsightContent from "./layout/Insight/InsightContent";
 import { ProfileProvider } from "./utils/ProfileContext";
 
 function App() {
@@ -34,8 +35,12 @@ function App() {
     },
 
     {
-      path: "/Weather/*",
+      path: "/weather/*",
       element: <ProtectedRoute element={<WeatherContent />} />,
+    },
+    {
+      path: "/insight/*",
+      element: <ProtectedRoute element={<InsightContent />} />,
     },
 
     {

@@ -161,7 +161,7 @@ const WeatherMap = ({ mapData }) => {
   }, [mapData]);
   // Precip map to be implemented later
   return (
-    <div ref={mapContainer} className="map-container">
+    <div ref={mapContainer} className="map-container skeleton">
       {/* <div className="mapboxgl-ctrl-bottom-left legend-container legend-bottom-left">
         <div className="legend-title">Precipitation Legend</div>
         <div className="legend-bar">

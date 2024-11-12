@@ -45,7 +45,7 @@
   justify-content: center;
   align-items: center;
   position: relative;
-  min-width: 280px;
+  min-width: 260px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2), 0px 10px 20px rgba(0, 0, 0, 0.25),
     0px 20px 25px rgba(0, 0, 0, 0.2);
 }
@@ -58,9 +58,23 @@
   font-size: 16px;
 }
 
-@media (max-width: 1648px) {
+@media (max-width: 1548px) {
   .weather-dashboard {
     grid-template-columns: 1fr;
+    column-gap: normal;
+  }
+  .highlights-container {
+    grid-column: 1 / span 2;
+    grid-row: 3 / 4;
+  }
+}
+
+@media (max-width: 1080px) {
+  .weather-dashboard {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    padding: 20px;
+    width: 100%;
   }
   .highlights-container {
     grid-column: 1 / span 2;
@@ -71,28 +85,13 @@
 @media (max-width: 1024px) {
   .weather-dashboard {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr auto;
-    gap: 20px;
-    padding: 20px;
-    width: 100%;
-  }
-  .highlights-container {
-    grid-column: 1 / span 2;
-    grid-row: 3 / 4;
-  }
-}
-
-@media (max-width: 768px) {
-  .weather-dashboard {
-    grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
-    gap: 15px;
     padding: 15px;
     width: 100%;
   }
   .highlights-container {
     grid-column: 1 / span 1;
-    grid-row: 4 / 5;
+    grid-row: 3 / 4;
   }
   .highlights {
     grid-template-columns: 1fr;

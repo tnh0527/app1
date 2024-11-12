@@ -36,7 +36,8 @@ const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
         );
         if (response.ok) {
           onUpload(selectedImage);
-          console.log("Profile picture updated.");
+          // console.log("Profile picture updated.");
+          window.location.reload();
         } else {
           const errorData = await response.json();
           console.error("Error updating profile picture:", errorData.error);

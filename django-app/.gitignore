@@ -1,0 +1,4 @@
+.env
+/djangoenv/
+__pycache__/
+media/

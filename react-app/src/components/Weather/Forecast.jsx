@@ -22,7 +22,10 @@ const Forecast = ({ forecast }) => {
     return { weekday, dayMonth };
   };
 
-  // console.log("Today:", todayDate);
+  const todayDate = new Date();
+  const todayFormatted = `${todayDate.getFullYear()}-${String(
+    todayDate.getMonth() + 1
+  ).padStart(2, "0")}-${String(todayDate.getDate()).padStart(2, "0")}`;
 
   const roundTemp = (temp) => {
     return Math.round(temp);
@@ -33,7 +36,7 @@ const Forecast = ({ forecast }) => {
       {data
         ? data.map((item, index) => {
             const { weekday, dayMonth } = formatDate(item.date);
-
+            const isToday = item.date === todayFormatted;
             const iconData = iconMap[item.condition];
             const iconSrc =
               typeof iconData === "object" && iconData.day
@@ -46,7 +49,12 @@ const Forecast = ({ forecast }) => {
                 key={index}
               >
                 <div className="forecast-info">
-                  <span className="forecast-day">{weekday}</span>
+                  <span
+                    className="forecast-day"
+                    style={{ color: isToday ? "red" : "inherit" }}
+                  >
+                    {isToday ? "Today" : weekday}
+                  </span>
                 </div>
                 <div className="forecast-dayMonth">{dayMonth || "Sample"}</div>
                 <div className="forecast-icon">

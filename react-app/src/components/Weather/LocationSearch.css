@@ -85,7 +85,7 @@
   box-shadow: 0 0 20px cyan;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1550px) {
   .search-bar {
     grid-column: 1 / span 1;
     width: 100%;

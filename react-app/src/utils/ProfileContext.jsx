@@ -1,11 +1,23 @@
 import { createContext, useState, useEffect } from "react";
 import profileImage from "../assets/images/default-profile.jpg";
 import { csrfToken } from "../data/data";
+import { useAuth } from "./AuthContext";
 export const ProfileContext = createContext();
 
 export const ProfileProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [profilePic, setProfilePic] = useState(null);
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProfile();
+      fetchProfilePic();
+    } else {
+      setProfile(null);
+      setProfilePic(null);
+    }
+  }, [isAuthenticated]);
 
   const fetchProfile = async () => {
     try {
@@ -60,14 +72,16 @@ export const ProfileProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-    fetchProfilePic();
-  }, []);
-
   return (
     <ProfileContext.Provider
-      value={{ profile, setProfile, profilePic, setProfilePic }}
+      value={{
+        profile,
+        setProfile,
+        profilePic,
+        setProfilePic,
+        fetchProfile,
+        fetchProfilePic,
+      }}
     >
       {children}
     </ProfileContext.Provider>

@@ -14,7 +14,6 @@ const Sidebar = () => {
     .split(";")
     .find((cookie) => cookie.trim().startsWith("csrftoken="))
     .split("=")[1];
-  const [sidebarClass, setSidebarClass] = useState("");
   const { profilePic, setProfilePic, profile } = useContext(ProfileContext);
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContext);
   const location = useLocation();
@@ -22,13 +21,7 @@ const Sidebar = () => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isSidebarOpen) {
-      setSidebarClass("sidebar-change");
-    } else {
-      setSidebarClass("");
-    }
-  }, [isSidebarOpen]);
+  const sidebarClass = isSidebarOpen ? "sidebar-change" : "";
 
   const handleLogout = async () => {
     const response = await fetch("http://localhost:8000/auth/logout/", {
@@ -38,6 +31,7 @@ const Sidebar = () => {
     if (response.ok) {
       logout();
       navigate("/");
+      window.location.reload();
     } else {
       console.error("An error occurred while logging out.");
     }
@@ -78,7 +72,7 @@ const Sidebar = () => {
             data-tooltip-content="Edit profile"
             data-tooltip-place="top"
           >
-            <img src={profilePic} alt={personsImgs.default_user} />
+            <img src={profilePic || personsImgs.default_user} alt="user pic" />
           </Link>
         </div>
         <span className="info-name">{getNameBar()}</span>
@@ -95,8 +89,8 @@ const Sidebar = () => {
             <i className="bi bi-caret-left-fill"></i>
           )}
         </button>
-        <Tooltip id="sidebar-tooltip" />
-        <Tooltip id="profile-tooltip" />
+        <Tooltip id="sidebar-tooltip" style={{ zIndex: "999" }} />
+        <Tooltip id="profile-tooltip" style={{ zIndex: "999" }} />
 
         <ProfilePicModal onUpload={setProfilePic} />
       </div>
@@ -125,6 +119,9 @@ const Sidebar = () => {
                     />
                     <span className="nav-link-text">
                       {navigationLink.title}
+                      {navigationLink.title === "Market Insight" && (
+                        <span className="beta-label">Beta</span>
+                      )}
                     </span>
                   </a>
                 </div>

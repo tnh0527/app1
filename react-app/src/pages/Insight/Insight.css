@@ -1,0 +1,191 @@
+.insight-dashboard {
+  display: grid;
+  grid-template-areas:
+    "stock-portfolio feature-grid"
+    "stock-watchlist feature-grid"
+    "details details";
+  grid-template-columns: 60% 40%;
+  grid-gap: 20px;
+  padding: 20px;
+  padding-right: 40px;
+  background-color: var(--clr-secondary);
+  color: #333;
+  max-width: 100%;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.stock-portfolio {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  position: relative;
+  color: white;
+}
+
+.scroll-button {
+  position: absolute;
+  color: cyan;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 2em;
+  cursor: pointer;
+}
+
+.stock-cards-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+}
+
+.stock-card {
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px cyan;
+  text-align: center;
+  overflow: hidden;
+  transition: opacity 0.5s;
+  background-color: var(--clr-primary);
+}
+
+.price-graph-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.stock-graph {
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  width: 100%;
+  padding-right: 5px;
+  margin-top: 10px;
+}
+
+.stock-graph img {
+  max-height: 100%;
+  display: block;
+  margin: 0 auto;
+}
+
+.total-return {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.total-return.positive {
+  color: #4caf50;
+}
+
+.total-return.negative {
+  color: #f44336;
+}
+
+.stock-watchlist {
+  grid-area: stock-watchlist;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 300px;
+}
+
+.chart-options {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.chart-option-button {
+  background: none;
+  border: none;
+  font-size: 1em;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.chart-option-button.active {
+  color: #6200ea;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.feature-grid {
+  grid-area: feature-grid;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.feature-1 {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  height: 40%;
+}
+
+.feature-2 {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  height: 60%;
+}
+
+.details {
+  grid-area: details;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.details-card {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.details ul {
+  list-style: none;
+  padding: 0;
+}
+
+.details li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.details li:last-child {
+  border-bottom: none;
+}
+
+.price {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin: 10px 0;
+}

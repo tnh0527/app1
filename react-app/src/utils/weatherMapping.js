@@ -70,7 +70,7 @@ export const videoMap = {
     night: "/videos/night-sky.mp4",
   },
   "Partly cloudy": {
-    day: "/videos/cloudy.mp4",
+    day: "/videos/partly-cloudy.mp4",
     night: "/videos/cloudy-night.mp4",
   },
   Overcast: {

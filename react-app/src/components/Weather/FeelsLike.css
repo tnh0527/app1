@@ -22,10 +22,9 @@
 
 .feels-like-description {
   font-size: 0.9rem;
-  margin-left: 20px;
+  margin-left: 10%;
   color: #b0b0b0;
   flex: 1;
-  text-align: center;
 }
 
 .hot {

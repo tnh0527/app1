@@ -89,6 +89,14 @@ def profile_pic(request):
             )
 
         if file.name.split(".")[-1].lower() in ["png", "jpg", "jpeg"]:
+            # Delete the old profile picture if it exists
+            if user.profile_pic:
+                old_file_path = os.path.join(
+                    settings.MEDIA_ROOT, "profile_pics", user.profile_pic
+                )
+                if os.path.exists(old_file_path):
+                    default_storage.delete(old_file_path)
+
             filename = f"{user.username}.{file.name.split('.')[-1]}"
             file_path = os.path.join(settings.MEDIA_ROOT, "profile_pics", filename)
 

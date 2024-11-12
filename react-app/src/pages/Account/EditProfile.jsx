@@ -101,7 +101,6 @@ const EditProfile = () => {
   };
 
   const saveProfile = async (e) => {
-    e.preventDefault();
     setLoading(true);
     const updatedFields = {};
     for (const key in state) {
