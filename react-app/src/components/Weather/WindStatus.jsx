@@ -202,9 +202,8 @@ const WindStatus = ({ windstatusData = [] }) => {
         </div>
 
         <div className="wind-time-data">
-          <span className="wind-time">
-            Last updated: {formatToAmPm(windData[currentIndex].time)}
-          </span>
+          <span className="wind-time">Last updated:</span>
+          <span>{formatToAmPm(windData[currentIndex].time)}</span>
         </div>
       </div>
     </div>

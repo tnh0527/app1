@@ -1,10 +1,5 @@
 .forecast {
   grid-column: 1 / span 2;
-  background-color: var(--clr-primary);
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5), 0px 12px 24px rgba(0, 0, 0, 0.55),
-    0px 20px 30px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 768px) {

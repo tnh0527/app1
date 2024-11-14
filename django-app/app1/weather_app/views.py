@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .weather_codes import weather_code_descriptions
+from datetime import datetime, timedelta, timezone
 
 
 class PlaceSuggestionsView(APIView):
@@ -49,6 +50,34 @@ class WeatherView(APIView):
             print(f"Error in get_coordinates: {e}")
         return None
 
+    def get_time_zone(self, lat, lng):
+        timestamp = int(datetime.now().timestamp())
+        url = f"https://maps.googleapis.com/maps/api/timezone/json?location={lat},{lng}&timestamp={timestamp}&key={settings.GOOGLE_API_KEY}"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+
+            time_zone_id, raw_offset, dst_offset = (
+                data["timeZoneId"],
+                data["rawOffset"],
+                data["dstOffset"],
+            )
+            # Calculate the total UTC offset (in seconds)
+            total_offset = raw_offset + dst_offset
+
+            time_zone_data = {
+                "time_zone": time_zone_id,
+                "utc_offset": total_offset,
+            }
+
+            return time_zone_data
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error in get_time_zone: {e}")
+
+        return None
+
     def get_air_uv(self, lat, lng):
         url = f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lng}&hourly=uv_index,us_aqi&timezone=auto&forecast_days=1"
         try:
@@ -76,7 +105,7 @@ class WeatherView(APIView):
         return None
 
     def get_weather_data(self, lat, lng):
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lng}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&minutely_15=temperature_2m,precipitation,weather_code,is_day&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=10"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lng}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&minutely_15=temperature_2m,precipitation,weather_code,apparent_temperature,is_day&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=10"
 
         try:
             response = requests.get(url)
@@ -88,7 +117,6 @@ class WeatherView(APIView):
             temperatures = hourly_data.get("temperature_2m", [])[:48]
             humidities = hourly_data.get("relative_humidity_2m", [])[:48]
             dew_points = hourly_data.get("dew_point_2m", [])[:48]
-            apparent_temperatures = hourly_data.get("apparent_temperature", [])[:48]
             weather_codes = hourly_data.get("weather_code", [])[:48]
             wind_speeds = hourly_data.get("wind_speed_10m", [])[:48]
 
@@ -98,18 +126,16 @@ class WeatherView(APIView):
                     "temperature": temp,
                     "humidity": humidity,
                     "dew_point": dew_point,
-                    "apparent_temperature": apparent_temp,
                     "weather_code": weather_code_descriptions.get(
                         weather_code, "Unknown"
                     ),
                     "wind_speed": wind_speed,
                 }
-                for time, temp, humidity, dew_point, apparent_temp, weather_code, wind_speed in zip(
+                for time, temp, humidity, dew_point, weather_code, wind_speed in zip(
                     times,
                     temperatures,
                     humidities,
                     dew_points,
-                    apparent_temperatures,
                     weather_codes,
                     wind_speeds,
                 )
@@ -151,6 +177,9 @@ class WeatherView(APIView):
             minutely_precipitation = minutely_15_data.get("precipitation", [])[:96]
             minutely_weather_codes = minutely_15_data.get("weather_code", [])[:96]
             minutely_is_day = minutely_15_data.get("is_day", [])[:96]
+            minutely_apparent_temperatures = minutely_15_data.get(
+                "apparent_temperature", []
+            )[:96]
 
             minutely_weather_data = [
                 {
@@ -161,13 +190,15 @@ class WeatherView(APIView):
                         weather_code, "Unknown"
                     ),
                     "is_day": is_day,
+                    "apparent_temperature": apparent_temp,
                 }
-                for time, temp, precipitation, weather_code, is_day in zip(
+                for time, temp, precipitation, weather_code, is_day, apparent_temp in zip(
                     minutely_times,
                     minutely_temperatures,
                     minutely_precipitation,
                     minutely_weather_codes,
                     minutely_is_day,
+                    minutely_apparent_temperatures,
                 )
             ]
 
@@ -200,6 +231,13 @@ class WeatherView(APIView):
 
         lat, lng = coordinates["lat"], coordinates["lng"]
 
+        time_zone_data = self.get_time_zone(lat, lng)
+        if time_zone_data is None:
+            return Response(
+                {"error": "Could not retrieve time zone data"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         air_uv_data = self.get_air_uv(lat, lng)
         if air_uv_data is None:
             return Response(
@@ -215,6 +253,7 @@ class WeatherView(APIView):
             )
 
         combined_data = {
+            "time_zone_data": time_zone_data,
             "coordinates": coordinates,
             "air_uv_data": air_uv_data,
             "weather_data": weather_data,

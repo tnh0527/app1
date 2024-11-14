@@ -10,13 +10,13 @@ import Humidity from "../../components/Weather/Humidity";
 import Forecast from "../../components/Weather/Forecast";
 import { useState, useEffect, useRef, useContext } from "react";
 import { ProfileContext } from "../../utils/ProfileContext";
-import { SidebarContext } from "../../layout/Sidebar/Context";
 
 const Weather = () => {
   const [currentWeather, setCurrentWeather] = useState({});
   const [dailyTemps, setDailyTemps] = useState({});
   const [forecastData, setForecastData] = useState([]);
   const [sunriseSunset, setSunriseSunset] = useState([]);
+  const [timeZone, setTimeZone] = useState({});
   const [uvData, setUvData] = useState([]);
   const [feelsLikeData, setFeelsLikeData] = useState([]);
   const [humidData, setHumidData] = useState([]);
@@ -26,10 +26,33 @@ const Weather = () => {
   const [locationSuggestions, setLocationSuggestions] = useState("");
   const [currentLocation, setCurrentLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [timeOfDay, setTimeOfDay] = useState();
   const [isLoading, setIsLoading] = useState(false);
   const { profile } = useContext(ProfileContext);
-  const { toggleSidebar } = useContext(SidebarContext);
+
+  // Cache weather data in localStorage
+  const cacheWeatherData = (location, data) => {
+    const cacheEntry = {
+      data,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(`weather_${location}`, JSON.stringify(cacheEntry));
+  };
+
+  // Retrieve cached weather data from localStorage
+  const getCachedWeatherData = (location) => {
+    const cacheEntry = localStorage.getItem(`weather_${location}`);
+    if (cacheEntry) {
+      const { data, timestamp } = JSON.parse(cacheEntry);
+      // Expiration time for cache data
+      const cacheExpiration = 30 * 60 * 1000;
+      if (Date.now() - timestamp < cacheExpiration) {
+        return data;
+      } else {
+        localStorage.removeItem(`weather_${location}`);
+      }
+    }
+    return null;
+  };
 
   // Handle user input / selection for location search
   const handleInputChange = (e) => {
@@ -148,7 +171,15 @@ const Weather = () => {
       return;
     }
     setIsLoading(true);
+    // Check for cached data
     try {
+      const cachedData = getCachedWeatherData(location);
+      if (cachedData) {
+        setWeatherStates(cachedData);
+        setIsLoading(false);
+        return;
+      }
+      // Fetch fresh data otherwise
       const response = await fetch(
         `http://localhost:8000/api/weather/?location=${encodeURIComponent(
           location
@@ -167,6 +198,7 @@ const Weather = () => {
           sunrise: dailyData[0].sunrise,
           sunset: dailyData[0].sunset,
         });
+        setTimeZone(weatherData.time_zone_data);
         // set 10-day forecast data
         setForecastData(
           dailyData.map((day) => ({
@@ -178,15 +210,6 @@ const Weather = () => {
           }))
         );
         const hourlyData = weatherData.weather_data["hourly"];
-
-        // Feelslike data
-        const temperatureData = hourlyData.map((hour) => ({
-          time: hour.time,
-          temperature: hour.temperature,
-          apparent_temperature: hour.apparent_temperature,
-          unit: "F",
-        }));
-        setFeelsLikeData(temperatureData);
 
         // Humidity and Dewpoint data
         const humidDewData = hourlyData.map((hour) => ({
@@ -218,9 +241,20 @@ const Weather = () => {
           temperature: minute_15.temperature,
           condition: minute_15.weather_code,
           is_day: minute_15.is_day,
+          feels_like: minute_15.apparent_temperature,
           unit: "F",
         }));
         setCurrentWeather(currentWeatherData);
+
+        // Feelslike data
+        const temperatureData = minutelyData.map((minute_15) => ({
+          time: minute_15.time,
+          temperature: minute_15.temperature,
+          apparent_temperature: minute_15.apparent_temperature,
+          unit: "F",
+        }));
+        setFeelsLikeData(temperatureData);
+
         setDailyTemps({
           tempMax: dailyData[0].max_temperature,
           tempMin: dailyData[0].min_temperature,
@@ -247,6 +281,33 @@ const Weather = () => {
           ],
         };
         setMapData(mapboxGeoData);
+        // Cache the fetched data
+        cacheWeatherData(location, {
+          AQI: weatherData.air_uv_data["aqi_data"],
+          uvData: weatherData.air_uv_data["uv_data"],
+          sunriseSunset: {
+            sunrise: dailyData[0].sunrise,
+            sunset: dailyData[0].sunset,
+          },
+          timeZone: weatherData.time_zone_data,
+          forecastData: dailyData.map((day) => ({
+            date: day.date,
+            condition: day.weather_code,
+            tempMax: day.max_temperature,
+            tempMin: day.min_temperature,
+            unit: "F",
+          })),
+          feelsLikeData: temperatureData,
+          humidData: humidDewData,
+          windData: hourlyWindData,
+          currentWeather: currentWeatherData,
+          dailyTemps: {
+            tempMax: dailyData[0].max_temperature,
+            tempMin: dailyData[0].min_temperature,
+            unit: "F",
+          },
+          mapData: mapboxGeoData,
+        });
       } else {
         console.error("Error fetching weather data:", response.statusText);
       }
@@ -255,6 +316,21 @@ const Weather = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper to set weather states
+  const setWeatherStates = (data) => {
+    setAQI(data.AQI);
+    setUvData(data.uvData);
+    setSunriseSunset(data.sunriseSunset);
+    setTimeZone(data.timeZone);
+    setForecastData(data.forecastData);
+    setFeelsLikeData(data.feelsLikeData);
+    setHumidData(data.humidData);
+    setWindData(data.windData);
+    setCurrentWeather(data.currentWeather);
+    setDailyTemps(data.dailyTemps);
+    setMapData(data.mapData);
   };
 
   useEffect(() => {
@@ -291,7 +367,8 @@ const Weather = () => {
         dailyTemps={dailyTemps}
         handleToggle={handleToggle}
         mapData={mapData}
-        timeOfDay={timeOfDay}
+        timezone={timeZone.time_zone}
+        sunData={sunriseSunset}
       />
       {/* Today's Highlights */}
       <div className={`highlights-container ${isLoading ? "skeleton" : ""}`}>
@@ -299,13 +376,10 @@ const Weather = () => {
         <div className="highlights">
           <WindStatus windstatusData={windData} />
           <UVIndex hourlyUVIndex={uvData} />
-          <SunriseSunset sunData={sunriseSunset} />
+          <SunriseSunset sunData={sunriseSunset} timeZone={timeZone} />
           <Humidity humidDewData={humidData} />
           <AirQuality airQuality={AQI} />
-          <FeelsLike
-            feels={feelsLikeData}
-            actualTemp={currentWeather.temperature}
-          />
+          <FeelsLike feels={feelsLikeData} />
         </div>
       </div>
       {/* 10 Day Forecast */}

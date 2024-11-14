@@ -1,6 +1,7 @@
 import "./Forecast.css";
 import { useEffect, useState } from "react";
 import { iconMap } from "../../utils/weatherMapping";
+import { Tooltip } from "react-tooltip";
 
 const Forecast = ({ forecast }) => {
   const [loading, setLoading] = useState(true);
@@ -58,7 +59,17 @@ const Forecast = ({ forecast }) => {
                 </div>
                 <div className="forecast-dayMonth">{dayMonth || "Sample"}</div>
                 <div className="forecast-icon">
-                  <img src={iconSrc} alt={item.condition || "Weather Icon"} />
+                  <img
+                    src={iconSrc}
+                    alt={item.condition || "Weather Icon"}
+                    data-tooltip-id={`forecast-tooltip-${index}`}
+                    data-tooltip-content={item.condition || "No Condition"}
+                    data-tooltip-place="top"
+                  />
+                  <Tooltip
+                    id={`forecast-tooltip-${index}`}
+                    style={{ zIndex: "999" }}
+                  />
                   <p>
                     <span style={{ fontSize: "0.8em", color: "#aaa" }}>H:</span>{" "}
                     {item.tempMax ? `${roundTemp(item.tempMax)}°` : "Sample"}{" "}

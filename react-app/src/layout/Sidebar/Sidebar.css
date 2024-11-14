@@ -12,7 +12,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  column-gap: 16px;
+  column-gap: 10px;
   transition: all 0.6s ease;
   padding: 6px 14px;
   border-bottom: 1px solid var(--clr-primary-light);

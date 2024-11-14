@@ -78,10 +78,16 @@
   z-index: 1;
 }
 
-.temperature img {
+.high-low-temp img {
   height: 180px;
   width: 180px;
-  margin-left: 65%;
+}
+.high-low-temp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 16px;
+  align-self: flex-end;
 }
 
 @media (max-width: 768px) {
@@ -110,12 +116,6 @@
   .temp-info h1 {
     font-size: 28px;
   }
-}
-
-.high-low-temp {
-  font-size: 16px;
-  align-self: flex-end;
-  margin-right: 8%;
 }
 
 .weather-map {
@@ -173,7 +173,7 @@
 }
 
 input:checked + .slider {
-  background-color: var(--clr-pumpkin);
+  background-color: grey;
 }
 
 input:checked + .slider:before {

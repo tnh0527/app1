@@ -19,7 +19,7 @@ class StockDataAPIView(APIView):
                 ).json()
                 for symbol in stock_symbols
             ]
-            print("Stock data:", stock_data_responses)
+            # print("Stock data:", stock_data_responses)
             # Fetch graph data from Financial Modeling Prep
             stock_graph_responses = [
                 requests.get(
@@ -78,7 +78,7 @@ class StockDataAPIView(APIView):
                 else:
                     updated_graphs.append({"labels": [], "values": []})
 
-            print("graph data:", updated_graphs)
+            # print("graph data:", updated_graphs)
 
             return Response(
                 {

@@ -1,22 +1,48 @@
 import "./SunriseSunset.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import moment from "moment-timezone";
 
-const SunriseSunset = ({ sunData }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  // console.log("Sun data", sunData);
+const SunriseSunset = ({ sunData, timeZone }) => {
+  const [currentTime, setCurrentTime] = useState(null);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
-    // Set interval to update the current time every minute
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    setCurrentTime(new Date());
-    return () => clearInterval(interval);
-  }, []);
+    if (!timeZone || !timeZone.time_zone) {
+      return;
+    }
+    const calculateLocalTime = () => {
+      return moment().tz(timeZone.time_zone).toDate();
+    };
+    setCurrentTime(calculateLocalTime());
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Set interval to update the current time every second
+    intervalRef.current = setInterval(() => {
+      setCurrentTime(calculateLocalTime());
+    }, 1000);
+
+    // Handle visibility changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Recalculate local time when tab is visible
+        setCurrentTime(calculateLocalTime());
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [timeZone]);
 
   const parseTime = (timeString) => {
     if (!timeString) return null; // Handle undefined time strings
-    return new Date(timeString);
+    return moment.tz(timeString, timeZone.time_zone).toDate();
   };
 
   // Function to calculate sun position based on current time, sunrise, and sunset
@@ -103,8 +129,16 @@ const SunriseSunset = ({ sunData }) => {
     };
   }
 
-  // Convert sunrise and sunset times to AM/PM format
-  const formatToAmPm = (timeString) => {
+  const formatLocalTime = (timeString) => {
+    const date = new Date(timeString);
+    return date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: timeZone.time_zone,
+    });
+  };
+  const formatSunTime = (timeString) => {
     const date = new Date(timeString);
     return date.toLocaleTimeString([], {
       hour: "numeric",
@@ -113,8 +147,10 @@ const SunriseSunset = ({ sunData }) => {
     });
   };
 
-  const formattedSunrise = sunData.sunrise ? formatToAmPm(sunData.sunrise) : "";
-  const formattedSunset = sunData.sunset ? formatToAmPm(sunData.sunset) : "";
+  const formattedSunrise = sunData.sunrise
+    ? formatSunTime(sunData.sunrise)
+    : "";
+  const formattedSunset = sunData.sunset ? formatSunTime(sunData.sunset) : "";
 
   return (
     <div
@@ -148,7 +184,8 @@ const SunriseSunset = ({ sunData }) => {
             </div>
           </div>
           <div className="local-time">
-            <p>Local time: {formatToAmPm(currentTime)}</p>
+            <p>Local time: </p>
+            <span className="time">{formatLocalTime(currentTime)}</span>
           </div>
         </>
       )}

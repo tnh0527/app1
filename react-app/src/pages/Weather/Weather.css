@@ -4,6 +4,7 @@
   grid-template-rows: auto 1fr auto;
   gap: 25px;
   padding: 32px;
+  padding-right: 55px;
   background-color: var(--clr-secondary);
   color: #ffffff;
   min-height: 100vh;
@@ -36,7 +37,7 @@
 }
 
 .highlight {
-  background: radial-gradient(circle, #2f3741a2 0%, rgba(47, 55, 65, 0.2) 100%);
+  background: radial-gradient(circle, #2f3741 0%, #2f37413b 100%);
   padding: 10px;
   border-radius: 15px;
   text-align: center;
@@ -62,6 +63,7 @@
   .weather-dashboard {
     grid-template-columns: 1fr;
     column-gap: normal;
+    padding: 32px;
   }
   .highlights-container {
     grid-column: 1 / span 2;

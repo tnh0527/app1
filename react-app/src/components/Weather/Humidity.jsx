@@ -43,8 +43,13 @@ const Humidity = ({ humidDewData }) => {
             </div>
 
             <div className="dew-point">
-              <i className="bi bi-droplet-half"></i>The current dew point is{" "}
-              {currentDewpoint}°.
+              <i className="bi bi-droplet-half"></i>
+              <div className="dewpoint-value">
+                <span>The current dew point is </span>
+                <span className="dewpoint" style={{ fontWeight: "bold" }}>
+                  {currentDewpoint}°.
+                </span>
+              </div>
             </div>
           </div>
         </div>

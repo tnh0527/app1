@@ -2,6 +2,7 @@ import WeatherMap from "./WeatherMap";
 import "./CurrentWeather.css";
 import { useRef, useEffect, useState } from "react";
 import { videoMap, iconMap } from "../../utils/weatherMapping";
+import moment from "moment-timezone";
 
 const CurrentWeather = ({
   currentWeather,
@@ -10,15 +11,30 @@ const CurrentWeather = ({
   dailyTemps,
   handleToggle,
   mapData,
+  timezone,
+  sunData,
 }) => {
   // State to track the current 15-minute interval index
+  // console.log("Current:", currentWeather);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDay, setIsDay] = useState(null);
+  // console.log("time:", timezone);
+
   useEffect(() => {
     if (currentWeather && Object.keys(currentWeather).length > 0) {
       setIsLoading(false);
     }
   }, [currentWeather]);
+
+  useEffect(() => {
+    if (sunData && sunData.sunrise && sunData.sunset) {
+      const currentTime = moment().tz(timezone);
+      const sunrise = moment.tz(sunData.sunrise, timezone);
+      const sunset = moment.tz(sunData.sunset, timezone);
+      setIsDay(currentTime.isAfter(sunrise) && currentTime.isBefore(sunset));
+    }
+  }, [timezone, sunData]);
 
   const videoRef = useRef(null);
 
@@ -44,19 +60,33 @@ const CurrentWeather = ({
       const currentMinuteIndex = Math.floor(
         (currentTime.getHours() * 60 + currentTime.getMinutes()) / 15
       );
-      // Make sure the index is within the bounds of the currentWeather array
       const newIndex = currentMinuteIndex % currentWeather.length;
 
       setCurrentIndex(newIndex);
     };
     updateCurrentWeather();
-    const interval = setInterval(() => {
-      updateCurrentWeather();
-    }, 15 * 60 * 1000); // Update every 15 minutes
-    console.log("Interval:", interval);
 
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [currentWeather.length]);
+    // Calculate the time until the next 15-minute interval
+    const currentTime = new Date();
+    const minutes = currentTime.getMinutes();
+    const seconds = currentTime.getSeconds();
+    const milliseconds = currentTime.getMilliseconds();
+
+    const msToNextQuarterHour =
+      (15 - (minutes % 15)) * 60 * 1000 - seconds * 1000 - milliseconds;
+
+    // Set a timeout to synchronize with the next quarter-hour
+    const timeout = setTimeout(() => {
+      updateCurrentWeather();
+
+      // Set interval to update every 15 minutes after the first synchronization
+      const interval = setInterval(updateCurrentWeather, 15 * 60 * 1000); // 15 minutes
+
+      return () => clearInterval(interval);
+    }, msToNextQuarterHour);
+
+    return () => clearTimeout(timeout);
+  }, [currentWeather]);
 
   // Update weather icon and video based on condition and time of day
   useEffect(() => {
@@ -67,18 +97,14 @@ const CurrentWeather = ({
     // Determine the appropriate icon
     let icon;
     if (typeof iconMap[condition] === "object") {
-      icon = currentWeather[currentIndex].is_day
-        ? iconMap[condition].day
-        : iconMap[condition].night;
+      icon = isDay ? iconMap[condition].day : iconMap[condition].night;
     } else {
       icon = iconMap[condition] || weatherImgs.undefined;
     }
     // Determine the appropriate video
     let video;
     if (typeof videoMap[condition] === "object") {
-      video = currentWeather[currentIndex].is_day
-        ? videoMap[condition].day
-        : videoMap[condition].night;
+      video = isDay ? videoMap[condition].day : videoMap[condition].night;
     } else {
       video = videoMap[condition] || videoMap.default.clear;
     }
@@ -97,7 +123,6 @@ const CurrentWeather = ({
         video: video,
         temperature: currentWeather[currentIndex].temperature,
         condition: currentWeather[currentIndex].condition,
-        is_day: currentWeather[currentIndex].is_day,
       };
     });
   }, [currentIndex, currentWeather, setCurrentWeather]);
@@ -141,7 +166,6 @@ const CurrentWeather = ({
           <h2>{location}</h2>
           <p className="current-date">{formattedDate}</p>
           <div className="temperature">
-            <img src={currentWeather.weatherIcon} alt="weather icon" />
             <div className="temp-info">
               <h1>
                 {currentWeather.temperature}°{currentWeather.unit || "F"}
@@ -149,8 +173,10 @@ const CurrentWeather = ({
               <p>{currentWeather.condition}</p>
             </div>
             <div className="high-low-temp">
-              <span>H: {dailyTemps.tempMax}°</span>{" "}
-              <span>L: {dailyTemps.tempMin}°</span>
+              <img src={currentWeather.weatherIcon} alt="weather icon" />
+              <span>
+                H: {dailyTemps.tempMax}° L: {dailyTemps.tempMin}°
+              </span>
             </div>
           </div>
 

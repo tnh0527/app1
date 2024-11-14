@@ -11,6 +11,7 @@ export const ProfileProvider = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("Authenticated.");
       fetchProfile();
       fetchProfilePic();
     } else {

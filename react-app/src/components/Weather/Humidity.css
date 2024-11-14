@@ -13,30 +13,31 @@
 
 .humidity-value-percentage {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
+  margin-top: auto;
 }
 
 .humidity-value {
   font-size: 2rem;
   font-weight: bold;
-  color: #00ccff;
+  color: aqua;
 }
 
 .humidity-percentage {
   font-size: 1rem;
   margin-left: 5px;
+  margin-top: 30%;
 }
 
 .dew-point {
   display: flex;
   flex-direction: column;
-  align-items: center;
   font-size: 0.9rem;
   color: #b0b0b0;
-  padding-left: 10%;
+  padding-left: 15%;
 }
 
 .dew-point .bi-droplet-half {
   font-size: 20px;
-  color: #00ccff;
+  color: aqua;
 }

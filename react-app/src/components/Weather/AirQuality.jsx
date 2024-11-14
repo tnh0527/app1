@@ -39,17 +39,19 @@ const AirQuality = ({ airQuality }) => {
   // position on AQI bar
   const getAQILevelPosition = (aqi) => {
     if (aqi <= 50) {
-      return "10%";
+      return `${(aqi / 50) * 20}%`; // 0%–20%
     } else if (aqi <= 100) {
-      return "30%";
+      return `${20 + ((aqi - 50) / 50) * 20}%`; // 20%–40%
     } else if (aqi <= 150) {
-      return "50%";
+      return `${40 + ((aqi - 100) / 50) * 20}%`; // 40%–60%
     } else if (aqi <= 200) {
-      return "70%";
+      return `${60 + ((aqi - 150) / 50) * 15}%`; // 60%–75%
     } else if (aqi <= 300) {
-      return "85%";
+      return `${75 + ((aqi - 200) / 100) * 15}%`; // 75%–90%
+    } else if (aqi <= 500) {
+      return `${90 + ((aqi - 300) / 200) * 10}%`; // 90%–100%
     } else {
-      return "95%";
+      return `100%`; // Cap at 100% beyond AQI 500
     }
   };
 

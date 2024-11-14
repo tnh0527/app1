@@ -3,22 +3,43 @@ import "./FeelsLike.css";
 
 const FeelsLike = ({ feels }) => {
   const [currentFeels, setCurrentFeels] = useState(null);
+  // console.log("Feels:", feels);
 
   useEffect(() => {
     const updateFeels = () => {
-      const currentHour = new Date().getHours();
+      const currentTime = new Date();
+      const currentHour = currentTime.getHours();
+      const currentMinute = currentTime.getMinutes();
+
       const currentData = feels.find((hourData) => {
-        const hour = parseInt(hourData.time.split("T")[1].split(":")[0], 10);
-        return hour === currentHour;
+        const [hourStr, minuteStr] = hourData.time.split("T")[1].split(":");
+        const hour = parseInt(hourStr, 10);
+        const minute = parseInt(minuteStr, 10);
+        return (
+          hour === currentHour && minute === Math.floor(currentMinute / 15) * 15
+        );
       });
+
       setCurrentFeels(currentData);
-      // console.log("Feels:", currentData);
+      console.log("Feels:", currentData);
     };
     updateFeels();
-    const interval = setInterval(() => {
+
+    const currentTime = new Date();
+    const minutes = currentTime.getMinutes();
+    const seconds = currentTime.getSeconds();
+    const milliseconds = currentTime.getMilliseconds();
+
+    const msToNextQuarterHour =
+      (15 - (minutes % 15)) * 60 * 1000 - seconds * 1000 - milliseconds;
+
+    const timeout = setTimeout(() => {
       updateFeels();
-    }, 3600000); // Update every hour
-    return () => clearInterval(interval);
+      const interval = setInterval(updateFeels, 15 * 60 * 1000);
+      return () => clearInterval(interval);
+    }, msToNextQuarterHour);
+
+    return () => clearTimeout(timeout);
   }, [feels]);
 
   const getTemperatureColor = (temperature, unit) => {

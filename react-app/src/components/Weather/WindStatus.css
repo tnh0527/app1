@@ -1,8 +1,10 @@
+.wind-status {
+  margin-right: 8px;
+}
 .wind-visual {
   position: relative;
 
   margin: 10px 0;
-  margin-bottom: 40px;
 }
 .wind-visual,
 .wind-chart {
@@ -37,6 +39,7 @@
 .wind-data-unit {
   display: flex;
   align-items: baseline;
+  color: #8f9779;
 }
 
 .wind-speed {
@@ -53,14 +56,15 @@
 }
 
 .wind-time-data {
-  position: absolute;
-  font-size: 13px;
-  bottom: 2%;
-  right: 4%;
-  text-align: right;
-  width: 30%;
-  color: #aaa;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   font-style: italic;
+  font-size: 0.8rem;
+}
+.wind-time {
+  bottom: 0;
+  color: #aaa;
 }
 
 .tooltip {
