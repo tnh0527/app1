@@ -21,12 +21,13 @@
   font-size: 2rem;
   font-weight: bold;
   color: aqua;
+  text-shadow: 0 0 5px;
 }
 
 .humidity-percentage {
   font-size: 1rem;
   margin-left: 5px;
-  margin-top: 30%;
+  margin-top: 25%;
 }
 
 .dew-point {

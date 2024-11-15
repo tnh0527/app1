@@ -18,6 +18,7 @@
 .feels-like-temp {
   font-size: 2rem;
   font-weight: bold;
+  text-shadow: 0 0 5px;
 }
 
 .feels-like-description {

@@ -15,7 +15,6 @@ const CurrentWeather = ({
   sunData,
 }) => {
   // State to track the current 15-minute interval index
-  // console.log("Current:", currentWeather);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isDay, setIsDay] = useState(null);
@@ -34,7 +33,7 @@ const CurrentWeather = ({
       const sunset = moment.tz(sunData.sunset, timezone);
       setIsDay(currentTime.isAfter(sunrise) && currentTime.isBefore(sunset));
     }
-  }, [timezone, sunData]);
+  }, [timezone, sunData, currentIndex]);
 
   const videoRef = useRef(null);
 
@@ -175,7 +174,10 @@ const CurrentWeather = ({
             <div className="high-low-temp">
               <img src={currentWeather.weatherIcon} alt="weather icon" />
               <span>
-                H: {dailyTemps.tempMax}° L: {dailyTemps.tempMin}°
+                <span style={{ fontSize: "0.8em", color: "#aaa" }}>H:</span>{" "}
+                {dailyTemps.tempMax ? `${dailyTemps.tempMax}°` : "Sample"}{" "}
+                <span style={{ fontSize: "0.8em", color: "#aaa" }}>L:</span>{" "}
+                {dailyTemps.tempMin ? `${dailyTemps.tempMin}°` : "Sample"}
               </span>
             </div>
           </div>

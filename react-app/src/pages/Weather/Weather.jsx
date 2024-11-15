@@ -44,7 +44,7 @@ const Weather = () => {
     if (cacheEntry) {
       const { data, timestamp } = JSON.parse(cacheEntry);
       // Expiration time for cache data
-      const cacheExpiration = 30 * 60 * 1000;
+      const cacheExpiration = 120 * 60 * 1000;
       if (Date.now() - timestamp < cacheExpiration) {
         return data;
       } else {

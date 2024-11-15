@@ -43,6 +43,12 @@ const WindStatus = ({ windstatusData = [] }) => {
   // Get future data directly from windstatusData, using data from the next 5 hours
   const futureData = windstatusData.slice(currentHour + 1, currentHour + 6);
 
+  const maxWindSpeed = Math.max(
+    ...windstatusData.map((data) => data.windspeed),
+    20
+  ); // Fallback to 20 if no data
+  const chartHeight = 20;
+
   // Fill past and future data if they have less than 5 points
   const windData = [
     ...Array(Math.max(0, 5 - pastData.length)).fill({
@@ -60,14 +66,14 @@ const WindStatus = ({ windstatusData = [] }) => {
     }),
   ].map((data, index) => ({
     ...data,
-    height: data.windspeed * 1.2,
+    height: (data.windspeed / maxWindSpeed) * chartHeight, // Normalize the height
     time: `${(currentHour - currentIndex + index + 24) % 24}:00`, // Local hour for each point
   }));
 
   const pathData = windData
     .map((data, index) => {
       const x = 5 + index * 10;
-      const y = Math.max(0, 20 - data.height * 0.6); // adjusting line height within view
+      const y = Math.max(0, chartHeight - data.height); // Ensure it stays within bounds
       return [x, y];
     })
     .reduce((acc, point, index, array) => {
@@ -129,7 +135,11 @@ const WindStatus = ({ windstatusData = [] }) => {
                     style={{ stopColor: "#404040", stopOpacity: 0.2 }}
                   />
                   <stop
-                    offset="41%"
+                    offset="40%"
+                    style={{ stopColor: "#00FFFF", stopOpacity: 0.4 }}
+                  />
+                  <stop
+                    offset="45%"
                     style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
                   />
                   <stop
@@ -137,35 +147,63 @@ const WindStatus = ({ windstatusData = [] }) => {
                     style={{ stopColor: "#FFFFFF", stopOpacity: 1 }}
                   />
                   <stop
-                    offset="61%"
-                    style={{ stopColor: "#00FFFF", stopOpacity: 1 }}
-                  />
-                  <stop
-                    offset="100%"
-                    style={{ stopColor: "#404040", stopOpacity: 0.2 }}
+                    offset="52%"
+                    style={{ stopColor: "#404040", stopOpacity: 0.1 }}
                   />
                 </linearGradient>
+                <filter
+                  id="glowFilter"
+                  x="-350%"
+                  y="-350%"
+                  width="1000%"
+                  height="1000%"
+                >
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+
+                <filter
+                  id="shadowFilter"
+                  x="-20%"
+                  y="-20%"
+                  width="140%"
+                  height="140%"
+                >
+                  <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" />
+                  <feOffset dx="1" dy="1" result="offsetblur" />
+                  <feFlood floodColor="rgba(0,0,0,0.6)" />
+                  <feComposite in2="offsetblur" operator="in" />
+                  <feMerge>
+                    <feMergeNode />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
               <path
                 d={pathData}
                 fill="none"
                 stroke="url(#lineGradient)"
-                strokeWidth="2"
+                strokeWidth="3"
                 strokeLinecap="round"
+                filter="url(#glowFilter)"
               />
             </svg>
           </div>
           <div className="wind-bars">
-            <svg viewBox="0 0 111 40" className="wind-bar-chart">
+            <svg viewBox="0 0 111 30" className="wind-bar-chart">
               {windData.map((data, index) => (
                 <rect
                   key={index}
                   x={5 + index * 10}
-                  y={25 - data.height}
+                  y={chartHeight - data.height}
                   width="5"
                   height={data.height}
-                  rx="2"
-                  ry="2"
+                  rx="1.5"
+                  ry="1.5"
                   fill={
                     index === currentIndex
                       ? "#00FFFF"
@@ -173,6 +211,7 @@ const WindStatus = ({ windstatusData = [] }) => {
                       ? "#005f69"
                       : "#404040"
                   }
+                  filter="url(#shadowFilter)"
                   onMouseEnter={(e) => handleMouseEnter(e, data.windspeed)}
                   onMouseLeave={handleMouseLeave}
                 />
@@ -199,11 +238,10 @@ const WindStatus = ({ windstatusData = [] }) => {
             </span>
             <span className="speed-unit">km/h</span>
           </div>
-        </div>
-
-        <div className="wind-time-data">
-          <span className="wind-time">Last updated:</span>
-          <span>{formatToAmPm(windData[currentIndex].time)}</span>
+          <div className="wind-time-data">
+            <span className="wind-time">Last updated:</span>
+            <span>{formatToAmPm(windData[currentIndex].time)}</span>
+          </div>
         </div>
       </div>
     </div>
