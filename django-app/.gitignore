@@ -1,5 +1,13 @@
 .env
 djangoenv/
 __pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 media/
 venv/
+*.sqlite3

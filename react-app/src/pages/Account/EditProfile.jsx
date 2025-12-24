@@ -146,6 +146,23 @@ const EditProfile = () => {
 
   return (
     <div className="profile-content">
+      <div className="profile-pic-page">
+        <div className="profile-picture">
+          <img src={profilePic} alt="Profile" className="profile-img" />
+          <input
+            className="upload-input"
+            id="formFileSm"
+            type="file"
+            accept="image/*"
+          />
+          <button
+            className="upload-button"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <i className="bi bi-image"></i>
+          </button>
+        </div>
+      </div>
       <div className="profile-edit-container">
         <h3>Personal Information </h3>
         <form className="profile-form" onSubmit={saveProfile}>
@@ -286,23 +303,6 @@ const EditProfile = () => {
             </button>
           </div>
         </form>
-      </div>
-      <div className="profile-pic-page">
-        <div className="profile-picture">
-          <img src={profilePic} alt="Profile" className="profile-img" />
-          <input
-            className="upload-input"
-            id="formFileSm"
-            type="file"
-            accept="image/*"
-          />
-          <button
-            className="upload-button"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <i className="bi bi-image"></i>
-          </button>
-        </div>
       </div>
       <ProfilePicModal
         isOpen={isModalOpen}

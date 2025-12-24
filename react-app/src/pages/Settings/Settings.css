@@ -1,0 +1,18 @@
+.settings-page {
+  background-color: var(--clr-secondary);
+  flex: 1;
+  padding: 40px;
+  color: var(--clr-white);
+  min-height: 100vh;
+}
+
+.settings-container {
+  background-color: var(--clr-primary);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.settings-muted {
+  color: var(--clr-silver-v1);
+  margin-top: 8px;
+}

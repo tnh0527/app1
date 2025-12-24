@@ -1,0 +1,44 @@
+# Root ignore (applies to whole repo)
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual envs (in-repo)
+venv/
+.venv/
+djangoenv/
+
+# Django
+*.sqlite3
+
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+
+# Playwright artifacts
+playwright-report/
+playwright-artifacts/
+test-results/
+
+# Local env files
+.env
+.env.*
+!.env.example
+*.local

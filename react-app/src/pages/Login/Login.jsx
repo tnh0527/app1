@@ -3,7 +3,7 @@ import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { useAuth } from "../../utils/AuthContext";
-import { csrfToken } from "../../data/data";
+import authApi from "../../api/authApi";
 
 const Login = () => {
   const [isActive, setIsActive] = useState(false);
@@ -22,48 +22,29 @@ const Login = () => {
     setErrors((prev) => ({ ...prev, [type]: {} }));
     setLoading(true);
 
-    const url =
-      type === "register"
-        ? "http://localhost:8000/auth/register/"
-        : "http://localhost:8000/auth/login/";
-
-    const userData =
-      type === "register"
-        ? {
-            username: newUsername,
-            email: newEmail,
-            password: newPassword,
-          }
-        : { username, password };
-
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        credentials: "include",
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const responseData = await response.json();
-        console.log("Error response data:", responseData);
-        setErrors((prev) => ({ ...prev, [type]: responseData }));
-        setPassword("");
+      if (type === "register") {
+        await authApi.register({
+          username: newUsername,
+          email: newEmail,
+          password: newPassword,
+        });
+        setIsActive(false);
+        console.log("Registered successfully!");
       } else {
-        if (type === "register") {
-          setIsActive(false);
-          console.log("Registered successfully!");
-        } else {
-          login();
-          navigate("/home");
-          console.log("Logged in successfully!");
-        }
+        await authApi.login({ username, password });
+        login();
+        navigate("/home");
+        console.log("Logged in successfully!");
       }
     } catch (error) {
       console.error("Error:", error);
+      if (error.response && error.response.data) {
+        setErrors((prev) => ({ ...prev, [type]: error.response.data }));
+      }
+      if (type === "login") {
+        setPassword("");
+      }
     } finally {
       setLoading(false);
     }

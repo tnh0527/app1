@@ -8,12 +8,9 @@ import { useAuth } from "../../utils/AuthContext";
 import { ProfileContext } from "../../utils/ProfileContext";
 import { personsImgs } from "../../utils/images";
 import { Tooltip } from "react-tooltip";
+import authApi from "../../api/authApi";
 
 const Sidebar = () => {
-  const csrfToken = document.cookie
-    .split(";")
-    .find((cookie) => cookie.trim().startsWith("csrftoken="))
-    .split("=")[1];
   const { profilePic, setProfilePic, profile } = useContext(ProfileContext);
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContext);
   const location = useLocation();
@@ -24,16 +21,13 @@ const Sidebar = () => {
   const sidebarClass = isSidebarOpen ? "sidebar-change" : "";
 
   const handleLogout = async () => {
-    const response = await fetch("http://localhost:8000/auth/logout/", {
-      method: "POST",
-      "X-CSRFToken": csrfToken,
-    });
-    if (response.ok) {
+    try {
+      await authApi.logout();
       logout();
       navigate("/");
       window.location.reload();
-    } else {
-      console.error("An error occurred while logging out.");
+    } catch (error) {
+      console.error("An error occurred while logging out.", error);
     }
   };
 
@@ -67,9 +61,9 @@ const Sidebar = () => {
       <div className="user-info">
         <div className="info-img img-fit-cover">
           <Link
-            to="/account/edit-profile"
+            to="/account"
             data-tooltip-id="profile-tooltip"
-            data-tooltip-content="Edit profile"
+            data-tooltip-content="My account"
             data-tooltip-place="top"
           >
             <img src={profilePic || personsImgs.default_user} alt="user pic" />
@@ -98,7 +92,7 @@ const Sidebar = () => {
       <nav className="navigation">
         <div className="top-links">
           <ul className="nav-list">
-            {navigationLinks.slice(0, -2).map((navigationLink) => (
+            {navigationLinks.slice(0, -3).map((navigationLink) => (
               <li className="nav-item" key={navigationLink.id}>
                 <div className="profile-icon">
                   <a
@@ -133,7 +127,7 @@ const Sidebar = () => {
         {/* Bottom links placed after the main navigation */}
         <div className="bottom-links">
           <ul className="nav-list">
-            {navigationLinks.slice(-2).map((navigationLink) => (
+            {navigationLinks.slice(-3).map((navigationLink) => (
               <li className="nav-item" key={navigationLink.id}>
                 <a
                   className={`nav-link ${

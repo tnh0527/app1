@@ -1,69 +1,33 @@
-from django.contrib.auth import authenticate, login, logout
-from rest_framework import status
-from rest_framework.decorators import api_view
+from django.contrib.auth import login, logout
+from rest_framework import status, generics, views
 from rest_framework.response import Response
-from .models import User
-import re
+from .serializers import RegisterSerializer, LoginSerializer
 
 
-@api_view(["POST"])
-def register(request):
-    username = request.data.get("username")
-    email = request.data.get("email")
-    password = request.data.get("password")
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
 
-    errors = {}
-    if not username:
-        errors["username"] = "Username cannot be empty."
-    elif User.objects.filter(username=username).exists():
-        errors["username"] = "Username already exists."
-
-    if not email:
-        errors["email"] = "Email cannot be empty."
-    elif User.objects.filter(email=email).exists():
-        errors["email"] = "This email is already registered."
-    elif not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
-        errors["email"] = "Invalid email format."
-
-    if not password or len(password) < 6:
-        errors["password"] = "Password must be at least 6 characters."
-
-    if errors:
-        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-
-    user = User(username=username, email=email)
-    user.set_password(password)
-    user.save()
-    return Response(
-        {"msg": "User registered successfully."}, status=status.HTTP_201_CREATED
-    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(
+                {"msg": "User registered successfully."}, status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["POST"])
-def user_login(request):
-    username = request.data.get("username")
-    password = request.data.get("password")
-
-    errors = {}
-    if not username:
-        errors["username"] = "Enter your username."
-    if not password:
-        errors["password"] = "Enter your password."
-
-    if errors:
-        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-
-    user = authenticate(request, username=username, password=password)
-    if user is not None:
-        login(request, user)
-        return Response({"msg": "Login successful."}, status=status.HTTP_200_OK)
-    else:
-        errors["username"] = "Invalid credentials."
-        errors["password"] = "Invalid credentials."
-        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+class LoginView(views.APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            login(request, user)
+            return Response({"msg": "Login successful."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["POST"])
-def user_logout(request):
-    logout(request)
-    return Response({"msg": "Logged out successfully!"}, status=status.HTTP_200_OK)
+class LogoutView(views.APIView):
+    def post(self, request):
+        logout(request)
+        return Response({"msg": "Logged out successfully!"}, status=status.HTTP_200_OK)

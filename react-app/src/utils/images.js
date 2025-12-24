@@ -19,7 +19,6 @@ import wealth from "../assets/icons/wealth.svg";
 import exit from "../assets/icons/exit.svg";
 import savings from "../assets/icons/savings.svg";
 import edit from "../assets/icons/edit.svg";
-import security from "../assets/icons/security.svg";
 import calendar from "../assets/icons/calendar.svg";
 import weather from "../assets/icons/weather.svg";
 
@@ -61,7 +60,6 @@ export const iconsImgs = {
   wealth,
   exit,
   savings,
-  security,
   edit,
   calendar,
   weather,

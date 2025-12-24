@@ -7,15 +7,8 @@ export const profileNavLink = [
     id: 1,
     title: "Edit Profile",
     image: iconsImgs.edit,
-    path: "/account/edit-profile",
+    path: "/account",
   },
-  {
-    id: 2,
-    title: "Security",
-    image: iconsImgs.security,
-    path: "/account/security",
-  },
-  { id: 3, title: "Settings", image: iconsImgs.gears },
 ];
 export const navigationLinks = [
   { id: 1, title: "Home", image: iconsImgs.home, path: "/home" },
@@ -29,9 +22,10 @@ export const navigationLinks = [
     id: 9,
     title: "My Account",
     image: iconsImgs.user,
-    path: "/account/edit-profile",
+    path: "/account",
     children: profileNavLink,
   },
+  { id: 11, title: "Settings", image: iconsImgs.gears, path: "/settings" },
   { id: 10, title: "Log Out", image: iconsImgs.exit },
 ];
 export const transactions = [
