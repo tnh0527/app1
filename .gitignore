@@ -31,6 +31,7 @@ djangoenv/
 node_modules/
 dist/
 dist-ssr/
+.vite/
 
 # Playwright artifacts
 playwright-report/
