@@ -12,6 +12,8 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { ProfileContext } from "../../utils/ProfileContext";
 
 const Weather = () => {
+  const DEFAULT_LOCATION = "Richmond, Texas, USA";
+
   const [currentWeather, setCurrentWeather] = useState({});
   const [dailyTemps, setDailyTemps] = useState({});
   const [forecastData, setForecastData] = useState([]);
@@ -334,12 +336,16 @@ const Weather = () => {
   };
 
   useEffect(() => {
-    if (profile) {
-      const { city, state } = profile;
-      if (city && state) {
-        setCurrentLocation(`${city}, ${state}`);
-      }
+    const city = profile?.city;
+    const state = profile?.state;
+
+    if (city && state) {
+      setCurrentLocation(`${city}, ${state}`);
+      return;
     }
+
+    // If user hasn't provided a location yet, default to Richmond, TX.
+    setCurrentLocation((prev) => prev || DEFAULT_LOCATION);
   }, [profile]);
 
   useEffect(() => {

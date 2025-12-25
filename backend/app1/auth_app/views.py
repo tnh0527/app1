@@ -23,6 +23,11 @@ class LoginView(views.APIView):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             login(request, user)
+            remember_me = bool(request.data.get("remember_me"))
+
+            # If remember_me is false, expire the session when the browser closes.
+            # Otherwise, use the default session age (persistent cookie by default).
+            request.session.set_expiry(None if remember_me else 0)
             return Response({"msg": "Login successful."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

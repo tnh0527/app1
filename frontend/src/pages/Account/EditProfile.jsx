@@ -145,164 +145,197 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="profile-content">
-      <div className="profile-pic-page">
-        <div className="profile-picture">
-          <img src={profilePic} alt="Profile" className="profile-img" />
-          <input
-            className="upload-input"
-            id="formFileSm"
-            type="file"
-            accept="image/*"
-          />
-          <button
-            className="upload-button"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <i className="bi bi-image"></i>
-          </button>
+    <div className="account-page">
+      <div className="account-header">
+        <div>
+          <h1 className="account-title">My Account</h1>
+          <p className="account-subtitle">Update your profile information</p>
         </div>
       </div>
-      <div className="profile-edit-container">
-        <h3>Personal Information </h3>
-        <form className="profile-form" onSubmit={saveProfile}>
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>First Name</label>
-              <input
-                id="first_name"
-                name="first_name"
-                type="text"
-                value={state.first_name}
-                onChange={handleChange}
-                onKeyDown={(e) => {
-                  if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
-                    e.preventDefault();
-                  }
-                }}
-                className={`form-control ${
-                  errors.first_name ? "is-invalid" : ""
-                }`}
-              />
-              <div className="invalid-feedback">{errors.first_name}</div>
-            </div>
 
-            <div className="form-group">
-              <label>Last Name</label>
-              <input
-                id="last_name"
-                name="last_name"
-                type="text"
-                value={state.last_name}
-                onChange={handleChange}
-                onKeyDown={(e) => {
-                  if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
-                    e.preventDefault();
-                  }
-                }}
-                className={`form-control ${
-                  errors.last_name ? "is-invalid" : ""
-                }`}
-              />
-              <div className="invalid-feedback">{errors.last_name}</div>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Username</label>
+      <div className="account-grid">
+        <div className="account-card account-card--avatar">
+          <div className="account-avatar">
+            <img src={profilePic} alt="Profile" className="profile-img" />
             <input
-              id="username"
-              name="username"
-              type="text"
-              value={state.username}
-              onChange={handleChange}
-              className={`form-control ${errors.username ? "is-invalid" : ""}`}
+              className="upload-input"
+              id="formFileSm"
+              type="file"
+              accept="image/*"
             />
-            <div className="invalid-feedback">{errors.username}</div>
-          </div>
-
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              id="email"
-              name="email"
-              type="text"
-              value={state.email}
-              onChange={handleChange}
-              className={`form-control ${errors.email ? "is-invalid" : ""}`}
-            />
-            <div className="invalid-feedback">{errors.email}</div>
-          </div>
-
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>State</label>
-              <select
-                id="state"
-                name="state"
-                value={state.state}
-                onChange={handleChange}
-                className={`form-control ${errors.state ? "is-invalid" : ""}`}
-              >
-                <option disabled value=""></option>
-                {usStates.map((state) => (
-                  <option key={state.abbreviation} value={state.abbreviation}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
-              <div className="invalid-feedback">{errors.state}</div>
-            </div>
-
-            <div className="form-group">
-              <label>City</label>
-              <input
-                id="city"
-                name="city"
-                type="text"
-                value={state.city}
-                onKeyDown={(e) => {
-                  if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
-                    e.preventDefault();
-                  }
-                }}
-                onChange={handleChange}
-                className={`form-control ${errors.city ? "is-invalid" : ""}`}
-              />
-              <div className="invalid-feedback">{errors.city}</div>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Birthdate</label>
-            <DatePicker
-              id="birthdate"
-              selected={state.birthdate ? new Date(state.birthdate) : null}
-              onChangeRaw={handleRawDateChange}
-              onFocus={(e) => {
-                setErrors((prevErrors) => ({ ...prevErrors, birthdate: "" }));
-              }}
-              dateFormat="MM/dd/yyyy"
-              open={false}
-              className={`form-control ${errors.birthdate ? "is-invalid" : ""}`}
-            />
-            <div className="invalid-feedback">{errors.birthdate}</div>
-          </div>
-
-          <div className="button-container">
             <button
-              type="submit"
-              className="button profile-button"
-              disabled={!hasChanges}
+              type="button"
+              className="upload-button"
+              onClick={() => setIsModalOpen(true)}
+              aria-label="Change profile picture"
             >
-              {loading ? (
-                <SyncLoader loading={loading} size={10} color={"#22D6D6"} />
-              ) : (
-                "Save"
-              )}
+              <i className="bi bi-image"></i>
             </button>
           </div>
-        </form>
+
+          <div className="account-avatar-meta">
+            <div className="account-meta-row">
+              <span className="account-meta-label">Username</span>
+              <span className="account-meta-value">
+                {state.username || "—"}
+              </span>
+            </div>
+            <div className="account-meta-row">
+              <span className="account-meta-label">Email</span>
+              <span className="account-meta-value">{state.email || "—"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="account-card account-card--form">
+          <div className="account-card-header">
+            <h3>Personal Information</h3>
+            <p>Fields are saved when you click Save.</p>
+          </div>
+
+          <form className="profile-form" onSubmit={saveProfile}>
+            <div className="form-group-row">
+              <div className="form-group">
+                <label>First Name</label>
+                <input
+                  id="first_name"
+                  name="first_name"
+                  type="text"
+                  value={state.first_name}
+                  onChange={handleChange}
+                  onKeyDown={(e) => {
+                    if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
+                      e.preventDefault();
+                    }
+                  }}
+                  className={`form-control ${
+                    errors.first_name ? "is-invalid" : ""
+                  }`}
+                />
+                <div className="invalid-feedback">{errors.first_name}</div>
+              </div>
+
+              <div className="form-group">
+                <label>Last Name</label>
+                <input
+                  id="last_name"
+                  name="last_name"
+                  type="text"
+                  value={state.last_name}
+                  onChange={handleChange}
+                  onKeyDown={(e) => {
+                    if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
+                      e.preventDefault();
+                    }
+                  }}
+                  className={`form-control ${
+                    errors.last_name ? "is-invalid" : ""
+                  }`}
+                />
+                <div className="invalid-feedback">{errors.last_name}</div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Username</label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                value={state.username}
+                onChange={handleChange}
+                className={`form-control ${
+                  errors.username ? "is-invalid" : ""
+                }`}
+              />
+              <div className="invalid-feedback">{errors.username}</div>
+            </div>
+
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                id="email"
+                name="email"
+                type="text"
+                value={state.email}
+                onChange={handleChange}
+                className={`form-control ${errors.email ? "is-invalid" : ""}`}
+              />
+              <div className="invalid-feedback">{errors.email}</div>
+            </div>
+
+            <div className="form-group-row">
+              <div className="form-group">
+                <label>State</label>
+                <select
+                  id="state"
+                  name="state"
+                  value={state.state}
+                  onChange={handleChange}
+                  className={`form-control ${errors.state ? "is-invalid" : ""}`}
+                >
+                  <option disabled value=""></option>
+                  {usStates.map((state) => (
+                    <option key={state.abbreviation} value={state.abbreviation}>
+                      {state.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="invalid-feedback">{errors.state}</div>
+              </div>
+
+              <div className="form-group">
+                <label>City</label>
+                <input
+                  id="city"
+                  name="city"
+                  type="text"
+                  value={state.city}
+                  onKeyDown={(e) => {
+                    if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
+                      e.preventDefault();
+                    }
+                  }}
+                  onChange={handleChange}
+                  className={`form-control ${errors.city ? "is-invalid" : ""}`}
+                />
+                <div className="invalid-feedback">{errors.city}</div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Birthdate</label>
+              <DatePicker
+                id="birthdate"
+                selected={state.birthdate ? new Date(state.birthdate) : null}
+                onChangeRaw={handleRawDateChange}
+                onFocus={(e) => {
+                  setErrors((prevErrors) => ({ ...prevErrors, birthdate: "" }));
+                }}
+                dateFormat="MM/dd/yyyy"
+                open={false}
+                className={`form-control ${
+                  errors.birthdate ? "is-invalid" : ""
+                }`}
+              />
+              <div className="invalid-feedback">{errors.birthdate}</div>
+            </div>
+
+            <div className="button-container">
+              <button
+                type="submit"
+                className="button profile-button"
+                disabled={!hasChanges}
+              >
+                {loading ? (
+                  <SyncLoader loading={loading} size={10} color={"#22D6D6"} />
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
       <ProfilePicModal
         isOpen={isModalOpen}

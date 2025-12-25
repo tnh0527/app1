@@ -10,12 +10,20 @@ const Login = () => {
   const [newUsername, setNewUsername] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newFirstName, setNewFirstName] = useState("");
+  const [newLastName, setNewLastName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ login: {}, register: {} });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  const errorText = (value) => {
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : value;
+  };
 
   const handleSubmit = async (e, type) => {
     e.preventDefault();
@@ -24,16 +32,42 @@ const Login = () => {
 
     try {
       if (type === "register") {
-        await authApi.register({
+        const firstName = newFirstName.trim();
+        const lastName = newLastName.trim();
+
+        if (!firstName || !lastName) {
+          setErrors((prev) => ({
+            ...prev,
+            register: {
+              ...prev.register,
+              ...(firstName ? {} : { first_name: "This field is required." }),
+              ...(lastName ? {} : { last_name: "This field is required." }),
+            },
+          }));
+          setLoading(false);
+          return;
+        }
+
+        const payload = {
           username: newUsername,
           email: newEmail,
           password: newPassword,
+          first_name: firstName,
+          last_name: lastName,
+        };
+        await authApi.register({
+          ...payload,
         });
         setIsActive(false);
+        setNewUsername("");
+        setNewEmail("");
+        setNewPassword("");
+        setNewFirstName("");
+        setNewLastName("");
         console.log("Registered successfully!");
       } else {
-        await authApi.login({ username, password });
-        login();
+        await authApi.login({ username, password, remember_me: rememberMe });
+        login(rememberMe);
         navigate("/home");
         console.log("Logged in successfully!");
       }
@@ -125,10 +159,26 @@ const Login = () => {
                 <div className="invalid-feedback">{errors.login.password}</div>
               )}
             </div>
+
+            <div
+              className="remember-row animation"
+              style={{ "--i": 3, "--j": 24 }}
+            >
+              <label className="remember-label" htmlFor="rememberMe">
+                <input
+                  id="rememberMe"
+                  type="checkbox"
+                  checked={rememberMe}
+                  disabled={loading}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                Remember me
+              </label>
+            </div>
             <button
               type="submit"
               className="button animation"
-              style={{ "--i": 3, "--j": 24 }}
+              style={{ "--i": 4, "--j": 25 }}
             >
               {loading ? (
                 <ClipLoader loading={loading} size={25} color={"#22D6D6"} />
@@ -138,7 +188,7 @@ const Login = () => {
             </button>
             <div
               className="logreg-link animation"
-              style={{ "--i": 4, "--j": 25 }}
+              style={{ "--i": 5, "--j": 26 }}
             >
               <p>
                 Don't have an account?
@@ -199,9 +249,9 @@ const Login = () => {
               />
               <label> Username </label>
               <i className="bx bxs-user"></i>
-              {errors.register.username && (
+              {errorText(errors.register.username) && (
                 <div className="invalid-feedback">
-                  {errors.register.username}
+                  {errorText(errors.register.username)}
                 </div>
               )}
             </div>
@@ -232,13 +282,76 @@ const Login = () => {
               />
               <label> Email </label>
               <i className="bx bxs-envelope"></i>
-              {errors.register.email && (
-                <div className="invalid-feedback">{errors.register.email}</div>
+              {errorText(errors.register.email) && (
+                <div className="invalid-feedback">
+                  {errorText(errors.register.email)}
+                </div>
               )}
+            </div>
+
+            <div className="name-row animation" style={{ "--i": 20, "--j": 3 }}>
+              <div
+                className="input-box"
+                style={{ width: "48%", marginRight: "4%" }}
+              >
+                <input
+                  type="text"
+                  id="firstname"
+                  value={newFirstName}
+                  autoComplete="off"
+                  required
+                  onFocus={() => {
+                    if (errors.register.first_name) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        register: { ...prev.register, first_name: null },
+                      }));
+                    }
+                  }}
+                  onChange={(e) => setNewFirstName(e.target.value)}
+                  className={`form-control ${
+                    errors.register.first_name ? "is-invalid" : ""
+                  }`}
+                />
+                <label> First name </label>
+                {errorText(errors.register.first_name) && (
+                  <div className="invalid-feedback">
+                    {errorText(errors.register.first_name)}
+                  </div>
+                )}
+              </div>
+
+              <div className="input-box" style={{ width: "48%" }}>
+                <input
+                  type="text"
+                  id="lastname"
+                  value={newLastName}
+                  autoComplete="off"
+                  required
+                  onFocus={() => {
+                    if (errors.register.last_name) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        register: { ...prev.register, last_name: null },
+                      }));
+                    }
+                  }}
+                  onChange={(e) => setNewLastName(e.target.value)}
+                  className={`form-control ${
+                    errors.register.last_name ? "is-invalid" : ""
+                  }`}
+                />
+                <label> Last name </label>
+                {errorText(errors.register.last_name) && (
+                  <div className="invalid-feedback">
+                    {errorText(errors.register.last_name)}
+                  </div>
+                )}
+              </div>
             </div>
             <div
               className="input-box animation"
-              style={{ "--i": 20, "--j": 3 }}
+              style={{ "--i": 23, "--j": 6 }}
             >
               <input
                 type="password"
@@ -264,16 +377,16 @@ const Login = () => {
               />
               <label> Password </label>
               <i className="bx bxs-lock-alt"></i>
-              {errors.register.password && (
+              {errorText(errors.register.password) && (
                 <div className="invalid-feedback">
-                  {errors.register.password}
+                  {errorText(errors.register.password)}
                 </div>
               )}
             </div>
             <button
               type="submit"
               className="button animation"
-              style={{ "--i": 21, "--j": 4 }}
+              style={{ "--i": 24, "--j": 7 }}
             >
               {loading ? (
                 <ClipLoader loading={loading} size={25} color={"#22D6D6"} />
@@ -283,7 +396,7 @@ const Login = () => {
             </button>
             <div
               className="logreg-link animation"
-              style={{ "--i": 22, "--j": 5 }}
+              style={{ "--i": 25, "--j": 8 }}
             >
               <p>
                 Already have an account?

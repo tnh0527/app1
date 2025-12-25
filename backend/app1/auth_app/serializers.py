@@ -11,9 +11,25 @@ class RegisterSerializer(serializers.ModelSerializer):
     )
     email = serializers.EmailField(required=True)
 
+    # Optional profile fields (stored on profile_app.Profile)
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
+    city = serializers.CharField(required=False, allow_blank=True)
+    state = serializers.CharField(required=False, allow_blank=True)
+    birthdate = serializers.DateField(required=False, allow_null=True)
+
     class Meta:
         model = User
-        fields = ["username", "email", "password"]
+        fields = [
+            "username",
+            "email",
+            "password",
+            "first_name",
+            "last_name",
+            "city",
+            "state",
+            "birthdate",
+        ]
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -21,11 +37,33 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        first_name = validated_data.pop("first_name", "")
+        last_name = validated_data.pop("last_name", "")
+        city = validated_data.pop("city", "")
+        state = validated_data.pop("state", "")
+        birthdate = validated_data.pop("birthdate", None)
+
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
         )
+
+        # Profile is created by signal; populate it if provided.
+        user.first_name = first_name
+        user.last_name = last_name
+        user.save(update_fields=["first_name", "last_name"])
+
+        # Profile is normally created by signal; be defensive in case signals
+        # aren't loaded yet (e.g., misconfigured INSTALLED_APPS).
+        from profile_app.models import Profile
+
+        profile, _created = Profile.objects.get_or_create(user=user)
+        profile.city = city
+        profile.state = state
+        profile.birthdate = birthdate
+        profile.save(update_fields=["city", "state", "birthdate"])
+
         return user
 
 
