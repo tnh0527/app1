@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Line, Chart as ChartJS } from "react-chartjs-2";
 import {
   Chart as ChartJSCore,
@@ -17,6 +17,8 @@ import {
 } from "chartjs-chart-financial";
 import "chartjs-chart-financial";
 
+import api from "../../api/axios";
+
 // Register the necessary components with Chart.js
 ChartJSCore.register(
   ...registerables,
@@ -31,130 +33,214 @@ ChartJSCore.register(
   CandlestickElement
 );
 
-const MainCharts = ({ timeRange, chartType }) => {
-  // Dummy data for charts
-  const dataOptions = {
-    "1D": [4520, 4530, 4540, 4525, 4550],
-    "5D": [4500, 4520, 4560, 4570, 4580],
-    "1M": [4400, 4500, 4550, 4600, 4650],
-    "6M": [4300, 4400, 4500, 4600, 4700],
-    "1Y": [4200, 4300, 4400, 4550, 4566],
-  };
+const MainCharts = ({ timeRange, chartType, symbol }) => {
+  const [payload, setPayload] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const candleDataOptions = {
-    "1D": [
-      { x: "2023-11-01", o: 4520, h: 4550, l: 4510, c: 4530 },
-      { x: "2023-11-02", o: 4530, h: 4560, l: 4520, c: 4540 },
-      { x: "2023-11-03", o: 4540, h: 4570, l: 4530, c: 4525 },
-      { x: "2023-11-04", o: 4525, h: 4560, l: 4500, c: 4550 },
-      { x: "2023-11-05", o: 4550, h: 4600, l: 4540, c: 4550 },
-    ],
-    "5D": [
-      { x: "2023-10-30", o: 4500, h: 4525, l: 4490, c: 4515 },
-      { x: "2023-10-31", o: 4515, h: 4550, l: 4505, c: 4530 },
-      { x: "2023-11-01", o: 4530, h: 4560, l: 4520, c: 4540 },
-      { x: "2023-11-02", o: 4540, h: 4570, l: 4530, c: 4555 },
-      { x: "2023-11-03", o: 4555, h: 4600, l: 4540, c: 4580 },
-    ],
-    "1M": [
-      { x: "2023-10-01", o: 4400, h: 4450, l: 4380, c: 4440 },
-      { x: "2023-10-10", o: 4440, h: 4500, l: 4420, c: 4480 },
-      { x: "2023-10-20", o: 4480, h: 4550, l: 4460, c: 4520 },
-      { x: "2023-10-30", o: 4520, h: 4600, l: 4500, c: 4590 },
-      { x: "2023-11-01", o: 4590, h: 4650, l: 4570, c: 4630 },
-    ],
-    "6M": [
-      { x: "2023-05-01", o: 4300, h: 4350, l: 4280, c: 4340 },
-      { x: "2023-06-01", o: 4340, h: 4400, l: 4320, c: 4380 },
-      { x: "2023-07-01", o: 4380, h: 4500, l: 4360, c: 4450 },
-      { x: "2023-08-01", o: 4450, h: 4600, l: 4430, c: 4580 },
-      { x: "2023-09-01", o: 4580, h: 4700, l: 4560, c: 4670 },
-    ],
-    "1Y": [
-      { x: "2022-11-01", o: 4200, h: 4250, l: 4180, c: 4230 },
-      { x: "2023-02-01", o: 4230, h: 4300, l: 4210, c: 4280 },
-      { x: "2023-05-01", o: 4280, h: 4400, l: 4260, c: 4380 },
-      { x: "2023-08-01", o: 4380, h: 4550, l: 4360, c: 4500 },
-      { x: "2023-11-01", o: 4500, h: 4566, l: 4480, c: 4550 },
-    ],
-  };
+  const theme = useMemo(() => {
+    if (typeof window === "undefined") {
+      return {
+        text: "rgba(255,255,255,0.85)",
+        muted: "rgba(255,255,255,0.65)",
+        grid: "rgba(255,255,255,0.08)",
+        accent: "rgba(255,255,255,0.75)",
+        up: "rgba(0, 255, 0, 0.85)",
+        down: "rgba(255, 0, 0, 0.85)",
+      };
+    }
+    const styles = getComputedStyle(document.documentElement);
+    const white = styles.getPropertyValue("--clr-white")?.trim() || "#fff";
+    const silver =
+      styles.getPropertyValue("--clr-silver-v1")?.trim() || "#bdbabb";
+    const jet =
+      styles.getPropertyValue("--clr-jet")?.trim() || "rgba(255,255,255,0.08)";
+    const accent =
+      styles.getPropertyValue("--clr-primary-light")?.trim() || silver;
+    const up = styles.getPropertyValue("--clr-green")?.trim() || "#4caf50";
+    const down = styles.getPropertyValue("--clr-scarlet")?.trim() || "#ff6347";
+    return {
+      text: white,
+      muted: silver,
+      grid: jet,
+      accent,
+      up,
+      down,
+    };
+  }, []);
 
-  const lineChartData = {
-    labels: ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"],
-    datasets: [
-      {
-        label: "S&P 500",
-        data: dataOptions[timeRange],
-        borderColor: "rgba(75,192,192,1)",
-        fill: false,
-        tension: 0.1,
-      },
-    ],
-  };
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchCandles = async () => {
+      setIsLoading(true);
+      try {
+        if (!symbol) {
+          if (!isCancelled) setPayload(null);
+          return;
+        }
+        const resp = await api.get("/api/stock-candles/", {
+          params: { symbol, range: timeRange },
+        });
+        const data = resp.data;
+        if (!isCancelled) setPayload(data);
+      } catch {
+        if (!isCancelled) setPayload(null);
+      } finally {
+        if (!isCancelled) setIsLoading(false);
+      }
+    };
+    fetchCandles();
+    return () => {
+      isCancelled = true;
+    };
+  }, [symbol, timeRange]);
 
-  const candleChartData = {
-    datasets: [
-      {
-        label: "S&P 500",
-        data: candleDataOptions[timeRange],
-        color: {
-          up: "#4caf50",
-          down: "#f44336",
-          unchanged: "#999",
+  const labels = useMemo(() => {
+    const ts = payload?.timestamps;
+    if (!Array.isArray(ts)) return [];
+    return ts.map((t) => {
+      const d = typeof t === "number" ? new Date(t * 1000) : new Date(t);
+      if (timeRange === "1D" || timeRange === "5D") {
+        return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+      return d.toLocaleDateString();
+    });
+  }, [payload, timeRange]);
+
+  const lineChartData = useMemo(() => {
+    const closes = Array.isArray(payload?.closes)
+      ? payload.closes.map((v) => Number(v))
+      : [];
+    return {
+      labels,
+      datasets: [
+        {
+          label: symbol,
+          data: closes,
+          borderColor: theme.accent,
+          fill: false,
+          tension: 0.2,
+          pointRadius: 0,
         },
-      },
-    ],
-  };
+      ],
+    };
+  }, [labels, payload, symbol, theme.accent]);
+
+  const candleChartData = useMemo(() => {
+    const candles = Array.isArray(payload?.candles) ? payload.candles : [];
+    return {
+      labels,
+      datasets: [
+        {
+          label: symbol,
+          // Use index-based candle points so the category x-axis stays aligned
+          // with our formatted `labels` (otherwise Chart.js can misalign points).
+          data: candles.map((p) => ({
+            o: p.o,
+            h: p.h,
+            l: p.l,
+            c: p.c,
+          })),
+          color: {
+            up: theme.up,
+            down: theme.down,
+            unchanged: theme.muted,
+          },
+          borderColor: {
+            up: theme.up,
+            down: theme.down,
+            unchanged: theme.muted,
+          },
+        },
+      ],
+    };
+  }, [labels, payload, symbol, theme.down, theme.muted, theme.up]);
 
   const lineChartOptions = {
     maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: theme.muted } },
+    },
     scales: {
       x: {
         type: "category",
         title: {
           display: true,
           text: "Time Points",
+          color: theme.muted,
         },
+        ticks: {
+          color: theme.muted,
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 10,
+        },
+        grid: { color: theme.grid },
       },
       y: {
         title: {
           display: true,
           text: "Value",
+          color: theme.muted,
         },
+        ticks: { color: theme.muted },
+        grid: { color: theme.grid },
       },
     },
   };
 
   const candleChartOptions = {
     maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: theme.muted } },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const p = ctx?.raw;
+            if (!p) return "";
+            return `O ${p.o}  H ${p.h}  L ${p.l}  C ${p.c}`;
+          },
+        },
+      },
+    },
     scales: {
       x: {
         type: "category",
         title: {
           display: true,
           text: "Time Points",
+          color: theme.muted,
         },
+        ticks: {
+          color: theme.muted,
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 10,
+        },
+        grid: { color: theme.grid },
       },
       y: {
         type: "linear",
         title: {
           display: true,
           text: "Value",
+          color: theme.muted,
         },
-        min: 4100, // Adjusted range to fit real data
-        max: 4700, // Adjusted range to fit real data
-      },
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: "top",
+        ticks: { color: theme.muted },
+        grid: { color: theme.grid },
       },
     },
   };
 
   return (
     <div className="chart-wrapper">
+      {isLoading ? (
+        <div className="insight-chart__loading">Loading chart…</div>
+      ) : null}
+      {!isLoading && (!payload?.closes?.length || payload?.error) ? (
+        <div className="insight-chart__empty">
+          {payload?.error ? payload.error : "No chart data available"}
+        </div>
+      ) : null}
       {chartType === "line" ? (
         <Line data={lineChartData} options={lineChartOptions} />
       ) : (

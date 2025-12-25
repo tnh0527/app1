@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import Chart from "chart.js/auto";
+import { useEffect, useState } from "react";
+import SparklineGraph from "./SparklineGraph";
 
 const Tickers = () => {
   const [stockIndex, setStockIndex] = useState(0);
@@ -82,33 +82,28 @@ const Tickers = () => {
               .map((_, index) => <div key={index} className="skeleton"></div>)
           : visibleStocks.map((stock, index) => (
               <div key={index} className="stock-card visible">
-                <span
-                  style={{
-                    fontStyle: "italic",
-                    color: "#aaa",
-                  }}
-                >
-                  {stock.name}
-                </span>
+                <span className="stock-card__name">{stock.name}</span>
                 <div className="stocks-header">
                   <h3>
-                    {stock.symbol}
-                    <i
-                      className={`bi bi-caret-${
-                        stock.positive ? "up" : "down"
-                      }-fill`}
-                      style={{
-                        color: stock.positive ? "lime" : "red",
-                        paddingLeft: "5px",
-                      }}
-                    ></i>
+                    <span className="stock-card__symbol">
+                      {stock.symbol}
+                      <i
+                        className={`bi bi-caret-${
+                          stock.positive ? "up" : "down"
+                        }-fill ${
+                          stock.positive
+                            ? "insight-change--up"
+                            : "insight-change--down"
+                        }`}
+                      ></i>
+                    </span>
                   </h3>
                   <p
-                    className="total-return"
-                    style={{
-                      color: stock.positive ? "lime" : "red",
-                      fontStyle: "italic",
-                    }}
+                    className={
+                      stock.positive
+                        ? "total-return insight-change--up"
+                        : "total-return insight-change--down"
+                    }
                   >
                     {stock.return}
                   </p>
@@ -140,26 +135,17 @@ const Tickers = () => {
                   </div>
                 </div>
                 <div className="price-info">
-                  <p style={{ fontSize: "14px" }}>Price:</p>
-                  <p
-                    className="current-price"
-                    style={{
-                      fontWeight: "bold",
-                      fontSize: "1.2em",
-                      color: "#e0e0e0",
-                    }}
-                  >
-                    {stock.value}
-                  </p>
+                  <p className="stock-card__label">Price:</p>
+                  <p className="stock-card__price">{stock.value}</p>
                 </div>
                 <div className="return-info">
-                  <p style={{ fontSize: "14px" }}>Total Return:</p>
+                  <p className="stock-card__label">Total Return:</p>
                   <p
-                    className="total-return"
-                    style={{
-                      color: stock.positive ? "lime" : "red",
-                      fontSize: "1em",
-                    }}
+                    className={
+                      stock.positive
+                        ? "total-return insight-change--up"
+                        : "total-return insight-change--down"
+                    }
                   >
                     {stock.positive ? "+" : ""}
                     {stock.change.toFixed(2)}
@@ -169,106 +155,6 @@ const Tickers = () => {
             ))}
       </div>
     </div>
-  );
-};
-
-const SparklineGraph = ({ data, isPositive }) => {
-  // console.log("data:", data);
-  // console.log(isPositive);
-  const canvasRef = useRef(null);
-  let chartInstance = useRef(null);
-
-  useEffect(() => {
-    if (!data || !data.labels || !data.values) {
-      return;
-    }
-    // console.log("data passed", data);
-
-    const ctx = canvasRef.current.getContext("2d");
-
-    const borderColor = isPositive ? "lime" : "red";
-    const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-
-    gradient.addColorStop(
-      0.05,
-      isPositive ? "rgba(76, 175, 80, 0.5)" : "rgba(255, 99, 71, 0.5)"
-    );
-
-    gradient.addColorStop(
-      0.3,
-      isPositive ? "rgba(76, 175, 80, 0)" : "rgba(255, 99, 71, 0)"
-    );
-
-    chartInstance.current = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: data.labels,
-        datasets: [
-          {
-            data: data.values,
-            borderColor: borderColor,
-            borderWidth: 1.5,
-            backgroundColor: gradient,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 2,
-          },
-          {
-            data: Array(data.labels.length).fill(data.openPrice),
-            borderColor: isPositive ? "green" : "crimson",
-            borderDash: [5, 5],
-            borderWidth: 1,
-            pointRadius: 0,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: function (context) {
-                let timeLabel = context[0].label;
-                return convertTo12HourFormat(timeLabel);
-              },
-              label: function (context) {
-                let value = context.parsed.y;
-                return `$${value.toFixed(2)}`;
-              },
-            },
-            displayColors: false,
-          },
-        },
-        scales: {
-          x: { display: false },
-          y: { display: false },
-        },
-      },
-    });
-    function convertTo12HourFormat(time) {
-      const [hour, minute] = time.split(":").map(Number);
-      const suffix = hour >= 12 ? "PM" : "AM";
-      const hour12 = hour % 12 || 12;
-      return `${hour12}:${minute < 10 ? "0" : ""}${minute} ${suffix}`;
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-    };
-  }, [data, isPositive]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="sparkline-canvas"
-      style={{ width: "100%", height: "auto" }}
-    />
   );
 };
 
