@@ -73,7 +73,6 @@ const AirQuality = ({ airQuality }) => {
 
   return (
     <div className={`highlight ${!currentAQI ? "skeleton" : ""}`}>
-      <h4>Air Quality</h4>
       {currentAQI && (
         <div className="card air-quality">
           <div

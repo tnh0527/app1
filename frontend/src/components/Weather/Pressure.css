@@ -1,0 +1,48 @@
+.highlight .pressure {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  padding: 35px 20px 0 20px;
+  box-sizing: border-box;
+}
+
+.pressure-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+}
+
+.pressure-icon {
+  font-size: 2.2rem;
+  color: #00d2ff;
+}
+
+.pressure-value-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.pressure-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #e0e0e0;
+  line-height: 1;
+}
+
+.pressure-unit {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.pressure-desc {
+  font-size: 1rem;
+  color: #ccc;
+  font-weight: 500;
+  text-align: center;
+}

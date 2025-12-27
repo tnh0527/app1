@@ -15,6 +15,8 @@ const initialState = {
   email: "",
   city: "",
   state: "",
+  street_address: "",
+  zip_code: "",
   birthdate: null,
 };
 
@@ -101,6 +103,7 @@ const EditProfile = () => {
   };
 
   const saveProfile = async (e) => {
+    e?.preventDefault();
     setLoading(true);
     const updatedFields = {};
     for (const key in state) {
@@ -132,7 +135,19 @@ const EditProfile = () => {
         setErrors(errorData.errors || {});
         console.error("Failed to update profile.");
       } else {
-        setInitialProfile({ ...initialProfile, ...updatedFields });
+        const updatedProfile = await response.json();
+        const birthdate = updatedProfile.birthdate
+          ? new Date(
+              new Date(updatedProfile.birthdate).getTime() +
+                new Date(updatedProfile.birthdate).getTimezoneOffset() * 60000
+            )
+          : null;
+
+        const normalizedProfile = { ...updatedProfile, birthdate };
+        setProfile(normalizedProfile);
+        dispatch({ type: "SET_PROFILE", payload: normalizedProfile });
+        setInitialProfile(normalizedProfile);
+
         console.log("Successfully updated profile.");
         setSavedChanges(!savedChanges);
       }
@@ -301,6 +316,41 @@ const EditProfile = () => {
                 />
                 <div className="invalid-feedback">{errors.city}</div>
               </div>
+            </div>
+
+            <div className="form-group">
+              <label>Street Address</label>
+              <input
+                id="street_address"
+                name="street_address"
+                type="text"
+                value={state.street_address}
+                onChange={handleChange}
+                className={`form-control ${
+                  errors.street_address ? "is-invalid" : ""
+                }`}
+              />
+              <div className="invalid-feedback">{errors.street_address}</div>
+            </div>
+
+            <div className="form-group">
+              <label>Zip Code</label>
+              <input
+                id="zip_code"
+                name="zip_code"
+                type="text"
+                value={state.zip_code}
+                onKeyDown={(e) => {
+                  if (!/^[0-9]$/.test(e.key) && e.key !== "Backspace") {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={handleChange}
+                className={`form-control ${
+                  errors.zip_code ? "is-invalid" : ""
+                }`}
+              />
+              <div className="invalid-feedback">{errors.zip_code}</div>
             </div>
 
             <div className="form-group">

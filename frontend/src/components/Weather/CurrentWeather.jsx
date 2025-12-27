@@ -174,10 +174,10 @@ const CurrentWeather = ({
             <div className="high-low-temp">
               <img src={currentWeather.weatherIcon} alt="weather icon" />
               <span>
-                <span style={{ fontSize: "0.8em", color: "#aaa" }}>H:</span>{" "}
-                {dailyTemps.tempMax ? `${dailyTemps.tempMax}°` : "Sample"}{" "}
                 <span style={{ fontSize: "0.8em", color: "#aaa" }}>L:</span>{" "}
-                {dailyTemps.tempMin ? `${dailyTemps.tempMin}°` : "Sample"}
+                {dailyTemps.tempMin ? `${dailyTemps.tempMin}°` : "Sample"}{" "}
+                <span style={{ fontSize: "0.8em", color: "#aaa" }}>H:</span>{" "}
+                {dailyTemps.tempMax ? `${dailyTemps.tempMax}°` : "Sample"}
               </span>
             </div>
           </div>

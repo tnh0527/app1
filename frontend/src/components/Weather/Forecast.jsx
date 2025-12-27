@@ -32,6 +32,18 @@ const Forecast = ({ forecast }) => {
     return Math.round(temp);
   };
 
+  const temps = data
+    ? data
+        .map((d) => ({ min: Number(d.tempMin), max: Number(d.tempMax) }))
+        .filter((t) => Number.isFinite(t.min) && Number.isFinite(t.max))
+    : [];
+  const globalMin = temps.length ? Math.min(...temps.map((t) => t.min)) : null;
+  const globalMax = temps.length ? Math.max(...temps.map((t) => t.max)) : null;
+  const globalRange =
+    globalMin != null && globalMax != null
+      ? Math.max(1, globalMax - globalMin)
+      : 1;
+
   return (
     <div className="forecast-cards">
       {data
@@ -70,12 +82,61 @@ const Forecast = ({ forecast }) => {
                     id={`forecast-tooltip-${index}`}
                     style={{ zIndex: "999" }}
                   />
-                  <p>
-                    <span style={{ fontSize: "0.8em", color: "#aaa" }}>H:</span>{" "}
-                    {item.tempMax ? `${roundTemp(item.tempMax)}°` : "Sample"}{" "}
-                    <span style={{ fontSize: "0.8em", color: "#aaa" }}>L:</span>{" "}
-                    {item.tempMin ? `${roundTemp(item.tempMin)}°` : "Sample"}
-                  </p>
+                  {item.tempMin != null &&
+                  item.tempMax != null &&
+                  globalMin != null ? (
+                    (() => {
+                      const min = Number(item.tempMin);
+                      const max = Number(item.tempMax);
+                      if (!Number.isFinite(min) || !Number.isFinite(max))
+                        return null;
+
+                      const leftPct = ((min - globalMin) / globalRange) * 100;
+                      const widthPct = ((max - min) / globalRange) * 100;
+                      const clampedLeft = Math.min(100, Math.max(0, leftPct));
+                      const clampedWidth = Math.min(
+                        100 - clampedLeft,
+                        Math.max(6, widthPct)
+                      );
+
+                      return (
+                        <div
+                          className="forecast-temps"
+                          aria-label={`Low ${roundTemp(
+                            min
+                          )} degrees, high ${roundTemp(max)} degrees`}
+                        >
+                          <span className="forecast-temp low">
+                            {roundTemp(min)}°
+                          </span>
+                          <div
+                            className="forecast-range-track"
+                            aria-hidden="true"
+                          >
+                            <div
+                              className="forecast-range-fill"
+                              style={{
+                                "--left": `${clampedLeft}%`,
+                                "--width": `${clampedWidth}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="forecast-temp high">
+                            {roundTemp(max)}°
+                          </span>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="forecast-temps">
+                      <span className="forecast-temp low">Sample</span>
+                      <div
+                        className="forecast-range-track"
+                        aria-hidden="true"
+                      />
+                      <span className="forecast-temp high">Sample</span>
+                    </div>
+                  )}
                 </div>
               </div>
             );

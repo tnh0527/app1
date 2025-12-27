@@ -1,31 +1,36 @@
-.feels-like {
+.highlight .feels-like {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  padding: 35px 20px 0 20px;
+  box-sizing: border-box;
 }
 
 .feels-like-content {
   display: flex;
   align-items: center;
-  margin-top: 15px;
+  gap: 15px;
 }
 
 .feels-like-icon {
-  font-size: 2rem;
-  margin-right: 10px;
+  font-size: 2.2rem;
 }
 
 .feels-like-temp {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: bold;
   text-shadow: 0 0 5px;
 }
 
 .feels-like-description {
-  font-size: 0.9rem;
-  margin-left: 10%;
+  font-size: 0.8rem;
   color: #b0b0b0;
-  flex: 1;
+  text-align: right;
+  max-width: 50%;
+  line-height: 1.2;
 }
 
 .hot {

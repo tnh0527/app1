@@ -6,7 +6,7 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
 import { useAuth } from "../../utils/AuthContext";
 import { ProfileContext } from "../../utils/ProfileContext";
-import { personsImgs } from "../../utils/images";
+import { personsImgs, iconsImgs } from "../../utils/images";
 import { Tooltip } from "react-tooltip";
 import authApi from "../../api/authApi";
 
@@ -58,36 +58,40 @@ const Sidebar = () => {
 
   return (
     <div className={`sidebar ${sidebarClass}`}>
-      <div className="user-info">
+      <button
+        className="toggle-button"
+        onClick={toggleSidebar}
+        data-tooltip-id="sidebar-tooltip"
+        data-tooltip-content="Toggle sidebar"
+        data-tooltip-place="right"
+      >
+        {isSidebarOpen ? (
+          <i className="bi bi-caret-left-fill"></i>
+        ) : (
+          <i className="bi bi-caret-right-fill"></i>
+        )}
+      </button>
+
+      <div className="sidebar-header">
+        <div className="app-logo">
+          <img src="/nexus_logo.svg" alt="Logo" />
+        </div>
+        <span className="info-name">{getNameBar()}</span>
         <div className="info-img img-fit-cover">
           <Link
             to="/account"
             data-tooltip-id="profile-tooltip"
             data-tooltip-content="My account"
-            data-tooltip-place="top"
+            data-tooltip-place="bottom"
           >
             <img src={profilePic || personsImgs.default_user} alt="user pic" />
           </Link>
         </div>
-        <span className="info-name">{getNameBar()}</span>
-        <button
-          className="toggle-button"
-          onClick={toggleSidebar}
-          data-tooltip-id="sidebar-tooltip"
-          data-tooltip-content="Toggle sidebar"
-          data-tooltip-place="top"
-        >
-          {isSidebarOpen ? (
-            <i className="bi bi-caret-right-fill"></i>
-          ) : (
-            <i className="bi bi-caret-left-fill"></i>
-          )}
-        </button>
-        <Tooltip id="sidebar-tooltip" style={{ zIndex: "999" }} />
-        <Tooltip id="profile-tooltip" style={{ zIndex: "999" }} />
-
         <ProfilePicModal onUpload={setProfilePic} />
       </div>
+
+      <Tooltip id="sidebar-tooltip" style={{ zIndex: "999" }} />
+      <Tooltip id="profile-tooltip" style={{ zIndex: "999" }} />
 
       <nav className="navigation">
         <div className="top-links">

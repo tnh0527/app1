@@ -17,27 +17,47 @@
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
 }
 
-.user-info {
-  position: relative;
+.sidebar-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  justify-content: space-between;
+  padding: 12px 8px;
   margin-bottom: 24px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--clr-jet);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.app-logo {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.user-info-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .sidebar .info-img {
-  height: 44px;
-  width: 44px;
+  height: 36px;
+  width: 36px;
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--clr-pumpkin);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .info-img img {
@@ -48,11 +68,13 @@
 
 .info-name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--clr-white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 120px;
+  text-align: center;
   opacity: 1;
   transition: opacity 0.3s ease;
 }
@@ -60,28 +82,43 @@
 /* Toggle Button */
 .toggle-button {
   position: absolute;
-  right: -12px;
-  top: 42px;
-  width: 24px;
-  height: 24px;
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
   background-color: var(--clr-pumpkin);
   color: var(--clr-white);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 20px;
   cursor: pointer;
-  border: 3px solid var(--clr-primary); /* Match sidebar bg */
+  border: 3px solid var(--clr-primary);
   transition: all 0.3s ease;
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-button:hover {
-  transform: scale(1.1);
+  transform: translateY(-50%) scale(1.1);
   background-color: var(--clr-white);
   color: var(--clr-pumpkin);
+}
+
+/* Collapsed State */
+.sidebar-change .sidebar-header {
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 4px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.sidebar-change .info-name {
+  display: none;
+  opacity: 0;
 }
 
 /* Navigation */
@@ -127,6 +164,7 @@
   text-decoration: none;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .nav-link:hover {
@@ -155,7 +193,7 @@
 }
 
 .nav-link-text {
-  font-size: 14px;
+  font-size: 16px;
   white-space: nowrap;
   opacity: 1;
   transition: opacity 0.2s ease;
@@ -177,7 +215,9 @@
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  margin-left: auto;
+  margin-left: 8px;
+  display: inline-block;
+  vertical-align: middle;
   border: 1px solid var(--clr-green);
   letter-spacing: 0.5px;
 }
@@ -188,20 +228,9 @@
   padding: 24px 12px;
 }
 
-.sidebar-change .user-info {
-  justify-content: center;
-  padding: 8px;
-  background-color: transparent;
-  border-color: transparent;
-}
-
 .sidebar-change .info-name {
   display: none;
   opacity: 0;
-}
-
-.sidebar-change .toggle-button {
-  /* Rotate icon if needed, or just position */
 }
 
 .sidebar-change .nav-link {
@@ -232,7 +261,7 @@
     padding: 24px 12px;
   }
 
-  .user-info {
+  .sidebar-header {
     justify-content: center;
     padding: 8px;
     background-color: transparent;

@@ -12,6 +12,8 @@
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 1648px) {
@@ -49,8 +51,11 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  min-width: 0;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 0px 12px 24px rgba(0, 0, 0, 0.25),
     0px 20px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 @media (max-width: 768px) {
@@ -70,8 +75,62 @@
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.forecast-temps {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 0;
+}
+
+.forecast-temp {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--clr-white);
+  width: 28px;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.forecast-temp.low {
+  color: var(--clr-silver-v1);
+}
+
+.forecast-range-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--clr-primary-light) 28%, transparent);
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--clr-primary-light) 28%, transparent),
+    0 0 10px color-mix(in srgb, var(--clr-primary-light) 22%, transparent);
+}
+
+.forecast-range-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--left);
+  width: var(--width);
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--clr-primary-light),
+    var(--clr-yellow)
+  );
+  box-shadow: 0 0 8px
+      color-mix(in srgb, var(--clr-primary-light) 32%, transparent),
+    0 0 12px color-mix(in srgb, var(--clr-yellow) 26%, transparent);
 }
 
 .forecast-icon img {
@@ -80,6 +139,12 @@
   width: 100px;
   height: 100px;
   object-fit: contain;
+}
+.forecast-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0px 12px 20px rgba(0, 0, 0, 0.35),
+    0px 22px 40px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
 }
 .forecast-date {
   display: flex;

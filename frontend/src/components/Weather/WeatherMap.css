@@ -1,62 +1,89 @@
-.map-container {
+.map-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.map-container::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
+.map-container {
   width: 100%;
   height: 100%;
-  background-color: #009dff1e;
-  pointer-events: none;
-}
-.mapboxgl-ctrl-bottom-left {
-  display: none;
 }
 
+.current-location-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: cyan;
+  box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.55);
+  animation: current-location-pulse 1.8s infinite;
+}
+
+@keyframes current-location-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(0, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);
+  }
+}
+
+/* Hide Mapbox logo/attribution for cleaner look if desired, 
+   but usually required by TOS. We'll just keep them subtle. */
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  display: none !important;
+}
+
+/* Home button overlay */
+.map-controls-overlay {
+  position: absolute;
+  top: 16px;
+  right: 50px; /* sits left of default zoom controls */
+  z-index: 1;
+  display: flex;
+}
+
+.map-home-btn {
+  background-color: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(10px);
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.map-home-btn:hover {
+  background-color: rgba(50, 50, 50, 0.95);
+  color: #fff;
+}
+
+/* Customize Mapbox Navigation Control */
 .mapboxgl-ctrl-group {
-  background-color: var(--clr-pumpkin);
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  background-color: rgba(30, 30, 30, 0.85) !important;
+  border: none !important;
+  backdrop-filter: blur(10px);
 }
 
 .mapboxgl-ctrl-group button {
-  transition: background-color 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.legend-container {
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  border-radius: 5px;
-  width: 150px;
-  font-size: 12px;
+.mapboxgl-ctrl-group button:last-child {
+  border-bottom: none;
 }
 
-.legend-bottom-left {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-}
-
-.legend-title {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.legend-bar {
-  display: flex;
-  flex-direction: row;
-}
-
-.legend-color {
-  flex: 1;
-  height: 20px;
-  text-align: center;
-  color: #000;
+.mapboxgl-ctrl-icon {
+  filter: invert(1); /* Make icons white */
 }

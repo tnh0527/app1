@@ -129,13 +129,13 @@ const SunriseSunset = ({ sunData, timeZone }) => {
     };
   }
 
-  const formatLocalTime = (timeString) => {
-    const date = new Date(timeString);
-    return date.toLocaleTimeString([], {
+  const formatLocalTime = (time) => {
+    if (!time) return "";
+    return time.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
+      second: "2-digit",
       hour12: true,
-      timeZone: timeZone.time_zone,
     });
   };
   const formatSunTime = (timeString) => {

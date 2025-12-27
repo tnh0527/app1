@@ -116,10 +116,7 @@ const Tickers = () => {
                   />
 
                   <div className="price-graph-container">
-                    <div
-                      className="stock-graph"
-                      style={{ overflow: "hidden", width: "100%" }}
-                    >
+                    <div className="stock-graph">
                       {visibleGraphs[index] ? (
                         <SparklineGraph
                           data={{

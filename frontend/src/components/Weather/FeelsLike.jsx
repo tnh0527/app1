@@ -57,7 +57,6 @@ const FeelsLike = ({ feels }) => {
 
   return (
     <div className={`highlight ${!currentFeels ? "skeleton" : ""}`}>
-      <h4>Feels Like</h4>
       {currentFeels && (
         <div className="card feels-like">
           <div className="feels-like-content">

@@ -39,8 +39,19 @@ const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
           // console.log("Profile picture updated.");
           window.location.reload();
         } else {
-          const errorData = await response.json();
-          console.error("Error updating profile picture:", errorData.error);
+          let errorMessage = "Failed to update profile picture.";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData?.error || errorMessage;
+          } catch {
+            try {
+              const text = await response.text();
+              if (text) errorMessage = text;
+            } catch {
+              // ignore
+            }
+          }
+          console.error("Error updating profile picture:", errorMessage);
         }
       } catch (error) {
         console.error("Failed to update profile picture:", error);

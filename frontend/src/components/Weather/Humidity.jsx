@@ -31,11 +31,11 @@ const Humidity = ({ humidDewData }) => {
         !currentHumidity || !currentDewpoint ? "skeleton" : ""
       }`}
     >
-      <h4>Humidity</h4>
       {!currentHumidity || !currentDewpoint ? null : (
         <div className="card humidity">
           <div className="humidity-content">
             <div className="humidity-info">
+              <i className="bi bi-droplet-half humidity-icon"></i>
               <div className="humidity-value-percentage">
                 <span className="humidity-value">{currentHumidity}</span>
                 <span className="humidity-percentage">%</span>
@@ -43,11 +43,10 @@ const Humidity = ({ humidDewData }) => {
             </div>
 
             <div className="dew-point">
-              <i className="bi bi-droplet-half"></i>
               <div className="dewpoint-value">
-                <span>The current dew point is </span>
+                <span>The dew point is </span>
                 <span className="dewpoint" style={{ fontWeight: "bold" }}>
-                  {currentDewpoint}°.
+                  {currentDewpoint}°
                 </span>
               </div>
             </div>

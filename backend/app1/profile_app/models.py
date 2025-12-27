@@ -9,6 +9,8 @@ class Profile(models.Model):
 
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=100, blank=True)
+    street_address = models.CharField(max_length=255, blank=True)
+    zip_code = models.CharField(max_length=20, blank=True)
     birthdate = models.DateField(null=True, blank=True)
     profile_pic = models.CharField(max_length=150, blank=True)
 

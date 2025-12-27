@@ -12,11 +12,20 @@ const LocationSearch = ({
 }) => {
   const { profile } = useContext(ProfileContext);
 
+  const mapsUrl = location?.trim()
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        location.trim()
+      )}`
+    : null;
+
   const getFirstName = () => {
     if (profile) {
-      const { first_name } = profile;
+      const { first_name, username } = profile;
       if (first_name) {
         return first_name;
+      }
+      if (username) {
+        return username;
       }
     }
     return "User";
@@ -51,6 +60,18 @@ const LocationSearch = ({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
         />
+        {mapsUrl && (
+          <a
+            className="location-external-link"
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open in Google Maps"
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <i className="bi bi-box-arrow-up-right"></i>
+          </a>
+        )}
         {suggestions.length > 0 && (
           <ul className="suggestions-list">
             {suggestions.map((suggestion, index) => (

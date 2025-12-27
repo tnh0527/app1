@@ -1,0 +1,131 @@
+.weather-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.weather-modal-content {
+    background-color: #202b3b;
+    padding: 20px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+/* Custom Scrollbar */
+.weather-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.weather-modal-content::-webkit-scrollbar-track {
+    background: #1a222e;
+    border-radius: 4px;
+}
+
+.weather-modal-content::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+.weather-modal-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.data-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.data-table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.data-table th, .data-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+.data-table th {
+    background-color: #1a222e;
+    position: sticky;
+    top: 0;
+}
+
+.data-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.data-card {
+    background-color: #2f3741;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    word-break: break-word;
+}
+
+.nested-data {
+    margin-top: 5px;
+    border-left: 2px solid #444;
+    padding-left: 10px;
+}
+
+.data-card strong {
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+.data-card span {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.data-item {
+    background-color: #2f3741;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+}

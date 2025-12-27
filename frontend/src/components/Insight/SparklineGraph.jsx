@@ -67,6 +67,7 @@ const SparklineGraph = ({ data, isPositive }) => {
 
   useEffect(() => {
     if (!data || !Array.isArray(data.labels) || !Array.isArray(data.values)) {
+      // console.warn("SparklineGraph: Invalid data", data);
       return undefined;
     }
 
@@ -87,57 +88,63 @@ const SparklineGraph = ({ data, isPositive }) => {
     gradient.addColorStop(0.05, colorToRgba(borderColor, 0.35));
     gradient.addColorStop(0.3, colorToRgba(borderColor, 0));
 
-    chartInstance.current = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: data.labels,
-        datasets: [
-          {
-            data: data.values,
-            borderColor,
-            borderWidth: 1.5,
-            backgroundColor: gradient,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 2,
-          },
-          ...(typeof data.openPrice === "number"
-            ? [
-                {
-                  data: Array(data.labels.length).fill(data.openPrice),
-                  borderColor: theme.muted,
-                  borderDash: [5, 5],
-                  borderWidth: 1,
-                  pointRadius: 0,
-                },
-              ]
-            : []),
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: (context) => to12Hour(context?.[0]?.label),
-              label: (context) => {
-                const value = context?.parsed?.y;
-                if (typeof value !== "number") return "";
-                return `$${value.toFixed(2)}`;
-              },
+    try {
+      chartInstance.current = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: data.labels,
+          datasets: [
+            {
+              data: data.values,
+              borderColor,
+              borderWidth: 1.5,
+              backgroundColor: gradient,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHoverRadius: 2,
             },
-            displayColors: false,
+            ...(typeof data.openPrice === "number"
+              ? [
+                  {
+                    data: Array(data.labels.length).fill(data.openPrice),
+                    borderColor: theme.muted,
+                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    pointRadius: 0,
+                  },
+                ]
+              : []),
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false, // Disable animation for performance/instant render
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true, // Ensure tooltip is enabled
+              callbacks: {
+                title: (context) => to12Hour(context?.[0]?.label),
+                label: (context) => {
+                  const value = context?.parsed?.y;
+                  if (typeof value !== "number") return "";
+                  return `$${value.toFixed(2)}`;
+                },
+              },
+              displayColors: false,
+            },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
           },
         },
-        scales: {
-          x: { display: false },
-          y: { display: false },
-        },
-      },
-    });
+      });
+    } catch (err) {
+      console.error("SparklineGraph: Chart creation failed", err);
+    }
 
     return () => {
       if (chartInstance.current) {
@@ -147,7 +154,15 @@ const SparklineGraph = ({ data, isPositive }) => {
     };
   }, [data, isPositive]);
 
-  return <canvas ref={canvasRef} className="sparkline-canvas" />;
+  return (
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <canvas
+        ref={canvasRef}
+        className="sparkline-canvas"
+        style={{ display: "block", width: "100%", height: "100%" }}
+      />
+    </div>
+  );
 };
 
 export default SparklineGraph;

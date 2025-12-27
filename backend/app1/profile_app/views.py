@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .models import Profile
 from .serializers import ProfileSerializer
 
 
@@ -41,12 +42,14 @@ def profile(request):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        # Ensure profile exists for legacy users created before signals were added.
+        Profile.objects.get_or_create(user=user)
+
         serializer = ProfileSerializer(user, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(
-                {"message": "Profile updated successfully."}, status=status.HTTP_200_OK
-            )
+            # Return the updated profile payload so the frontend can re-render immediately.
+            return Response(ProfileSerializer(user).data, status=status.HTTP_200_OK)
 
         return Response(
             {"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
@@ -57,7 +60,7 @@ def profile(request):
 @permission_classes([IsAuthenticated])
 def profile_pic(request):
     user = request.user
-    profile = user.profile
+    profile, _ = Profile.objects.get_or_create(user=user)
 
     if request.method == "GET":
         if profile.profile_pic:
@@ -91,25 +94,28 @@ def profile_pic(request):
             )
 
         if file.name.split(".")[-1].lower() in ["png", "jpg", "jpeg"]:
-            # Delete the old profile picture if it exists
-            if profile.profile_pic:
-                old_file_path = os.path.join(
-                    settings.MEDIA_ROOT, "profile_pics", profile.profile_pic
-                )
-                if os.path.exists(old_file_path):
-                    default_storage.delete(old_file_path)
-
             filename = f"{user.username}.{file.name.split('.')[-1]}"
-            file_path = os.path.join(settings.MEDIA_ROOT, "profile_pics", filename)
+            # Use relative path for default_storage
+            relative_path = os.path.join("profile_pics", filename)
 
-            default_storage.save(file_path, file)
+            try:
+                # Delete the old profile picture if it exists
+                if default_storage.exists(relative_path):
+                    default_storage.delete(relative_path)
 
-            profile.profile_pic = filename
-            profile.save()
-            return Response(
-                {"msg": "Profile picture saved successfully!"},
-                status=status.HTTP_200_OK,
-            )
+                default_storage.save(relative_path, file)
+
+                profile.profile_pic = filename
+                profile.save()
+                return Response(
+                    {"msg": "Profile picture saved successfully!"},
+                    status=status.HTTP_200_OK,
+                )
+            except Exception as e:
+                return Response(
+                    {"error": f"Failed to save file: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
         return Response(
             {"error": "File format not allowed."}, status=status.HTTP_400_BAD_REQUEST

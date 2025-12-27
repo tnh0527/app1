@@ -1,15 +1,26 @@
 import "./Weather.css";
 import LocationSearch from "../../components/Weather/LocationSearch";
 import CurrentWeather from "../../components/Weather/CurrentWeather";
-import WindStatus from "../../components/Weather/WindStatus";
-import UVIndex from "../../components/Weather/UVIndex";
-import SunriseSunset from "../../components/Weather/SunriseSunset";
-import FeelsLike from "../../components/Weather/FeelsLike";
-import AirQuality from "../../components/Weather/AirQuality";
-import Humidity from "../../components/Weather/Humidity";
 import Forecast from "../../components/Weather/Forecast";
+import CardSlot from "../../components/Weather/CardSlot";
+import WeatherModal from "../../components/Weather/WeatherModal";
 import { useState, useEffect, useRef, useContext } from "react";
 import { ProfileContext } from "../../utils/ProfileContext";
+
+const TOP_CARD_OPTIONS = [
+  { value: "wind", label: "Wind Status" },
+  { value: "uv", label: "UV Index" },
+  { value: "sunrise", label: "Sunrise & Sunset" },
+];
+
+const BOTTOM_CARD_OPTIONS = [
+  { value: "humidity", label: "Humidity" },
+  { value: "air_quality", label: "Air Quality" },
+  { value: "feels_like", label: "Feels Like" },
+  { value: "visibility", label: "Visibility" },
+  { value: "cloud_cover", label: "Cloud Cover" },
+  { value: "pressure", label: "Pressure" },
+];
 
 const Weather = () => {
   const DEFAULT_LOCATION = "Richmond, Texas, USA";
@@ -24,12 +35,45 @@ const Weather = () => {
   const [humidData, setHumidData] = useState([]);
   const [windData, setWindData] = useState([]);
   const [AQI, setAQI] = useState([]);
+  const [visibilityData, setVisibilityData] = useState([]);
+  const [pressureData, setPressureData] = useState([]);
+  const [cloudCoverData, setCloudCoverData] = useState([]);
   const [mapData, setMapData] = useState([]);
   const [locationSuggestions, setLocationSuggestions] = useState("");
   const [currentLocation, setCurrentLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { profile } = useContext(ProfileContext);
+
+  const [cardSlots, setCardSlots] = useState({
+    slot1: "wind",
+    slot2: "uv",
+    slot3: "sunrise",
+    slot4: "humidity",
+    slot5: "visibility",
+    slot6: "feels_like",
+  });
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: "", data: null });
+
+  const [currentConditions, setCurrentConditions] = useState({
+    visibility: null,
+    pressure: null,
+    cloud_cover: null,
+  });
+
+  const handleCardChange = (slotId, newType) => {
+    setCardSlots((prev) => ({
+      ...prev,
+      [slotId]: newType,
+    }));
+  };
+
+  const handleCardClick = (type, data) => {
+    setModalContent({ title: type, data: data });
+    setModalOpen(true);
+  };
 
   // Cache weather data in localStorage
   const cacheWeatherData = (location, data) => {
@@ -176,7 +220,8 @@ const Weather = () => {
     // Check for cached data
     try {
       const cachedData = getCachedWeatherData(location);
-      if (cachedData) {
+      // Ensure cache has the new 'currentConditions' field
+      if (cachedData && cachedData.currentConditions) {
         setWeatherStates(cachedData);
         setIsLoading(false);
         return;
@@ -225,8 +270,30 @@ const Weather = () => {
         const hourlyWindData = hourlyData.map((hour) => ({
           time: hour.time,
           windspeed: hour.wind_speed,
+          winddirection: hour.wind_direction,
         }));
         setWindData(hourlyWindData);
+
+        // Visibility data
+        const visibilityData = hourlyData.map((hour) => ({
+          time: hour.time,
+          visibility: hour.visibility,
+        }));
+        setVisibilityData(visibilityData);
+
+        // Pressure data
+        const pressureData = hourlyData.map((hour) => ({
+          time: hour.time,
+          pressure: hour.pressure,
+        }));
+        setPressureData(pressureData);
+
+        // Cloud Cover data
+        const cloudCoverData = hourlyData.map((hour) => ({
+          time: hour.time,
+          cloud_cover: hour.cloud_cover,
+        }));
+        setCloudCoverData(cloudCoverData);
 
         // Fetch 15-minute data
         const minutelyData = weatherData.weather_data["minutely_15"];
@@ -237,7 +304,8 @@ const Weather = () => {
         const currentMinuteIndex = Math.floor(
           (currentTime.getHours() * 60 + currentTime.getMinutes()) / 15
         );
-        const currentMinuteData = minutelyData[currentMinuteIndex];
+        const currentMinuteData =
+          minutelyData[currentMinuteIndex] || minutelyData[0] || {};
 
         const currentWeatherData = minutelyData.map((minute_15) => ({
           temperature: minute_15.temperature,
@@ -247,6 +315,18 @@ const Weather = () => {
           unit: "F",
         }));
         setCurrentWeather(currentWeatherData);
+
+        // Store current conditions for cards
+        const newCurrentConditions = {
+          visibility: currentMinuteData.visibility,
+          pressure: currentMinuteData.pressure,
+          cloud_cover: currentMinuteData.cloud_cover,
+        };
+        setCurrentConditions(newCurrentConditions);
+
+        setVisibilityData(visibilityData);
+        setPressureData(pressureData);
+        setCloudCoverData(cloudCoverData);
 
         // Feelslike data
         const temperatureData = minutelyData.map((minute_15) => ({
@@ -263,7 +343,9 @@ const Weather = () => {
           unit: "F",
         });
 
-        // data for Mapbox
+        // data for Map (coordinates + a couple properties used by overlays)
+        const currentHourIndex = new Date().getHours();
+        const currentHour = hourlyData[currentHourIndex] || {};
         const mapboxGeoData = {
           type: "FeatureCollection",
           features: [
@@ -278,6 +360,8 @@ const Weather = () => {
               },
               properties: {
                 precip: currentMinuteData.precipitation,
+                wind_speed: currentHour.wind_speed,
+                wind_direction: currentHour.wind_direction,
               },
             },
           ],
@@ -302,7 +386,11 @@ const Weather = () => {
           feelsLikeData: temperatureData,
           humidData: humidDewData,
           windData: hourlyWindData,
+          visibilityData: visibilityData,
+          pressureData: pressureData,
+          cloudCoverData: cloudCoverData,
           currentWeather: currentWeatherData,
+          currentConditions: newCurrentConditions,
           dailyTemps: {
             tempMax: dailyData[0].max_temperature,
             tempMin: dailyData[0].min_temperature,
@@ -330,17 +418,27 @@ const Weather = () => {
     setFeelsLikeData(data.feelsLikeData);
     setHumidData(data.humidData);
     setWindData(data.windData);
+    setVisibilityData(data.visibilityData);
+    setPressureData(data.pressureData);
+    setCloudCoverData(data.cloudCoverData);
     setCurrentWeather(data.currentWeather);
+    if (data.currentConditions) {
+      setCurrentConditions(data.currentConditions);
+    }
     setDailyTemps(data.dailyTemps);
     setMapData(data.mapData);
   };
 
   useEffect(() => {
+    const street = profile?.street_address;
     const city = profile?.city;
     const state = profile?.state;
+    const zip = profile?.zip_code;
 
-    if (city && state) {
-      setCurrentLocation(`${city}, ${state}`);
+    const locationParts = [street, city, state, zip].filter(Boolean);
+
+    if (locationParts.length > 0) {
+      setCurrentLocation(locationParts.join(", "));
       return;
     }
 
@@ -353,6 +451,35 @@ const Weather = () => {
       fetchWeatherData(currentLocation);
     }
   }, [currentLocation]);
+
+  const allWeatherData = {
+    windData,
+    uvData,
+    sunriseSunset,
+    timeZone,
+    humidData,
+    AQI,
+    feelsLikeData,
+    visibilityData,
+    pressureData,
+    cloudCoverData,
+    currentConditions,
+  };
+
+  const getAvailableOptions = (slotId, isTop) => {
+    const options = isTop ? TOP_CARD_OPTIONS : BOTTOM_CARD_OPTIONS;
+    const currentSlots = cardSlots;
+
+    // Get all currently selected values
+    const selectedValues = Object.values(currentSlots);
+
+    // Filter options: keep the one currently in this slot, or ones not selected anywhere else
+    return options.filter(
+      (opt) =>
+        opt.value === currentSlots[slotId] ||
+        !selectedValues.includes(opt.value)
+    );
+  };
 
   return (
     <div className="weather-dashboard">
@@ -380,12 +507,54 @@ const Weather = () => {
       <div className={`highlights-container ${isLoading ? "skeleton" : ""}`}>
         <h3>Today's Highlights</h3>
         <div className="highlights">
-          <WindStatus windstatusData={windData} />
-          <UVIndex hourlyUVIndex={uvData} />
-          <SunriseSunset sunData={sunriseSunset} timeZone={timeZone} />
-          <Humidity humidDewData={humidData} />
-          <AirQuality airQuality={AQI} />
-          <FeelsLike feels={feelsLikeData} />
+          <CardSlot
+            slotId="slot1"
+            type={cardSlots.slot1}
+            data={allWeatherData}
+            onChange={handleCardChange}
+            onCardClick={handleCardClick}
+            options={[]}
+          />
+          <CardSlot
+            slotId="slot2"
+            type={cardSlots.slot2}
+            data={allWeatherData}
+            onChange={handleCardChange}
+            onCardClick={handleCardClick}
+            options={[]}
+          />
+          <CardSlot
+            slotId="slot3"
+            type={cardSlots.slot3}
+            data={allWeatherData}
+            onChange={handleCardChange}
+            onCardClick={handleCardClick}
+            options={[]}
+          />
+          <CardSlot
+            slotId="slot4"
+            type={cardSlots.slot4}
+            data={allWeatherData}
+            onChange={handleCardChange}
+            onCardClick={handleCardClick}
+            options={getAvailableOptions("slot4", false)}
+          />
+          <CardSlot
+            slotId="slot5"
+            type={cardSlots.slot5}
+            data={allWeatherData}
+            onChange={handleCardChange}
+            onCardClick={handleCardClick}
+            options={getAvailableOptions("slot5", false)}
+          />
+          <CardSlot
+            slotId="slot6"
+            type={cardSlots.slot6}
+            data={allWeatherData}
+            onChange={handleCardChange}
+            onCardClick={handleCardClick}
+            options={getAvailableOptions("slot6", false)}
+          />
         </div>
       </div>
       {/* 10 Day Forecast */}
@@ -393,6 +562,12 @@ const Weather = () => {
         <h3>10-Day Forecast</h3>
         <Forecast forecast={forecastData} />
       </div>
+      <WeatherModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalContent.title}
+        data={modalContent.data}
+      />
     </div>
   );
 };

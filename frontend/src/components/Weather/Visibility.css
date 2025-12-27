@@ -1,4 +1,4 @@
-.highlight .humidity {
+.highlight .visibility {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -9,7 +9,7 @@
   box-sizing: border-box;
 }
 
-.humidity-content {
+.visibility-content {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -17,48 +17,41 @@
   width: 100%;
 }
 
-.humidity-info {
+.visibility-info {
   display: flex;
   align-items: center;
   gap: 15px;
 }
 
-.humidity-icon {
+.visibility-icon {
   font-size: 2.2rem;
-  color: aqua;
+  color: #ddd;
 }
 
-.humidity-value-percentage {
+.visibility-value-unit {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
 }
 
-.humidity-value {
+.visibility-value {
   font-size: 1.5rem;
   font-weight: bold;
   color: #e0e0e0;
   line-height: 1;
 }
 
-.humidity-percentage {
+.visibility-unit {
   font-size: 0.8rem;
   color: #aaa;
   margin-left: 0;
 }
 
-.dew-point {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  font-size: 0.8rem;
-  color: #b0b0b0;
-  text-align: right;
-  max-width: 50%;
-  line-height: 1.2;
+.visibility-desc {
+  text-align: center;
 }
-
-.dew-point .bi-droplet-half {
-  display: none; /* Icon moved to left */
+  font-size: 1rem;
+  color: #ccc;
+  font-weight: 500;
 }

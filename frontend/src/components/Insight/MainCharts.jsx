@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
   registerables,
 } from "chart.js";
 import {
@@ -29,6 +30,7 @@ ChartJSCore.register(
   Title,
   Tooltip,
   Legend,
+  Filler,
   CandlestickController,
   CandlestickElement
 );
@@ -46,6 +48,7 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
         accent: "rgba(255,255,255,0.75)",
         up: "rgba(0, 255, 0, 0.85)",
         down: "rgba(255, 0, 0, 0.85)",
+        tooltipBg: "rgba(20, 20, 20, 0.9)",
       };
     }
     const styles = getComputedStyle(document.documentElement);
@@ -65,6 +68,7 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
       accent,
       up,
       down,
+      tooltipBg: "rgba(20, 20, 20, 0.9)",
     };
   }, []);
 
@@ -72,6 +76,32 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
     let isCancelled = false;
     const fetchCandles = async () => {
       setIsLoading(true);
+
+      // Cache check
+      const cacheKey = `insight_candles_${symbol}_${timeRange}`;
+      const cacheTsKey = `insight_candles_ts_${symbol}_${timeRange}`;
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedTimestamp = localStorage.getItem(cacheTsKey);
+      const now = new Date().getTime();
+      const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+      if (
+        cachedData &&
+        cachedTimestamp &&
+        now - cachedTimestamp < CACHE_DURATION
+      ) {
+        try {
+          const data = JSON.parse(cachedData);
+          if (!isCancelled) {
+            setPayload(data);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Candles cache parse error", e);
+        }
+      }
+
       try {
         if (!symbol) {
           if (!isCancelled) setPayload(null);
@@ -81,7 +111,12 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
           params: { symbol, range: timeRange },
         });
         const data = resp.data;
-        if (!isCancelled) setPayload(data);
+        if (!isCancelled) {
+          setPayload(data);
+          // Save to cache
+          localStorage.setItem(cacheKey, JSON.stringify(data));
+          localStorage.setItem(cacheTsKey, now.toString());
+        }
       } catch {
         if (!isCancelled) setPayload(null);
       } finally {
@@ -117,9 +152,27 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
           label: symbol,
           data: closes,
           borderColor: theme.accent,
-          fill: false,
-          tension: 0.2,
+          backgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            // Use a semi-transparent version of accent color
+            // We can't easily parse the CSS var here without a helper,
+            // so we'll assume theme.accent is a hex or rgb string, or fallback to a fixed color if needed.
+            // For simplicity, let's use a fixed opacity trick or just a solid color if parsing is hard.
+            // But wait, theme.accent comes from getComputedStyle, so it's likely a hex or rgb.
+            // Let's just use a hardcoded blue-ish gradient if theme.accent is not easily manipulatable,
+            // OR better: use the theme.accent and let the browser handle it if it's a color.
+            // But to add opacity, we need to manipulate it.
+            // Let's try to use a simple gradient for now.
+            gradient.addColorStop(0, "rgba(94, 106, 210, 0.5)");
+            gradient.addColorStop(1, "rgba(94, 106, 210, 0.0)");
+            return gradient;
+          },
+          fill: true,
+          tension: 0.4,
           pointRadius: 0,
+          pointHoverRadius: 4,
+          borderWidth: 2,
         },
       ],
     };
@@ -132,8 +185,6 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
       datasets: [
         {
           label: symbol,
-          // Use index-based candle points so the category x-axis stays aligned
-          // with our formatted `labels` (otherwise Chart.js can misalign points).
           data: candles.map((p) => ({
             o: p.o,
             h: p.h,
@@ -150,54 +201,74 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
             down: theme.down,
             unchanged: theme.muted,
           },
+          borderWidth: 1,
         },
       ],
     };
   }, [labels, payload, symbol, theme.down, theme.muted, theme.up]);
 
-  const lineChartOptions = {
+  const commonOptions = {
     maintainAspectRatio: false,
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
     plugins: {
-      legend: { labels: { color: theme.muted } },
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: theme.tooltipBg,
+        titleColor: "#fff",
+        bodyColor: "#ccc",
+        borderColor: theme.grid,
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false,
+      },
     },
     scales: {
       x: {
         type: "category",
-        title: {
-          display: true,
-          text: "Time Points",
-          color: theme.muted,
+        display: true,
+        grid: {
+          display: false,
         },
         ticks: {
           color: theme.muted,
           maxRotation: 0,
           autoSkip: true,
-          maxTicksLimit: 10,
+          maxTicksLimit: 8,
+          font: { size: 10 },
         },
-        grid: { color: theme.grid },
       },
       y: {
-        title: {
-          display: true,
-          text: "Value",
-          color: theme.muted,
+        position: "right",
+        grid: {
+          color: theme.grid,
+          borderDash: [4, 4],
         },
-        ticks: { color: theme.muted },
-        grid: { color: theme.grid },
+        ticks: {
+          color: theme.muted,
+          font: { size: 10 },
+        },
       },
     },
   };
 
+  const lineChartOptions = {
+    ...commonOptions,
+  };
+
   const candleChartOptions = {
-    maintainAspectRatio: false,
+    ...commonOptions,
     plugins: {
-      legend: { labels: { color: theme.muted } },
+      ...commonOptions.plugins,
       tooltip: {
+        ...commonOptions.plugins.tooltip,
         callbacks: {
           label: (ctx) => {
             const p = ctx?.raw;
             if (!p) return "";
-            return `O ${p.o}  H ${p.h}  L ${p.l}  C ${p.c}`;
+            return `O: ${p.o}  H: ${p.h}  L: ${p.l}  C: ${p.c}`;
           },
         },
       },
@@ -205,28 +276,29 @@ const MainCharts = ({ timeRange, chartType, symbol }) => {
     scales: {
       x: {
         type: "category",
-        title: {
-          display: true,
-          text: "Time Points",
-          color: theme.muted,
+        display: true,
+        grid: {
+          display: false,
         },
         ticks: {
           color: theme.muted,
           maxRotation: 0,
           autoSkip: true,
-          maxTicksLimit: 10,
+          maxTicksLimit: 8,
+          font: { size: 10 },
         },
-        grid: { color: theme.grid },
       },
       y: {
         type: "linear",
-        title: {
-          display: true,
-          text: "Value",
-          color: theme.muted,
+        position: "right",
+        grid: {
+          color: theme.grid,
+          borderDash: [4, 4],
         },
-        ticks: { color: theme.muted },
-        grid: { color: theme.grid },
+        ticks: {
+          color: theme.muted,
+          font: { size: 10 },
+        },
       },
     },
   };
