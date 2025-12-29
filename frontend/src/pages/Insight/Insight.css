@@ -1,11 +1,13 @@
 .insight-dashboard {
   width: 100%;
+  max-width: 100vw;
   flex: 1;
   padding: 20px;
   padding-right: 40px;
   background-color: var(--clr-secondary);
   color: var(--clr-white);
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .insight-grid {

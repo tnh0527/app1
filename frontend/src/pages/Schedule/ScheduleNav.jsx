@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { iconsImgs } from "../../utils/images";
-import { SidebarContext } from "../../layout/Sidebar/Context";
+import { SidebarContext } from "../../contexts/SidebarContext";
 
 const ScheduleNav = () => {
   const { toggleSidebar } = useContext(SidebarContext);

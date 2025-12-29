@@ -1,6 +1,18 @@
 import { createContext, useReducer, useEffect } from "react";
-import reducer from "../Sidebar/Reducer";
-import PropTypes from "prop-types";
+
+const sidebarReducer = (state, action) => {
+  switch (action.type) {
+    case "TOGGLE_SIDEBAR": {
+      const newState = {
+        ...state,
+        isSidebarOpen: !state.isSidebarOpen,
+      };
+      return newState;
+    }
+    default:
+      throw new Error(`No matching "${action.type}" action type`);
+  }
+};
 
 const initialState = {
   isSidebarOpen: false,
@@ -21,7 +33,7 @@ const getInitialState = () => {
 export const SidebarContext = createContext({});
 
 export const SidebarProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, getInitialState());
+  const [state, dispatch] = useReducer(sidebarReducer, getInitialState());
 
   // Save state to localStorage when it changes
   useEffect(() => {
@@ -44,8 +56,4 @@ export const SidebarProvider = ({ children }) => {
       {children}
     </SidebarContext.Provider>
   );
-};
-
-SidebarProvider.propTypes = {
-  children: PropTypes.node,
 };

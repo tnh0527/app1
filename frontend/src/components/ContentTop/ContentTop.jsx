@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { iconsImgs } from "../../utils/images";
 import "./ContentTop.css";
-import { SidebarContext } from "../../layout/Sidebar/Context";
+import { SidebarContext } from "../../contexts/SidebarContext";
 
 const ContentTop = () => {
   const { toggleSidebar } = useContext(SidebarContext);

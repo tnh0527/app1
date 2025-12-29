@@ -4,8 +4,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useState, useReducer, useEffect, useContext } from "react";
 import { usStates } from "../../data/data";
 import { SyncLoader } from "react-spinners";
-import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
-import { ProfileContext } from "../../utils/ProfileContext";
+import { ProfilePicModal } from "../../components/Modals";
+import { ProfileContext } from "../../contexts/ProfileContext";
 import { csrfToken } from "../../data/data";
 
 const initialState = {

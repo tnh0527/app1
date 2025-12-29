@@ -2,6 +2,7 @@ import { createContext, useState, useEffect } from "react";
 import profileImage from "../assets/images/default-profile.jpg";
 import { csrfToken } from "../data/data";
 import { useAuth } from "./AuthContext";
+
 export const ProfileContext = createContext();
 
 export const ProfileProvider = ({ children }) => {

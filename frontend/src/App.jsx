@@ -1,15 +1,17 @@
-import "./App.css";
+import "./styles/global.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import Login from "./pages/Login/Login";
-import Dashboard from "./layout/Dashboard/Dashboard";
-import { ProfileProvider } from "./utils/ProfileContext";
-import Settings from "./pages/Settings/Settings";
-import AppShell from "./layout/AppShell";
-import ProtectedLayout from "./utils/ProtectedLayout";
-import Schedule from "./pages/Schedule/Schedule";
-import Weather from "./pages/Weather/Weather";
-import Insight from "./pages/Insight/Insight";
-import EditProfile from "./pages/Account/EditProfile";
+import { ProfileProvider } from "./contexts";
+import { ProtectedLayout } from "./components";
+import {
+  AppShell,
+  Dashboard,
+  EditProfile,
+  Insight,
+  Login,
+  Schedule,
+  Settings,
+  Weather,
+} from "./pages";
 
 function App() {
   const route = createBrowserRouter([
@@ -54,7 +56,7 @@ function App() {
   ]);
 
   return (
-    <div className="App">
+    <div className="app">
       <ProfileProvider>
         <RouterProvider router={route} />
       </ProfileProvider>

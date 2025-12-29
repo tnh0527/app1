@@ -6,6 +6,12 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   --clr-primary: #031622;
   --clr-primary-light: #065481;
@@ -39,6 +45,8 @@ body {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  width: 100%;
+  min-width: 100%;
 }
 
 ul {
@@ -84,6 +92,9 @@ button {
 .app {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* commons */

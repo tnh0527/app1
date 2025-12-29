@@ -1,5 +1,5 @@
 import "./LocationSearch.css";
-import { ProfileContext } from "../../utils/ProfileContext";
+import { ProfileContext } from "../../contexts/ProfileContext";
 import { useContext } from "react";
 
 const LocationSearch = ({

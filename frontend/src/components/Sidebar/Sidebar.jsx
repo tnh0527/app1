@@ -1,11 +1,11 @@
 import "./Sidebar.css";
 import { navigationLinks } from "../../data/data";
 import { useState, useContext, useEffect } from "react";
-import { SidebarContext } from "./Context";
+import { SidebarContext } from "../../contexts/SidebarContext";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import ProfilePicModal from "../../components/Modals/Profile/ProfilePicModal";
-import { useAuth } from "../../utils/AuthContext";
-import { ProfileContext } from "../../utils/ProfileContext";
+import { ProfilePicModal } from "../Modals";
+import { useAuth } from "../../contexts/AuthContext";
+import { ProfileContext } from "../../contexts/ProfileContext";
 import { personsImgs, iconsImgs } from "../../utils/images";
 import { Tooltip } from "react-tooltip";
 import authApi from "../../api/authApi";

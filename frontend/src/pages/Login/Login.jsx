@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
-import { useAuth } from "../../utils/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import authApi from "../../api/authApi";
 
 const Login = () => {

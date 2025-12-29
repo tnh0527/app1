@@ -6,7 +6,7 @@ import CardSlot from "../../components/Weather/CardSlot";
 import WeatherModal from "../../components/Weather/WeatherModal";
 import WeatherEffects from "../../components/Weather/WeatherEffects";
 import { useState, useEffect, useRef, useContext } from "react";
-import { ProfileContext } from "../../utils/ProfileContext";
+import { ProfileContext } from "../../contexts/ProfileContext";
 import { transformLocationInput } from "../../utils/capitalCities";
 
 const TOP_CARD_OPTIONS = [

@@ -1,5 +1,5 @@
 import "./Dashboard.css";
-import ContentMain from "../../components/ContentMain/ContentMain";
+import { ContentMain } from "../../components";
 
 const Dashboard = () => {
   return (

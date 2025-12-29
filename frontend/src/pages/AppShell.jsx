@@ -1,10 +1,10 @@
 import { Outlet } from "react-router-dom";
-import SidebarProvider from "./Sidebar/SidebarProvider";
+import { Sidebar } from "../components";
 
 const AppShell = () => {
   return (
     <div className="app">
-      <SidebarProvider />
+      <Sidebar />
       <Outlet />
     </div>
   );
