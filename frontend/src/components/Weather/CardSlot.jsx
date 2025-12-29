@@ -1,4 +1,5 @@
 import "./CardSlot.css";
+import { useState, useRef, useEffect } from "react";
 import WindStatus from "./WindStatus";
 import UVIndex from "./UVIndex";
 import SunriseSunset from "./SunriseSunset";
@@ -23,6 +24,19 @@ const COMPONENT_MAP = {
 
 const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
   const Component = COMPONENT_MAP[type];
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const getProps = (type, data) => {
     switch (type) {
@@ -59,23 +73,50 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
   };
 
   const props = getProps(type, data);
+  const currentLabel =
+    options?.find((opt) => opt.value === type)?.label || type;
+
+  const handleOptionClick = (value) => {
+    onChange(slotId, value);
+    setIsOpen(false);
+  };
 
   return (
     <div className="card-slot-container">
       {options && options.length > 0 && (
-        <div className="card-selector-wrapper">
-          <select
-            value={type}
-            onChange={(e) => onChange(slotId, e.target.value)}
-            className="card-select"
-            onClick={(e) => e.stopPropagation()} // Prevent modal open when clicking select
+        <div className="card-selector-wrapper" ref={dropdownRef}>
+          <button
+            className="card-dropdown-trigger"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(!isOpen);
+            }}
           >
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            <span>{currentLabel}</span>
+            <i
+              className={`bi bi-chevron-down dropdown-arrow ${
+                isOpen ? "open" : ""
+              }`}
+            ></i>
+          </button>
+          {isOpen && (
+            <ul className="card-dropdown-list">
+              {options.map((opt) => (
+                <li
+                  key={opt.value}
+                  className={`card-dropdown-item ${
+                    opt.value === type ? "selected" : ""
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOptionClick(opt.value);
+                  }}
+                >
+                  {opt.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
       <div

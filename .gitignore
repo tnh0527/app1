@@ -43,3 +43,6 @@ test-results/
 .env.*
 !.env.example
 *.local
+
+# Sensitive local config
+mcp.json

@@ -54,7 +54,7 @@ const Forecast = ({ forecast }) => {
             const iconSrc =
               typeof iconData === "object" && iconData.day
                 ? iconData.day
-                : iconData || "default-icon.png";
+                : iconData || "bi bi-question-circle";
 
             return (
               <div
@@ -71,13 +71,12 @@ const Forecast = ({ forecast }) => {
                 </div>
                 <div className="forecast-dayMonth">{dayMonth || "Sample"}</div>
                 <div className="forecast-icon">
-                  <img
-                    src={iconSrc}
-                    alt={item.condition || "Weather Icon"}
+                  <i
+                    className={iconSrc}
                     data-tooltip-id={`forecast-tooltip-${index}`}
                     data-tooltip-content={item.condition || "No Condition"}
                     data-tooltip-place="top"
-                  />
+                  ></i>
                   <Tooltip
                     id={`forecast-tooltip-${index}`}
                     style={{ zIndex: "999" }}

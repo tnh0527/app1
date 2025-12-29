@@ -1,0 +1,717 @@
+/* ============================================
+   WEATHER EFFECTS - Futuristic & Realistic
+   ============================================ */
+
+.weather-fx {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.fx-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* ============================================
+   RAIN - Thin luminous streaks
+   ============================================ */
+.rain-streak {
+  position: absolute;
+  top: -40px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(120, 180, 220, 0.2) 20%,
+    rgba(150, 200, 240, 0.5) 80%,
+    rgba(180, 220, 255, 0.3) 100%
+  );
+  transform: rotate(8deg);
+  animation: rain-fall linear infinite;
+}
+
+.rain-streak.storm {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(100, 150, 200, 0.3) 20%,
+    rgba(140, 180, 220, 0.7) 80%,
+    rgba(180, 210, 240, 0.4) 100%
+  );
+}
+
+@keyframes rain-fall {
+  0% {
+    transform: translateY(-40px) rotate(8deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(100vh) rotate(8deg);
+    opacity: 0;
+  }
+}
+
+/* Rain mist at bottom */
+.rain-mist {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(
+    to top,
+    rgba(100, 140, 180, 0.08) 0%,
+    transparent 100%
+  );
+  animation: mist-pulse 4s ease-in-out infinite;
+}
+
+.rain-mist.storm {
+  height: 180px;
+  background: linear-gradient(
+    to top,
+    rgba(80, 120, 160, 0.12) 0%,
+    transparent 100%
+  );
+}
+
+@keyframes mist-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   SNOW - Soft glowing particles
+   ============================================ */
+.snow-particle {
+  position: absolute;
+  top: -10px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(200, 220, 255, 0.4) 50%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(200, 220, 255, 0.5);
+  animation: snow-drift linear infinite;
+}
+
+@keyframes snow-drift {
+  0% {
+    transform: translateY(-10px) translateX(0);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(50vh) translateX(var(--drift, 30px));
+  }
+  95% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh) translateX(calc(var(--drift, 30px) * -0.5));
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   THUNDERSTORM - Lightning flashes
+   ============================================ */
+.lightning-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.lightning {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.lightning.l1 {
+  animation: flash-burst 6s ease-in-out infinite;
+}
+
+.lightning.l2 {
+  animation: flash-burst 8s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+@keyframes flash-burst {
+  0%,
+  100% {
+    background: transparent;
+  }
+  1% {
+    background: rgba(200, 220, 255, 0.4);
+  }
+  1.5% {
+    background: rgba(180, 200, 240, 0.1);
+  }
+  2% {
+    background: rgba(220, 235, 255, 0.6);
+  }
+  2.5% {
+    background: rgba(200, 220, 250, 0.15);
+  }
+  3% {
+    background: transparent;
+  }
+  5% {
+    background: rgba(210, 225, 250, 0.25);
+  }
+  5.5% {
+    background: transparent;
+  }
+}
+
+/* ============================================
+   FOG - Smooth drifting bands
+   ============================================ */
+.fog-band {
+  position: absolute;
+  width: 200%;
+  height: 33%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(180, 195, 210, 0.06) 15%,
+    rgba(180, 195, 210, 0.12) 50%,
+    rgba(180, 195, 210, 0.06) 85%,
+    transparent 100%
+  );
+  filter: blur(40px);
+}
+
+.fog-band.b1 {
+  top: 0;
+  animation: fog-slide 40s linear infinite;
+}
+
+.fog-band.b2 {
+  top: 33%;
+  animation: fog-slide 55s linear infinite reverse;
+  animation-delay: -20s;
+  opacity: 0.8;
+}
+
+.fog-band.b3 {
+  top: 66%;
+  animation: fog-slide 45s linear infinite;
+  animation-delay: -10s;
+  opacity: 0.6;
+}
+
+@keyframes fog-slide {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   CLEAR - Subtle sun flare & dust motes
+   ============================================ */
+.sun-flare {
+  position: absolute;
+  top: -15%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 240, 200, 0.08) 0%,
+    rgba(255, 220, 150, 0.04) 40%,
+    transparent 70%
+  );
+  animation: flare-breathe 8s ease-in-out infinite;
+}
+
+@keyframes flare-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+.dust-mote {
+  position: absolute;
+  background: radial-gradient(
+    circle,
+    rgba(255, 250, 240, 0.6) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  animation: mote-float ease-in-out infinite;
+}
+
+.dust-mote.dim {
+  background: radial-gradient(
+    circle,
+    rgba(200, 210, 220, 0.3) 0%,
+    transparent 70%
+  );
+}
+
+@keyframes mote-float {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(15px, -10px);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(30px, 5px);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translate(15px, 15px);
+    opacity: 0.5;
+  }
+}
+
+/* ============================================
+   CLOUDY - Drifting cloud layers
+   ============================================ */
+.cloud-drift {
+  position: absolute;
+  width: 200%;
+  height: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(200, 210, 220, 0.04) 20%,
+    rgba(200, 210, 220, 0.08) 50%,
+    rgba(200, 210, 220, 0.04) 80%,
+    transparent 100%
+  );
+  filter: blur(60px);
+}
+
+.cloud-drift.c1 {
+  top: 5%;
+  animation: cloud-move 50s linear infinite;
+}
+
+.cloud-drift.c2 {
+  top: 35%;
+  animation: cloud-move 70s linear infinite reverse;
+  animation-delay: -25s;
+  opacity: 0.7;
+}
+
+.cloud-drift.c3 {
+  top: 65%;
+  animation: cloud-move 60s linear infinite;
+  animation-delay: -15s;
+  opacity: 0.5;
+}
+
+@keyframes cloud-move {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   WIND - Horizontal streaks
+   ============================================ */
+.fx-wind {
+  overflow: hidden;
+}
+
+.wind-streak {
+  position: absolute;
+  left: -200px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(180, 200, 220, 0.15) 10%,
+    rgba(200, 220, 240, 0.35) 50%,
+    rgba(180, 200, 220, 0.15) 90%,
+    transparent 100%
+  );
+  animation: wind-blow linear infinite;
+}
+
+.wind-streak.extreme {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(160, 180, 200, 0.2) 10%,
+    rgba(180, 200, 220, 0.5) 50%,
+    rgba(160, 180, 200, 0.2) 90%,
+    transparent 100%
+  );
+}
+
+@keyframes wind-blow {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(calc(100vw + 400px));
+    opacity: 0;
+  }
+}
+
+/* Flying debris */
+.debris-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.debris-particle {
+  position: absolute;
+  left: -30px;
+  width: 4px;
+  height: 4px;
+  background: rgba(140, 130, 120, 0.6);
+  border-radius: 2px;
+  animation: debris-fly linear infinite;
+}
+
+@keyframes debris-fly {
+  0% {
+    transform: translateX(0) rotate(0deg) translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(50vw) rotate(360deg) translateY(-30px);
+  }
+  100% {
+    transform: translateX(calc(100vw + 60px)) rotate(720deg) translateY(20px);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   HEAT - Shimmer & haze effects
+   ============================================ */
+.fx-heat {
+  overflow: hidden;
+}
+
+.heat-wave {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 200, 150, 0.04) 25%,
+    rgba(255, 180, 120, 0.08) 50%,
+    rgba(255, 200, 150, 0.04) 75%,
+    transparent 100%
+  );
+  filter: blur(4px);
+  animation: heat-shimmer ease-in-out infinite;
+}
+
+.heat-wave.intense {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 180, 100, 0.06) 25%,
+    rgba(255, 150, 80, 0.12) 50%,
+    rgba(255, 180, 100, 0.06) 75%,
+    transparent 100%
+  );
+}
+
+@keyframes heat-shimmer {
+  0%,
+  100% {
+    transform: scaleX(1) translateY(0);
+    opacity: 0.5;
+  }
+  25% {
+    transform: scaleX(1.02) translateY(-2px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scaleX(0.98) translateY(2px);
+    opacity: 0.6;
+  }
+  75% {
+    transform: scaleX(1.01) translateY(-1px);
+    opacity: 0.9;
+  }
+}
+
+.heat-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(
+    ellipse at center top,
+    rgba(255, 200, 100, 0.06) 0%,
+    rgba(255, 180, 80, 0.03) 40%,
+    transparent 70%
+  );
+  animation: glow-pulse 6s ease-in-out infinite;
+}
+
+.heat-glow.extreme {
+  background: radial-gradient(
+    ellipse at center top,
+    rgba(255, 150, 50, 0.1) 0%,
+    rgba(255, 120, 30, 0.06) 40%,
+    transparent 70%
+  );
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+.heat-distortion {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(255, 200, 150, 0.02) 3px,
+    rgba(255, 200, 150, 0.02) 4px
+  );
+  animation: distortion-wave 2s linear infinite;
+}
+
+@keyframes distortion-wave {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(4px);
+  }
+}
+
+/* ============================================
+   FREEZE - Frost & cold effects
+   ============================================ */
+.fx-freeze {
+  overflow: hidden;
+}
+
+.frost-crystal {
+  position: absolute;
+  background: radial-gradient(
+    circle,
+    rgba(200, 230, 255, 0.7) 0%,
+    rgba(180, 220, 255, 0.4) 40%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(180, 220, 255, 0.4);
+  animation: frost-sparkle ease-in-out infinite;
+  transform: rotate(var(--rotation, 0deg));
+}
+
+.frost-crystal.intense {
+  background: radial-gradient(
+    circle,
+    rgba(220, 240, 255, 0.9) 0%,
+    rgba(200, 230, 255, 0.5) 40%,
+    transparent 70%
+  );
+  box-shadow: 0 0 12px rgba(200, 230, 255, 0.6);
+}
+
+@keyframes frost-sparkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: rotate(var(--rotation, 0deg)) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: rotate(calc(var(--rotation, 0deg) + 30deg)) scale(1.2);
+  }
+}
+
+.cold-mist {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30%;
+  background: linear-gradient(
+    to top,
+    rgba(200, 220, 255, 0.08) 0%,
+    rgba(180, 210, 255, 0.04) 50%,
+    transparent 100%
+  );
+  filter: blur(20px);
+  animation: cold-mist-drift 8s ease-in-out infinite;
+}
+
+.cold-mist.heavy {
+  height: 45%;
+  background: linear-gradient(
+    to top,
+    rgba(200, 220, 255, 0.12) 0%,
+    rgba(180, 210, 255, 0.06) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes cold-mist-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(3%);
+    opacity: 1;
+  }
+}
+
+.frost-border {
+  position: absolute;
+  inset: 0;
+  border: 4px solid transparent;
+  border-image: linear-gradient(
+      135deg,
+      rgba(200, 230, 255, 0.3) 0%,
+      transparent 20%,
+      transparent 80%,
+      rgba(200, 230, 255, 0.3) 100%
+    )
+    1;
+  pointer-events: none;
+  animation: frost-border-pulse 4s ease-in-out infinite;
+}
+
+@keyframes frost-border-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Wind chill streaks */
+.chill-streaks {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.chill-streak {
+  position: absolute;
+  left: -150px;
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(200, 230, 255, 0.2) 20%,
+    rgba(220, 240, 255, 0.4) 50%,
+    rgba(200, 230, 255, 0.2) 80%,
+    transparent 100%
+  );
+  animation: chill-blow linear infinite;
+}
+
+@keyframes chill-blow {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(calc(100vw + 300px));
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .rain-streak,
+  .snow-particle,
+  .lightning,
+  .fog-band,
+  .sun-flare,
+  .dust-mote,
+  .cloud-drift,
+  .rain-mist,
+  .wind-streak,
+  .debris-particle,
+  .heat-wave,
+  .heat-glow,
+  .heat-distortion,
+  .frost-crystal,
+  .cold-mist,
+  .frost-border,
+  .chill-streak {
+    animation: none !important;
+  }
+}

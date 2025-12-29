@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./WeatherMap.css";
@@ -12,27 +12,28 @@ const getWindDirection = (degrees) => {
   const index = Math.round(degrees / 45) % 8;
   return directions[index];
 };
-const DEFAULT_CENTER = [-95.3698, 29.7604];
 
 const WeatherMap = ({ mapData }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markerRef = useRef(null);
-  const [isMapLoading, setIsMapLoading] = useState(true);
-  const [hasLocation, setHasLocation] = useState(true); // show default map by default
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Home view = where the map should return after pan/zoom.
+  // We update this whenever a new location is selected (mapData changes).
   const homeViewRef = useRef({
-    center: null,
-    zoom: 17,
+    center: [-95.7608, 29.5826],
+    zoom: 18,
     bearing: 0,
     pitch: 0,
   });
 
+  const INITIAL_ZOOM = 18;
+  // â€œHouse-levelâ€ without being too close.
   const SELECTION_ZOOM = 17;
 
   const handleHomeClick = () => {
-    if (!map.current || !homeViewRef.current.center) return;
+    if (!map.current) return;
     const view = homeViewRef.current;
     map.current.flyTo({
       center: view.center,
@@ -43,15 +44,10 @@ const WeatherMap = ({ mapData }) => {
     });
   };
 
-  // Initialize map only when we have coordinates
   useEffect(() => {
-    const rawCoords = mapData?.features?.[0]?.geometry?.coordinates;
-    const centerCoordinates =
-      rawCoords && rawCoords.length >= 2 ? rawCoords : DEFAULT_CENTER;
-
-    // If no explicit location provided, we'll show the default Houston center.
-    setHasLocation(true);
-    setIsMapLoading(true); // show loading while map updates
+    const centerCoordinates = mapData?.features?.[0]?.geometry?.coordinates || [
+      -95.7608, 29.5826,
+    ];
 
     if (!MAPBOX_ACCESS_TOKEN) {
       console.error(
@@ -61,49 +57,23 @@ const WeatherMap = ({ mapData }) => {
     }
 
     // Disable telemetry to prevent "ERR_BLOCKED_BY_CLIENT" errors from ad blockers
+    // Must be set before creating the map
     try {
       mapboxgl.config.TELEMETRY = false;
     } catch (e) {
       console.warn("Could not disable Mapbox telemetry", e);
     }
 
-    if (!mapContainer.current) return;
-
-    // If map already exists, just update location
-    if (map.current) {
-      homeViewRef.current = {
-        center: centerCoordinates,
-        zoom: SELECTION_ZOOM,
-        bearing: 0,
-        pitch: 0,
-      };
-
-      map.current.flyTo({
-        center: centerCoordinates,
-        zoom: SELECTION_ZOOM,
-        bearing: 0,
-        pitch: 0,
-        essential: true,
-      });
-
-      if (markerRef.current) {
-        markerRef.current.setLngLat(centerCoordinates);
-      }
-
-      // Hide loading after fly completes (on idle)
-      map.current.once("idle", () => {
-        setIsMapLoading(false);
-      });
+    if (!mapContainer.current || map.current) {
       return;
     }
 
-    // Create new map
     mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/dark-v11",
       center: centerCoordinates,
-      zoom: SELECTION_ZOOM,
+      zoom: INITIAL_ZOOM,
       pitch: 0,
       bearing: 0,
       antialias: true,
@@ -112,7 +82,7 @@ const WeatherMap = ({ mapData }) => {
 
     homeViewRef.current = {
       center: centerCoordinates,
-      zoom: SELECTION_ZOOM,
+      zoom: INITIAL_ZOOM,
       bearing: 0,
       pitch: 0,
     };
@@ -126,11 +96,7 @@ const WeatherMap = ({ mapData }) => {
       .addTo(map.current);
 
     map.current.on("load", () => {
-      setIsMapLoading(false);
-    });
-
-    map.current.on("idle", () => {
-      setIsMapLoading(false);
+      setIsMapLoaded(true);
     });
 
     return () => {
@@ -142,9 +108,34 @@ const WeatherMap = ({ mapData }) => {
         map.current.remove();
         map.current = null;
       }
-      setIsMapLoading(true);
     };
-  }, [mapData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!isMapLoaded || !map.current) return;
+    const centerCoordinates = mapData?.features?.[0]?.geometry?.coordinates;
+    if (!centerCoordinates || centerCoordinates.length < 2) return;
+
+    // When a user selects a specific location, zoom in more (but not too close).
+    homeViewRef.current = {
+      center: centerCoordinates,
+      zoom: SELECTION_ZOOM,
+      bearing: 0,
+      pitch: 0,
+    };
+
+    map.current.flyTo({
+      center: centerCoordinates,
+      zoom: SELECTION_ZOOM,
+      bearing: 0,
+      pitch: 0,
+      essential: true,
+    });
+    if (markerRef.current) {
+      markerRef.current.setLngLat(centerCoordinates);
+    }
+  }, [isMapLoaded, mapData]);
 
   // Extract weather properties for overlay
   const weatherProps = mapData?.features?.[0]?.properties || {};
@@ -153,18 +144,9 @@ const WeatherMap = ({ mapData }) => {
   const precipitation = weatherProps.precip;
   const coords = mapData?.features?.[0]?.geometry?.coordinates;
 
-  // Always render map wrapper — default location will be shown when none selected
-
   return (
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
-
-      {/* Map loading overlay - show spinner while map is loading */}
-      {isMapLoading && (
-        <div className="map-loading-overlay">
-          <div className="map-spinner"></div>
-        </div>
-      )}
 
       {/* Weather Info Overlay */}
       <div className="map-weather-overlay">
@@ -189,7 +171,7 @@ const WeatherMap = ({ mapData }) => {
         <div className="map-coords-overlay">
           <i className="bi bi-geo-alt"></i>
           <span>
-            {coords[1].toFixed(4)}°, {coords[0].toFixed(4)}°
+            {coords[1].toFixed(4)}Â°, {coords[0].toFixed(4)}Â°
           </span>
         </div>
       )}
@@ -209,3 +191,4 @@ const WeatherMap = ({ mapData }) => {
 };
 
 export default WeatherMap;
+

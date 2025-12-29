@@ -78,15 +78,15 @@
   z-index: 1;
 }
 
-.high-low-temp img {
-  height: 180px;
-  width: 180px;
+.high-low-temp i {
+  font-size: 70px;
+  /* color: #fff; Removed to allow gradient coloring */
 }
 .high-low-temp {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 18px;
+  font-size: 16px;
   align-self: flex-end;
 }
 
@@ -235,4 +235,175 @@ input:checked + .slider:before {
     left: 22px;
     bottom: 2px;
   }
+}
+
+/* Hourly Forecast Section */
+.hourly-forecast-container {
+  width: 100%;
+  padding: 8px 15px;
+  background: rgba(0, 0, 0, 0.4); /* Darker background for better contrast */
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 2;
+  overflow: hidden;
+}
+
+.hourly-forecast-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 18px;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.hourly-forecast-scroll.dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+.hourly-forecast-scroll:active {
+  cursor: grabbing;
+}
+
+.hourly-forecast-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.hourly-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 45px;
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.hourly-time {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hourly-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.hourly-temp {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Sunrise and Sunset special styling */
+.sunrise-item .hourly-icon,
+.sunset-item .hourly-icon {
+  font-size: 22px;
+}
+
+.sunrise-item .hourly-icon {
+  color: #ffb347; /* Warm orange for sunrise */
+}
+
+.sunset-item .hourly-icon {
+  color: #ff6b6b; /* Warm red-orange for sunset */
+}
+
+.sun-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Skeleton Loading Styles */
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-details {
+  background: linear-gradient(135deg, #1a2332 0%, #0d1520 100%);
+  min-height: 180px;
+}
+
+.skeleton-location,
+.skeleton-date,
+.skeleton-temp {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.skeleton-location {
+  width: 70%;
+  height: 24px;
+  margin-bottom: 10px;
+}
+
+.skeleton-date {
+  width: 50%;
+  height: 16px;
+  margin-bottom: 20px;
+}
+
+.skeleton-temp {
+  width: 100px;
+  height: 48px;
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+}
+
+.skeleton-hourly {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.skeleton-hourly-items {
+  display: flex;
+  gap: 18px;
+  padding: 5px 0;
+}
+
+.skeleton-hourly-item {
+  width: 45px;
+  height: 60px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.skeleton-map {
+  flex: 1;
+  min-height: 200px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 2s ease-in-out infinite;
 }

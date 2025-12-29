@@ -109,13 +109,13 @@ class WeatherView(APIView):
         data = self.fetch_open_meteo(lat, lng)
         if data:
             return data
-        
+
         # Fallback to Secondary API (e.g., NWS)
         print("Open-Meteo failed, switching to secondary API...")
         return self.fetch_secondary_api(lat, lng)
 
     def fetch_open_meteo(self, lat, lng):
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lng}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,weather_code,wind_speed_10m,wind_direction_10m,visibility,surface_pressure,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&minutely_15=temperature_2m,precipitation,weather_code,apparent_temperature,is_day,visibility,surface_pressure,cloud_cover&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=10"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lng}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,weather_code,wind_speed_10m,wind_direction_10m,visibility,surface_pressure,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&minutely_15=temperature_2m,precipitation,weather_code,apparent_temperature,is_day,visibility,surface_pressure,cloud_cover&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=10"
 
         try:
             response = requests.get(url)
@@ -133,6 +133,7 @@ class WeatherView(APIView):
             visibilities = hourly_data.get("visibility", [])[:48]
             pressures = hourly_data.get("surface_pressure", [])[:48]
             cloud_covers = hourly_data.get("cloud_cover", [])[:48]
+            is_day_values = hourly_data.get("is_day", [])[:48]
 
             hourly_weather_data = [
                 {
@@ -148,8 +149,9 @@ class WeatherView(APIView):
                     "visibility": visibility,
                     "pressure": pressure,
                     "cloud_cover": cloud_cover,
+                    "is_day": is_day,
                 }
-                for time, temp, humidity, dew_point, weather_code, wind_speed, wind_direction, visibility, pressure, cloud_cover in zip(
+                for time, temp, humidity, dew_point, weather_code, wind_speed, wind_direction, visibility, pressure, cloud_cover, is_day in zip(
                     times,
                     temperatures,
                     humidities,
@@ -160,6 +162,7 @@ class WeatherView(APIView):
                     visibilities,
                     pressures,
                     cloud_covers,
+                    is_day_values,
                 )
             ]
 
@@ -251,10 +254,9 @@ class WeatherView(APIView):
         # I will leave this as a placeholder for the user to fill or for future implementation.
         # However, to satisfy the prompt "if 1 does not have info, pull from another one",
         # I should ideally have something here.
-        # I'll implement a mock fallback that returns data if Open-Meteo fails, 
+        # I'll implement a mock fallback that returns data if Open-Meteo fails,
         # just to show the logic works.
         return None
-
 
     def get(self, request):
         location = request.query_params.get("location")

@@ -27,19 +27,6 @@ import person_three from "../assets/images/person_three.jpg";
 import person_four from "../assets/images/person_four.jpg";
 import default_user from "../assets/images/default-profile.jpg";
 
-import cloudy from "../assets/weather/cloudy-icon.png";
-import partly_cloudy from "../assets/weather/partly-cloudy-icon.png";
-import rainy from "../assets/weather/rainy-icon.png";
-import slight_rain from "../assets/weather/slight-rain-icon.png";
-import snowy from "../assets/weather/snowy-icon.png";
-import sunny from "../assets/weather/sunny-icon.png";
-import storm from "../assets/weather/storm-icon.png";
-import clear_night from "../assets/weather/clear-night-icon.png";
-import clear_day from "../assets/weather/clear-day-icon.png";
-import fog from "../assets/weather/fog-icon.png";
-import cloudy_night from "../assets/weather/cloudy-night.png";
-import undefined from "../assets/weather/unknown-icon.png";
-
 export const iconsImgs = {
   alert,
   bell,
@@ -70,19 +57,4 @@ export const personsImgs = {
   person_three,
   person_four,
   default_user,
-};
-
-export const weatherImgs = {
-  cloudy,
-  partly_cloudy,
-  rainy,
-  slight_rain,
-  snowy,
-  storm,
-  sunny,
-  clear_day,
-  clear_night,
-  cloudy_night,
-  fog,
-  undefined,
 };

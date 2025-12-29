@@ -4,8 +4,10 @@ import CurrentWeather from "../../components/Weather/CurrentWeather";
 import Forecast from "../../components/Weather/Forecast";
 import CardSlot from "../../components/Weather/CardSlot";
 import WeatherModal from "../../components/Weather/WeatherModal";
+import WeatherEffects from "../../components/Weather/WeatherEffects";
 import { useState, useEffect, useRef, useContext } from "react";
 import { ProfileContext } from "../../utils/ProfileContext";
+import { transformLocationInput } from "../../utils/capitalCities";
 
 const TOP_CARD_OPTIONS = [
   { value: "wind", label: "Wind Status" },
@@ -39,10 +41,15 @@ const Weather = () => {
   const [pressureData, setPressureData] = useState([]);
   const [cloudCoverData, setCloudCoverData] = useState([]);
   const [mapData, setMapData] = useState([]);
+  const [hourlyForecast, setHourlyForecast] = useState([]);
   const [locationSuggestions, setLocationSuggestions] = useState("");
   const [currentLocation, setCurrentLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [weatherCondition, setWeatherCondition] = useState(null);
+  const [currentTemp, setCurrentTemp] = useState(null);
+  const [currentWindSpeed, setCurrentWindSpeed] = useState(null);
+  const [currentFeelsLike, setCurrentFeelsLike] = useState(null);
   const { profile } = useContext(ProfileContext);
 
   const [cardSlots, setCardSlots] = useState({
@@ -50,7 +57,7 @@ const Weather = () => {
     slot2: "uv",
     slot3: "sunrise",
     slot4: "humidity",
-    slot5: "visibility",
+    slot5: "air_quality",
     slot6: "feels_like",
   });
 
@@ -110,19 +117,34 @@ const Weather = () => {
     if (e.key === "Enter") {
       if (suggestions.length > 0) {
         // If suggestions exist, use the first suggestion
-        const firstSuggestion = suggestions[0].place_name;
-        setCurrentLocation(firstSuggestion);
+        const firstSuggestion = suggestions[0];
+        // Transform in case it's a country name
+        const transformedLocation = transformLocationInput(firstSuggestion);
+        setCurrentLocation(transformedLocation);
+        setSuggestions([]);
+      } else if (locationSuggestions.trim()) {
+        // No suggestions but user typed something - try transforming (e.g., "USA" -> capital)
+        const transformedLocation = transformLocationInput(
+          locationSuggestions.trim()
+        );
+        setCurrentLocation(transformedLocation);
         setSuggestions([]);
       } else {
-        // If no suggestions, reset input
+        // If no input, reset
         setLocationSuggestions("");
       }
     }
   };
   const handleSuggestionClick = (suggestion) => {
-    const locationName = suggestion;
-    console.log("Location clicked:", locationName);
-    setCurrentLocation(locationName);
+    // Transform in case it's a country name -> use capital city
+    const transformedLocation = transformLocationInput(suggestion);
+    console.log(
+      "Location clicked:",
+      suggestion,
+      "-> transformed:",
+      transformedLocation
+    );
+    setCurrentLocation(transformedLocation);
     setSuggestions([]);
   };
   const handleBlur = () => {
@@ -168,6 +190,15 @@ const Weather = () => {
         ...day,
         tempMax: convertTemperature(day.tempMax, day.unit),
         tempMin: convertTemperature(day.tempMin, day.unit),
+        unit: newUnit,
+      }));
+    });
+    setHourlyForecast((prevHourly) => {
+      if (!prevHourly || prevHourly.length === 0) return [];
+      const newUnit = prevHourly[0].unit === "C" ? "F" : "C";
+      return prevHourly.map((hour) => ({
+        ...hour,
+        temperature: convertTemperature(hour.temperature, hour.unit),
         unit: newUnit,
       }));
     });
@@ -220,8 +251,12 @@ const Weather = () => {
     // Check for cached data
     try {
       const cachedData = getCachedWeatherData(location);
-      // Ensure cache has the new 'currentConditions' field
-      if (cachedData && cachedData.currentConditions) {
+      // Ensure cache has the new 'currentConditions' and 'hourlyForecast' fields
+      if (
+        cachedData &&
+        cachedData.currentConditions &&
+        cachedData.hourlyForecast
+      ) {
         setWeatherStates(cachedData);
         setIsLoading(false);
         return;
@@ -239,11 +274,13 @@ const Weather = () => {
         setAQI(weatherData.air_uv_data["aqi_data"]);
         setUvData(weatherData.air_uv_data["uv_data"]);
 
-        // Set sunrise and sunset data
+        // Set sunrise and sunset data (today and tomorrow for hourly forecast)
         const dailyData = weatherData.weather_data["daily"];
         setSunriseSunset({
           sunrise: dailyData[0].sunrise,
           sunset: dailyData[0].sunset,
+          tomorrowSunrise: dailyData[1]?.sunrise || null,
+          tomorrowSunset: dailyData[1]?.sunset || null,
         });
         setTimeZone(weatherData.time_zone_data);
         // set 10-day forecast data
@@ -295,6 +332,17 @@ const Weather = () => {
         }));
         setCloudCoverData(cloudCoverData);
 
+        // Hourly Forecast Data (including wind speed for windy detection)
+        const hourlyForecastData = hourlyData.map((hour) => ({
+          time: hour.time,
+          temperature: hour.temperature,
+          condition: hour.weather_code,
+          is_day: hour.is_day,
+          wind_speed: hour.wind_speed,
+          unit: "F",
+        }));
+        setHourlyForecast(hourlyForecastData);
+
         // Fetch 15-minute data
         const minutelyData = weatherData.weather_data["minutely_15"];
         // console.log("15-mins:", minutelyData);
@@ -315,6 +363,19 @@ const Weather = () => {
           unit: "F",
         }));
         setCurrentWeather(currentWeatherData);
+
+        // Set weather condition and current values for effects
+        if (currentMinuteData.weather_code) {
+          setWeatherCondition(currentMinuteData.weather_code);
+        }
+        // Set current temperature for effects
+        if (currentMinuteData.temperature !== undefined) {
+          setCurrentTemp(currentMinuteData.temperature);
+        }
+        // Set current feels like for effects
+        if (currentMinuteData.apparent_temperature !== undefined) {
+          setCurrentFeelsLike(currentMinuteData.apparent_temperature);
+        }
 
         // Store current conditions for cards
         const newCurrentConditions = {
@@ -346,6 +407,12 @@ const Weather = () => {
         // data for Map (coordinates + a couple properties used by overlays)
         const currentHourIndex = new Date().getHours();
         const currentHour = hourlyData[currentHourIndex] || {};
+
+        // Set current wind speed for effects (from hourly since 15-min doesn't have wind)
+        if (currentHour.wind_speed !== undefined) {
+          setCurrentWindSpeed(currentHour.wind_speed);
+        }
+
         const mapboxGeoData = {
           type: "FeatureCollection",
           features: [
@@ -374,6 +441,8 @@ const Weather = () => {
           sunriseSunset: {
             sunrise: dailyData[0].sunrise,
             sunset: dailyData[0].sunset,
+            tomorrowSunrise: dailyData[1]?.sunrise || null,
+            tomorrowSunset: dailyData[1]?.sunset || null,
           },
           timeZone: weatherData.time_zone_data,
           forecastData: dailyData.map((day) => ({
@@ -396,7 +465,13 @@ const Weather = () => {
             tempMin: dailyData[0].min_temperature,
             unit: "F",
           },
+          hourlyForecast: hourlyForecastData,
           mapData: mapboxGeoData,
+          // Weather effects data
+          weatherCondition: currentMinuteData.weather_code,
+          currentTemp: currentMinuteData.temperature,
+          currentWindSpeed: currentHour.wind_speed,
+          currentFeelsLike: currentMinuteData.apparent_temperature,
         });
       } else {
         console.error("Error fetching weather data:", response.statusText);
@@ -426,7 +501,21 @@ const Weather = () => {
       setCurrentConditions(data.currentConditions);
     }
     setDailyTemps(data.dailyTemps);
+    setHourlyForecast(data.hourlyForecast);
     setMapData(data.mapData);
+    // Set weather effects data
+    if (data.weatherCondition) {
+      setWeatherCondition(data.weatherCondition);
+    }
+    if (data.currentTemp !== undefined) {
+      setCurrentTemp(data.currentTemp);
+    }
+    if (data.currentWindSpeed !== undefined) {
+      setCurrentWindSpeed(data.currentWindSpeed);
+    }
+    if (data.currentFeelsLike !== undefined) {
+      setCurrentFeelsLike(data.currentFeelsLike);
+    }
   };
 
   useEffect(() => {
@@ -483,6 +572,14 @@ const Weather = () => {
 
   return (
     <div className="weather-dashboard">
+      {/* Weather Effects Overlay */}
+      <WeatherEffects
+        condition={weatherCondition}
+        temperature={currentTemp}
+        windSpeed={currentWindSpeed}
+        feelsLike={currentFeelsLike}
+      />
+
       {/* LocationSearch */}
       <LocationSearch
         location={locationSuggestions}
@@ -502,6 +599,8 @@ const Weather = () => {
         mapData={mapData}
         timezone={timeZone.time_zone}
         sunData={sunriseSunset}
+        hourlyForecast={hourlyForecast}
+        isLoadingWeather={isLoading}
       />
       {/* Today's Highlights */}
       <div className={`highlights-container ${isLoading ? "skeleton" : ""}`}>

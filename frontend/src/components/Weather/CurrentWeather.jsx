@@ -13,6 +13,8 @@ const CurrentWeather = ({
   mapData,
   timezone,
   sunData,
+  hourlyForecast,
+  isLoadingWeather,
 }) => {
   // State to track the current 15-minute interval index
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -20,11 +22,22 @@ const CurrentWeather = ({
   const [isDay, setIsDay] = useState(null);
   // console.log("time:", timezone);
 
+  // Reset loading when parent signals loading or when location changes
   useEffect(() => {
-    if (currentWeather && Object.keys(currentWeather).length > 0) {
+    if (isLoadingWeather) {
+      setIsLoading(true);
+    }
+  }, [isLoadingWeather]);
+
+  useEffect(() => {
+    if (
+      currentWeather &&
+      Object.keys(currentWeather).length > 0 &&
+      !isLoadingWeather
+    ) {
       setIsLoading(false);
     }
-  }, [currentWeather]);
+  }, [currentWeather, isLoadingWeather]);
 
   useEffect(() => {
     if (sunData && sunData.sunrise && sunData.sunset) {
@@ -36,6 +49,34 @@ const CurrentWeather = ({
   }, [timezone, sunData, currentIndex]);
 
   const videoRef = useRef(null);
+  const scrollRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  // Drag to scroll handlers
+  const handleMouseDown = (e) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // Scroll speed multiplier
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   useEffect(() => {
     if (videoRef.current) {
@@ -98,7 +139,7 @@ const CurrentWeather = ({
     if (typeof iconMap[condition] === "object") {
       icon = isDay ? iconMap[condition].day : iconMap[condition].night;
     } else {
-      icon = iconMap[condition] || weatherImgs.undefined;
+      icon = iconMap[condition] || "bi bi-question-circle";
     }
     // Determine the appropriate video
     let video;
@@ -137,10 +178,20 @@ const CurrentWeather = ({
   if (isLoading) {
     return (
       <div className="current-weather">
-        <div className="weather-container skeleton">
-          <div className="current-weather-details">
-            <h2>Current weather...</h2>
+        <div className="weather-container">
+          <div className="current-weather-details skeleton-details">
+            <div className="skeleton-location"></div>
+            <div className="skeleton-date"></div>
+            <div className="skeleton-temp"></div>
           </div>
+          <div className="hourly-forecast-container skeleton-hourly">
+            <div className="skeleton-hourly-items">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="skeleton-hourly-item"></div>
+              ))}
+            </div>
+          </div>
+          <div className="weather-map skeleton-map"></div>
         </div>
       </div>
     );
@@ -172,7 +223,7 @@ const CurrentWeather = ({
               <p>{currentWeather.condition}</p>
             </div>
             <div className="high-low-temp">
-              <img src={currentWeather.weatherIcon} alt="weather icon" />
+              <i className={currentWeather.weatherIcon}></i>
               <span>
                 <span style={{ fontSize: "0.8em", color: "#aaa" }}>L:</span>{" "}
                 {dailyTemps.tempMin ? `${dailyTemps.tempMin}°` : "Sample"}{" "}
@@ -197,6 +248,223 @@ const CurrentWeather = ({
             </label>
           </div>
         </div>
+
+        {/* Hourly Forecast Scrollable Section */}
+        <div className="hourly-forecast-container">
+          <div
+            className={`hourly-forecast-scroll ${isDragging ? "dragging" : ""}`}
+            ref={scrollRef}
+            onWheel={(e) => {
+              if (scrollRef.current) {
+                scrollRef.current.scrollLeft += e.deltaY;
+              }
+            }}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+          >
+            {hourlyForecast && hourlyForecast.length > 0 && sunData ? (
+              (() => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                // Find the index of the first item that matches or is after the current hour
+                const startIndex = hourlyForecast.findIndex((hour) => {
+                  const hourDate = new Date(hour.time);
+                  return (
+                    hourDate.getDate() === now.getDate() &&
+                    hourDate.getHours() === currentHour
+                  );
+                });
+
+                const effectiveStartIndex = startIndex !== -1 ? startIndex : 0;
+                const slicedForecast = hourlyForecast.slice(
+                  effectiveStartIndex,
+                  effectiveStartIndex + 24
+                );
+
+                // Parse sunrise and sunset times (today and tomorrow)
+                const todaySunrise = sunData.sunrise
+                  ? new Date(sunData.sunrise)
+                  : null;
+                const todaySunset = sunData.sunset
+                  ? new Date(sunData.sunset)
+                  : null;
+                const tomorrowSunrise = sunData.tomorrowSunrise
+                  ? new Date(sunData.tomorrowSunrise)
+                  : null;
+                const tomorrowSunset = sunData.tomorrowSunset
+                  ? new Date(sunData.tomorrowSunset)
+                  : null;
+
+                // Build the forecast with sunrise/sunset inserted at correct positions
+                const forecastWithSun = [];
+                let todaySunriseInserted = false;
+                let todaySunsetInserted = false;
+                let tomorrowSunriseInserted = false;
+                let tomorrowSunsetInserted = false;
+
+                slicedForecast.forEach((hour, index) => {
+                  const hourTime = new Date(hour.time);
+
+                  // Insert today's sunrise if it falls before this hour and hasn't been inserted
+                  if (
+                    !todaySunriseInserted &&
+                    todaySunrise &&
+                    todaySunrise >= now &&
+                    todaySunrise <= hourTime
+                  ) {
+                    forecastWithSun.push({
+                      type: "sunrise",
+                      time: todaySunrise,
+                    });
+                    todaySunriseInserted = true;
+                  }
+
+                  // Insert today's sunset if it falls before this hour and hasn't been inserted
+                  if (
+                    !todaySunsetInserted &&
+                    todaySunset &&
+                    todaySunset >= now &&
+                    todaySunset <= hourTime
+                  ) {
+                    forecastWithSun.push({
+                      type: "sunset",
+                      time: todaySunset,
+                    });
+                    todaySunsetInserted = true;
+                  }
+
+                  // Insert tomorrow's sunrise if it falls before this hour
+                  if (
+                    !tomorrowSunriseInserted &&
+                    tomorrowSunrise &&
+                    tomorrowSunrise <= hourTime
+                  ) {
+                    forecastWithSun.push({
+                      type: "sunrise",
+                      time: tomorrowSunrise,
+                    });
+                    tomorrowSunriseInserted = true;
+                  }
+
+                  // Insert tomorrow's sunset if it falls before this hour
+                  if (
+                    !tomorrowSunsetInserted &&
+                    tomorrowSunset &&
+                    tomorrowSunset <= hourTime
+                  ) {
+                    forecastWithSun.push({
+                      type: "sunset",
+                      time: tomorrowSunset,
+                    });
+                    tomorrowSunsetInserted = true;
+                  }
+
+                  forecastWithSun.push({
+                    ...hour,
+                    type: "weather",
+                    originalIndex: index,
+                  });
+                });
+
+                // Append any sun events that come after all hours in the slice
+                if (
+                  !todaySunriseInserted &&
+                  todaySunrise &&
+                  todaySunrise >= now
+                ) {
+                  forecastWithSun.push({ type: "sunrise", time: todaySunrise });
+                }
+                if (!todaySunsetInserted && todaySunset && todaySunset >= now) {
+                  forecastWithSun.push({ type: "sunset", time: todaySunset });
+                }
+                if (!tomorrowSunriseInserted && tomorrowSunrise) {
+                  forecastWithSun.push({
+                    type: "sunrise",
+                    time: tomorrowSunrise,
+                  });
+                }
+
+                // Wind speed threshold for "Windy" condition (iPhone uses ~20 mph typically)
+                const WINDY_THRESHOLD = 20;
+
+                return forecastWithSun.map((item, index) => {
+                  if (item.type === "sunrise" || item.type === "sunset") {
+                    const timeString = item.time.toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    });
+                    const iconClass =
+                      item.type === "sunrise"
+                        ? "bi bi-sunrise-fill"
+                        : "bi bi-sunset-fill";
+                    const label =
+                      item.type === "sunrise" ? "Sunrise" : "Sunset";
+
+                    return (
+                      <div
+                        key={`${item.type}-${index}`}
+                        className={`hourly-item ${item.type}-item`}
+                      >
+                        <span className="hourly-time">{timeString}</span>
+                        <i className={`hourly-icon ${iconClass}`}></i>
+                        <span className="hourly-temp sun-label">{label}</span>
+                      </div>
+                    );
+                  }
+
+                  // Regular weather item
+                  const time = new Date(item.time);
+                  const hourString = time.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    hour12: true,
+                  });
+
+                  let iconClass = "bi bi-question-circle";
+                  let condition = item.condition;
+                  const isDayTime = item.is_day === 1;
+
+                  // Check for windy condition: high wind speed overrides other conditions
+                  // Similar to iPhone weather app behavior
+                  const isWindy =
+                    item.wind_speed && item.wind_speed >= WINDY_THRESHOLD;
+                  if (isWindy) {
+                    iconClass = "bi bi-wind";
+                  } else if (iconMap[condition]) {
+                    if (typeof iconMap[condition] === "object") {
+                      iconClass = isDayTime
+                        ? iconMap[condition].day
+                        : iconMap[condition].night;
+                    } else {
+                      iconClass = iconMap[condition];
+                    }
+                  }
+
+                  const isNow = item.originalIndex === 0;
+
+                  return (
+                    <div key={index} className="hourly-item">
+                      <span className="hourly-time">
+                        {isNow ? "Now" : hourString}
+                      </span>
+                      <i className={`hourly-icon ${iconClass}`}></i>
+                      <span className="hourly-temp">
+                        {Math.round(item.temperature)}°
+                      </span>
+                    </div>
+                  );
+                });
+              })()
+            ) : (
+              <div className="hourly-item" style={{ width: "100%" }}>
+                <span className="hourly-time">Loading forecast...</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="weather-map">
           <WeatherMap mapData={mapData} />
         </div>

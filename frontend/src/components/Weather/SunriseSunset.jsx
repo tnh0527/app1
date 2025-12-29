@@ -129,22 +129,13 @@ const SunriseSunset = ({ sunData, timeZone }) => {
     };
   }
 
-  const formatLocalTime = (time) => {
-    if (!time) return "";
-    return time.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
+  const formatLocalTime = () => {
+    if (!timeZone || !timeZone.time_zone) return "";
+    return moment().tz(timeZone.time_zone).format("h:mm:ss A");
   };
   const formatSunTime = (timeString) => {
-    const date = new Date(timeString);
-    return date.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    if (!timeString || !timeZone || !timeZone.time_zone) return "";
+    return moment.tz(timeString, timeZone.time_zone).format("h:mm A");
   };
 
   const formattedSunrise = sunData.sunrise
@@ -185,7 +176,7 @@ const SunriseSunset = ({ sunData, timeZone }) => {
           </div>
           <div className="local-time">
             <p>Local time: </p>
-            <span className="time">{formatLocalTime(currentTime)}</span>
+            <span className="time">{formatLocalTime()}</span>
           </div>
         </>
       )}

@@ -157,3 +157,54 @@ select:-webkit-autofill:focus {
     background-position: -200% 0;
   }
 }
+
+/* Weather Icon Gradients */
+i.bi-sun-fill {
+  background: linear-gradient(to bottom right, #fec80a, #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+i.bi-cloud-fill {
+  background: linear-gradient(to bottom right, #ffffff, #b0c4de);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+i.bi-cloud-rain-fill,
+i.bi-cloud-drizzle-fill {
+  background: linear-gradient(to bottom right, #cfd9df, #12a6e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+i.bi-cloud-lightning-rain-fill {
+  background: linear-gradient(to bottom right, #4b6cb7, #182848);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+i.bi-snow,
+i.bi-cloud-snow-fill {
+  background: linear-gradient(to bottom right, #e0eafc, #cfdef3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+i.bi-cloud-sun-fill {
+  background: linear-gradient(to bottom right, #ffffff 30%, #fec80a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+i.bi-moon-stars-fill {
+  background: linear-gradient(to bottom right, #9796f0, #fbc7d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+i.bi-cloud-fog2-fill {
+  background: linear-gradient(to bottom right, #d7d2cc, #304352);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
