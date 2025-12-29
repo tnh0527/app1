@@ -189,15 +189,15 @@ const WeatherEffects = ({ condition, temperature, windSpeed, feelsLike }) => {
       // Wind streaks
       wind: generateParticles(25, () => ({
         y: Math.random() * 100,
-        delay: Math.random() * 4,
-        duration: 0.8 + Math.random() * 0.6,
+        delay: Math.random() * 5,
+        duration: 1.5 + Math.random() * 0.88,
         length: 60 + Math.random() * 100,
         opacity: 0.15 + Math.random() * 0.2,
       })),
       windHeavy: generateParticles(45, () => ({
         y: Math.random() * 100,
-        delay: Math.random() * 2,
-        duration: 0.4 + Math.random() * 0.4,
+        delay: Math.random() * 4,
+        duration: 2 + Math.random() * 1.5,
         length: 100 + Math.random() * 150,
         opacity: 0.2 + Math.random() * 0.25,
       })),

@@ -137,60 +137,76 @@
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 60px;
-  height: 30px;
+  width: 70px;
+  height: 34px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 17px;
+  border: 2px solid cyan;
+  cursor: pointer;
+  padding: 0;
 }
 
 .toggle-switch input {
   opacity: 0;
   width: 0;
   height: 0;
+  position: absolute;
 }
 
+/* The white ball slider */
 .slider {
   position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: black;
-  transition: 0.4s;
-  border-radius: 30px;
-  outline: solid 2px cyan;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 24px;
+  top: 3px;
+  left: 3px;
   width: 24px;
-  left: 33px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.4s;
+  height: 24px;
+  background: #fff;
   border-radius: 50%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 3;
 }
 
+/* Move ball to right when checked (C) */
 input:checked + .slider {
-  background-color: var(--clr-primary-light);
-}
-
-input:checked + .slider:before {
-  transform: translateX(-30px);
+  transform: translateX(36px);
 }
 
 .labels {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100%;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
-  font-size: 14px;
-  color: white;
+  padding: 0 10px;
+  box-sizing: border-box;
   pointer-events: none;
+  z-index: 2;
+}
+
+.labels span {
+  font-size: 14px;
+  font-weight: 700;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+/* F visible (left), C hidden when unchecked */
+.labels span:first-child {
+  color: transparent;
+}
+.labels span:last-child {
+  color: #fff;
+}
+
+/* C visible (right), F hidden when checked */
+.toggle-switch:has(input:checked) .labels span:first-child {
+  color: #fff;
+}
+.toggle-switch:has(input:checked) .labels span:last-child {
+  color: transparent;
 }
 
 @media (max-width: 1550px) {

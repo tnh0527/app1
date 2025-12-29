@@ -46,3 +46,4 @@ test-results/
 
 # Sensitive local config
 mcp.json
+.roo

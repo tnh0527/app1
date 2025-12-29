@@ -23,33 +23,35 @@
 
 .search-input {
   padding: 12px 44px 12px 44px;
-  background: linear-gradient(
-    135deg,
-    rgba(30, 35, 50, 0.95),
-    rgba(20, 25, 40, 0.98)
-  );
+  background: transparent;
   color: #fff;
   font-size: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  border: none;
+  border-radius: 12px;
   width: 100%;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s ease;
+  box-shadow: none;
+}
+
+/* Ensure focus styles don't change layout size */
+.search-input,
+.search-input-wrapper {
+  box-sizing: border-box;
+}
+.search-input {
+  background-clip: padding-box;
 }
 
 .search-input:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: linear-gradient(
-    135deg,
-    rgba(35, 40, 55, 0.95),
-    rgba(25, 30, 45, 0.98)
-  );
+  /* no layout-changing hover on input; wrapper handles visuals */
+  color: #fff;
 }
 
 .search-input:focus {
   outline: none;
   border-color: rgba(0, 255, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1), 0 4px 20px rgba(0, 0, 0, 0.3);
+  /* keep only the subtle inner shadow; halo is handled by wrapper */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .search-input::placeholder {
@@ -59,7 +61,65 @@
 
 .search-input-wrapper {
   position: relative;
-  width: 500px;
+  width: 420px;
+  min-width: 320px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(30, 35, 50, 0.95),
+    rgba(20, 25, 40, 0.98)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0; /* keep input padding internal */
+}
+
+/* external halo so input size/box doesn't change on focus */
+.search-input-wrapper:focus-within::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 18px;
+  pointer-events: none;
+  box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.12);
+}
+
+/* Highly specific override to avoid global styles from other bundles */
+.search-bar .search-input-wrapper .search-input,
+.search-input-wrapper > .search-input {
+  background: transparent !important;
+  border: none !important;
+  width: 100% !important;
+  padding: 12px 44px !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+}
+
+/* Ensure the icon remains positioned inside the wrapper */
+.search-bar .search-input-wrapper .search-icon,
+.search-input-wrapper .search-icon {
+  left: 14px;
+}
+
+/* Prevent browser autofill or focus-fill from painting a rounded box */
+.search-input:-webkit-autofill,
+.search-input:-webkit-autofill:hover,
+.search-input:-webkit-autofill:focus,
+.search-input:-internal-autofill-selected {
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* also neutralize any focused outline from other css */
+.search-input:focus {
+  outline: none !important;
 }
 
 .location-external-link {

@@ -346,52 +346,116 @@
 }
 
 /* ============================================
-   WIND - Horizontal streaks
+   WIND - Flowing particles and organic streaks
    ============================================ */
 .fx-wind {
   overflow: hidden;
 }
 
+/* Main wind particle - organic flowing shape */
 .wind-streak {
   position: absolute;
-  left: -200px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(180, 200, 220, 0.15) 10%,
-    rgba(200, 220, 240, 0.35) 50%,
-    rgba(180, 200, 220, 0.15) 90%,
-    transparent 100%
-  );
-  animation: wind-blow linear infinite;
-}
-
-.wind-streak.extreme {
+  left: -250px;
   height: 2px;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(160, 180, 200, 0.2) 10%,
-    rgba(180, 200, 220, 0.5) 50%,
-    rgba(160, 180, 200, 0.2) 90%,
+    rgba(180, 220, 255, 0.08) 5%,
+    rgba(200, 235, 255, 0.25) 20%,
+    rgba(220, 245, 255, 0.4) 45%,
+    rgba(200, 235, 255, 0.25) 70%,
+    rgba(180, 220, 255, 0.08) 95%,
     transparent 100%
   );
+  border-radius: 50%;
+  filter: blur(0.5px);
+  animation: wind-flow ease-in-out infinite;
+  transform-origin: left center;
 }
 
-@keyframes wind-blow {
+/* Add subtle curve to wind path */
+.wind-streak::before {
+  content: "";
+  position: absolute;
+  width: 60%;
+  height: 100%;
+  left: 20%;
+  background: inherit;
+  border-radius: inherit;
+  transform: translateY(-2px) rotate(-2deg);
+  opacity: 0.6;
+}
+
+.wind-streak::after {
+  content: "";
+  position: absolute;
+  width: 40%;
+  height: 100%;
+  left: 30%;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: inherit;
+  filter: blur(1px);
+}
+
+/* Extreme/storm wind - more intense */
+.wind-streak.extreme {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(160, 200, 240, 0.15) 5%,
+    rgba(180, 220, 255, 0.4) 25%,
+    rgba(200, 240, 255, 0.6) 50%,
+    rgba(180, 220, 255, 0.4) 75%,
+    rgba(160, 200, 240, 0.15) 95%,
+    transparent 100%
+  );
+  filter: blur(0.3px);
+}
+
+.wind-streak.extreme::before {
+  transform: translateY(-3px) rotate(-3deg);
+  opacity: 0.7;
+}
+
+.wind-streak.extreme::after {
+  background: rgba(255, 255, 255, 0.25);
+  width: 50%;
+  left: 25%;
+}
+
+/* Organic flowing animation with slight wave */
+@keyframes wind-flow {
   0% {
-    transform: translateX(0);
+    transform: translateX(0) scaleX(0.3) translateY(0);
     opacity: 0;
   }
-  10% {
+  5% {
+    transform: translateX(5vw) scaleX(0.6) translateY(-2px);
+    opacity: 0.4;
+  }
+  15% {
+    transform: translateX(15vw) scaleX(1) translateY(3px);
+    opacity: 0.9;
+  }
+  30% {
+    transform: translateX(30vw) scaleX(1.2) translateY(-1px);
     opacity: 1;
   }
-  90% {
-    opacity: 0.8;
+  50% {
+    transform: translateX(50vw) scaleX(1) translateY(4px);
+    opacity: 0.9;
+  }
+  70% {
+    transform: translateX(70vw) scaleX(0.9) translateY(-2px);
+    opacity: 0.7;
+  }
+  85% {
+    transform: translateX(85vw) scaleX(0.7) translateY(2px);
+    opacity: 0.4;
   }
   100% {
-    transform: translateX(calc(100vw + 400px));
+    transform: translateX(calc(100vw + 300px)) scaleX(0.4) translateY(0);
     opacity: 0;
   }
 }

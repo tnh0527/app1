@@ -20,6 +20,7 @@ const WeatherMap = ({ mapData }) => {
   const markerRef = useRef(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [hasLocation, setHasLocation] = useState(true); // show default map by default
+  const [mapBearing, setMapBearing] = useState(0); // Track map rotation for compass
 
   // Home view = where the map should return after pan/zoom.
   const homeViewRef = useRef({
@@ -133,6 +134,11 @@ const WeatherMap = ({ mapData }) => {
       setIsMapLoading(false);
     });
 
+    // Track map rotation for compass
+    map.current.on("rotate", () => {
+      setMapBearing(map.current.getBearing());
+    });
+
     return () => {
       if (markerRef.current) {
         markerRef.current.remove();
@@ -158,6 +164,23 @@ const WeatherMap = ({ mapData }) => {
   return (
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
+
+      {/* Compass that rotates with map */}
+      <div
+        className="map-compass"
+        style={{ transform: `rotate(${-mapBearing}deg)` }}
+      >
+        <div className="compass-ring">
+          <span className="compass-direction compass-n">N</span>
+          <span className="compass-direction compass-e">E</span>
+          <span className="compass-direction compass-s">S</span>
+          <span className="compass-direction compass-w">W</span>
+          <div className="compass-needle">
+            <div className="needle-north"></div>
+            <div className="needle-south"></div>
+          </div>
+        </div>
+      </div>
 
       {/* Map loading overlay - show spinner while map is loading */}
       {isMapLoading && (

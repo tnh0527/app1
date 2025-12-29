@@ -11,6 +11,149 @@
   height: 100%;
 }
 
+/* Futuristic Compass Styles */
+.map-compass {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  width: 70px;
+  height: 70px;
+  transition: transform 0.15s ease-out;
+}
+
+.compass-ring {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at center,
+    rgba(10, 15, 25, 0.95) 0%,
+    rgba(5, 10, 20, 0.98) 100%
+  );
+  backdrop-filter: blur(12px);
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.5),
+    inset 0 0 30px rgba(0, 255, 255, 0.05);
+}
+
+/* Outer glow ring */
+.compass-ring::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  animation: compass-pulse 3s ease-in-out infinite;
+}
+
+/* Inner circle accent */
+.compass-ring::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 255, 0.8) 0%,
+    rgba(0, 255, 255, 0.2) 60%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+}
+
+@keyframes compass-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+.compass-direction {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+  font-family: "Consolas", "Monaco", monospace;
+}
+
+.compass-n {
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: cyan;
+  font-size: 11px;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.compass-s {
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-e {
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.compass-w {
+  left: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.compass-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 36px;
+}
+
+.needle-north {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 16px solid cyan;
+  filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.8));
+}
+
+.needle-south {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 14px solid rgba(255, 255, 255, 0.25);
+}
+
 .current-location-marker {
   width: 14px;
   height: 14px;
