@@ -1,42 +1,74 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./NetWorth.css";
 import { dashboardApi, snapshotsApi } from "../../api/networthApi";
 import { HeroSection } from "../../components/NetWorth/HeroSection";
 import { NetWorthTimeline } from "../../components/NetWorth/NetWorthTimeline";
 import { AssetLiabilityBreakdown } from "../../components/NetWorth/AssetLiabilityBreakdown";
 import { WhatChanged } from "../../components/NetWorth/WhatChanged";
-import { SubscriptionsPanel } from "../../components/NetWorth/SubscriptionsPanel";
 import { CashFlowPanel } from "../../components/NetWorth/CashFlowPanel";
 import { MilestonesPanel } from "../../components/NetWorth/MilestonesPanel";
 import { AccountsPanel } from "../../components/NetWorth/AccountsPanel";
+import { RetirementPanel } from "../../components/NetWorth/RetirementPanel";
 import { AddAccountModal } from "../../components/NetWorth/AddAccountModal";
 import { UpdateValuesModal } from "../../components/NetWorth/UpdateValuesModal";
+import { NetWorthSkeleton } from "./NetWorthSkeleton";
+import {
+  ErrorState,
+  TimeoutState,
+  EmptyState,
+} from "../../components/shared/LoadingStates";
+
+const REQUEST_TIMEOUT = 15000; // 15 seconds timeout
 
 const NetWorth = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isTimedOut, setIsTimedOut] = useState(false);
   const [timelineRange, setTimelineRange] = useState("1y");
   const [showForecast, setShowForecast] = useState(true);
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
   const [isUpdateValuesOpen, setIsUpdateValuesOpen] = useState(false);
+  const timeoutRef = useRef(null);
 
   const fetchDashboardData = useCallback(async () => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    setLoading(true);
+    setError(null);
+    setIsTimedOut(false);
+
+    // Set up timeout
+    timeoutRef.current = setTimeout(() => {
+      setIsTimedOut(true);
+      setLoading(false);
+    }, REQUEST_TIMEOUT);
+
     try {
-      setLoading(true);
       const data = await dashboardApi.getFullDashboard(timelineRange);
+      clearTimeout(timeoutRef.current);
       setDashboardData(data);
       setError(null);
     } catch (err) {
+      clearTimeout(timeoutRef.current);
       console.error("Failed to fetch dashboard data:", err);
       setError("Failed to load dashboard data. Please try again.");
     } finally {
+      clearTimeout(timeoutRef.current);
       setLoading(false);
     }
   }, [timelineRange]);
 
   useEffect(() => {
     fetchDashboardData();
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [fetchDashboardData]);
 
   const handleRefresh = async () => {
@@ -58,32 +90,38 @@ const NetWorth = () => {
     fetchDashboardData();
   };
 
+  // Loading state - show skeleton
   if (loading && !dashboardData) {
+    return <NetWorthSkeleton />;
+  }
+
+  // Timeout state
+  if (isTimedOut && !dashboardData) {
     return (
       <div className="networth-page">
-        <div className="networth-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading your financial dashboard...</p>
-        </div>
+        <TimeoutState
+          title="Request Timed Out"
+          message="The server took too long to respond. Please check your connection and try again."
+          onRetry={fetchDashboardData}
+        />
       </div>
     );
   }
 
+  // Error state
   if (error && !dashboardData) {
     return (
       <div className="networth-page">
-        <div className="networth-error">
-          <i className="bi bi-exclamation-triangle"></i>
-          <p>{error}</p>
-          <button onClick={fetchDashboardData} className="retry-btn">
-            Try Again
-          </button>
-        </div>
+        <ErrorState
+          title="Failed to Load Data"
+          message={error}
+          onRetry={fetchDashboardData}
+        />
       </div>
     );
   }
 
-  const { summary, timeline, forecast, accounts, cash_flow, subscriptions, insights, milestones } =
+  const { summary, timeline, forecast, accounts, cash_flow, insights, milestones } =
     dashboardData || {};
 
   return (
@@ -138,6 +176,11 @@ const NetWorth = () => {
           <AssetLiabilityBreakdown summary={summary} accounts={accounts} />
         </div>
 
+        {/* Retirement Accounts */}
+        <div className="grid-item retirement-section">
+          <RetirementPanel accounts={accounts} />
+        </div>
+
         {/* What Changed Panel */}
         <div className="grid-item changes-section">
           <WhatChanged insights={insights} />
@@ -151,11 +194,6 @@ const NetWorth = () => {
         {/* Cash Flow */}
         <div className="grid-item cashflow-section">
           <CashFlowPanel cashFlow={cash_flow} />
-        </div>
-
-        {/* Subscriptions */}
-        <div className="grid-item subscriptions-section">
-          <SubscriptionsPanel subscriptions={subscriptions} />
         </div>
 
         {/* Milestones */}

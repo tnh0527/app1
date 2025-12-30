@@ -1,0 +1,699 @@
+/* Travel Dashboard Page Styles */
+
+.travel-page {
+  flex: 1;
+  min-width: 0;
+  padding: var(--page-vertical-padding) var(--page-horizontal-padding);
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--clr-secondary) 0%, #0a1628 50%, #050e2e 100%);
+  overflow-x: hidden;
+}
+
+/* Loading & Error States */
+.travel-loading,
+.travel-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+  color: var(--clr-silver);
+}
+
+.travel-loading .loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(32, 133, 133, 0.2);
+  border-top-color: #00d4aa;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.travel-error i {
+  font-size: 48px;
+  color: var(--clr-scarlet);
+}
+
+.retry-btn {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+}
+
+/* Header */
+.travel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-title h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--clr-white);
+  margin: 0;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-subtitle {
+  font-size: 14px;
+  color: var(--clr-silver);
+}
+
+.header-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.view-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--clr-silver);
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  color: var(--clr-white);
+}
+
+.toggle-btn.active {
+  background: rgba(0, 212, 170, 0.2);
+  color: #00d4aa;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  color: white;
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--clr-silver);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--clr-white);
+  border-color: #00d4aa;
+}
+
+/* Main Grid */
+.travel-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto;
+  gap: 20px;
+  width: 100%;
+}
+
+.grid-item {
+  background: linear-gradient(
+    135deg,
+    rgba(3, 22, 34, 0.9) 0%,
+    rgba(5, 14, 46, 0.8) 100%
+  );
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.grid-item:hover {
+  border-color: rgba(0, 212, 170, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Grid Layout */
+.timeline-section {
+  grid-column: span 8;
+  min-height: 400px;
+}
+
+.upcoming-section {
+  grid-column: span 4;
+  max-height: 450px;
+}
+
+.budget-section {
+  grid-column: span 6;
+}
+
+.tools-section {
+  grid-column: span 6;
+}
+
+.stats-section {
+  grid-column: span 4;
+}
+
+.bucketlist-section {
+  grid-column: span 8;
+  max-height: 400px;
+}
+
+/* Panel Header Style */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-title i {
+  color: #00d4aa;
+}
+
+.panel-content {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Trip Status Colors */
+.status-planning {
+  color: #ffc107;
+}
+
+.status-booked {
+  color: #17a2b8;
+}
+
+.status-in_progress {
+  color: #00d4aa;
+}
+
+.status-completed {
+  color: #6c757d;
+}
+
+.status-cancelled {
+  color: #dc3545;
+}
+
+/* Badge Styles */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.planning {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+}
+
+.status-badge.booked {
+  background: rgba(23, 162, 184, 0.15);
+  color: #17a2b8;
+}
+
+.status-badge.in_progress {
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+}
+
+.status-badge.completed {
+  background: rgba(108, 117, 125, 0.15);
+  color: #6c757d;
+}
+
+.status-badge.cancelled {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+/* Trip Type Icons */
+.trip-type-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.trip-type-icon.vacation {
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+}
+
+.trip-type-icon.business {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.trip-type-icon.adventure {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.trip-type-icon.city_break {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.trip-type-icon.beach {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+}
+
+.trip-type-icon.road_trip {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.trip-type-icon.backpacking {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+/* Responsive */
+@media screen and (max-width: 1400px) {
+  .travel-page {
+    padding: var(--page-vertical-padding) 20px;
+  }
+
+  .timeline-section {
+    grid-column: span 12;
+  }
+
+  .upcoming-section {
+    grid-column: span 6;
+  }
+
+  .budget-section {
+    grid-column: span 6;
+  }
+
+  .tools-section {
+    grid-column: span 6;
+  }
+
+  .stats-section {
+    grid-column: span 6;
+  }
+
+  .bucketlist-section {
+    grid-column: span 12;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .travel-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .upcoming-section,
+  .budget-section,
+  .tools-section,
+  .stats-section {
+    grid-column: span 12;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .travel-page {
+    padding: 16px;
+  }
+
+  .header-title h1 {
+    font-size: 24px;
+  }
+
+  .view-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .action-btn.primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grid-item {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.grid-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.grid-item:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.grid-item:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.grid-item:nth-child(4) {
+  animation-delay: 0.25s;
+}
+.grid-item:nth-child(5) {
+  animation-delay: 0.3s;
+}
+.grid-item:nth-child(6) {
+  animation-delay: 0.35s;
+}
+
+/* Scrollbar Styling */
+.panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 170, 0.3);
+  border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 170, 0.5);
+}
+
+/* ==========================================
+   Skeleton Loading Styles
+   ========================================== */
+
+.skeleton-header .header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-header .header-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.view-toggle-skeleton {
+  display: flex;
+  gap: 8px;
+}
+
+/* Hero Skeleton */
+.travel-hero-skeleton {
+  background: linear-gradient(
+    135deg,
+    rgba(3, 22, 34, 0.95) 0%,
+    rgba(5, 14, 46, 0.9) 100%
+  );
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 32px;
+  margin-bottom: 24px;
+  min-height: 200px;
+}
+
+.hero-skeleton-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hero-skeleton-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-skeleton-countdown {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.countdown-item-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-skeleton-side {
+  flex-shrink: 0;
+}
+
+/* Panel Skeleton */
+.panel-skeleton {
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-skeleton-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Timeline Skeleton */
+.timeline-skeleton-items {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.timeline-card-skeleton {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.timeline-card-content-skeleton {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timeline-card-footer-skeleton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+/* Upcoming Skeleton */
+.upcoming-list-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upcoming-item-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+}
+
+.upcoming-item-content-skeleton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Budget Skeleton */
+.budget-breakdown-skeleton {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.budget-item-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 100px;
+}
+
+/* Tools Skeleton */
+.tools-tabs-skeleton {
+  display: flex;
+  gap: 8px;
+}
+
+.tools-content-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+/* Stats Skeleton */
+.stats-grid-skeleton {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.stat-item-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+}
+
+/* Bucket List Skeleton */
+.bucketlist-grid-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goal-card-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+}
+
+.goal-content-skeleton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Responsive Skeleton */
+@media screen and (max-width: 1200px) {
+  .timeline-skeleton-items {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .hero-skeleton-content {
+    flex-direction: column;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .timeline-skeleton-items {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid-skeleton {
+    grid-template-columns: 1fr;
+  }
+}
+

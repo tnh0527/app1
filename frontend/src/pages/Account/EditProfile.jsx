@@ -13,11 +13,21 @@ const initialState = {
   last_name: "",
   username: "",
   email: "",
+  career_title: "",
+  company: "",
+  bio: "",
+  phone_number: "",
+  website: "",
+  linkedin: "",
+  github: "",
+  instagram: "",
   city: "",
   state: "",
   street_address: "",
   zip_code: "",
+  country: "United States",
   birthdate: null,
+  member_since: "",
 };
 
 const formReducer = (state, action) => {
@@ -39,9 +49,10 @@ const EditProfile = () => {
   const [initialProfile, setInitialProfile] = useState(initialState);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [savedChanges, setSavedChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState("personal");
 
   useEffect(() => {
     if (profile) {
@@ -104,7 +115,7 @@ const EditProfile = () => {
 
   const saveProfile = async (e) => {
     e?.preventDefault();
-    setLoading(true);
+    setSaving(true);
     const updatedFields = {};
     for (const key in state) {
       if (state[key] !== initialProfile[key]) {
@@ -112,8 +123,7 @@ const EditProfile = () => {
       }
     }
     if (Object.keys(updatedFields).length === 0) {
-      console.log("No changes detected.");
-      setLoading(false);
+      setSaving(false);
       return;
     }
     try {
@@ -133,7 +143,6 @@ const EditProfile = () => {
       if (!response.ok) {
         const errorData = await response.json();
         setErrors(errorData.errors || {});
-        console.error("Failed to update profile.");
       } else {
         const updatedProfile = await response.json();
         const birthdate = updatedProfile.birthdate
@@ -147,246 +156,463 @@ const EditProfile = () => {
         setProfile(normalizedProfile);
         dispatch({ type: "SET_PROFILE", payload: normalizedProfile });
         setInitialProfile(normalizedProfile);
-
-        console.log("Successfully updated profile.");
-        setSavedChanges(!savedChanges);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
     } finally {
-      setLoading(false);
+      setSaving(false);
       setHasChanges(false);
     }
   };
 
-  return (
-    <div className="account-page">
-      <div className="account-header">
-        <div>
-          <h1 className="account-title">My Account</h1>
-          <p className="account-subtitle">Update your profile information</p>
+  const tabs = [
+    { id: "personal", label: "Personal", icon: "bi-person" },
+    { id: "professional", label: "Professional", icon: "bi-briefcase" },
+    { id: "location", label: "Location", icon: "bi-geo-alt" },
+    { id: "social", label: "Social", icon: "bi-link-45deg" },
+  ];
+
+  const getFullName = () => {
+    const name = `${state.first_name} ${state.last_name}`.trim();
+    return name || state.username || "User";
+  };
+
+  const getLocation = () => {
+    const parts = [state.city, state.state, state.country].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "Location not set";
+  };
+
+  if (loading) {
+    return (
+      <div className="account-page">
+        <div className="account-loading">
+          <SyncLoader color="#00d4aa" size={12} />
+          <p>Loading profile...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="account-grid">
-        <div className="account-card account-card--avatar">
-          <div className="account-avatar">
-            <img src={profilePic} alt="Profile" className="profile-img" />
-            <input
-              className="upload-input"
-              id="formFileSm"
-              type="file"
-              accept="image/*"
-            />
+  return (
+    <div className="account-page">
+      {/* Animated Background Elements */}
+      <div className="account-bg-effects">
+        <div className="bg-orb bg-orb-1"></div>
+        <div className="bg-orb bg-orb-2"></div>
+        <div className="bg-orb bg-orb-3"></div>
+        <div className="bg-grid"></div>
+      </div>
+
+      <div className="account-container">
+        {/* Left Column - Profile Card */}
+        <aside className="profile-sidebar">
+          <div className="profile-card glass-card">
+            {/* Avatar Section */}
+            <div className="profile-avatar-wrapper">
+              <div className="avatar-glow"></div>
+              <div className="profile-avatar">
+                <img src={profilePic} alt="Profile" />
+                <button
+                  className="avatar-edit-btn"
+                  onClick={() => setIsModalOpen(true)}
+                  aria-label="Change profile picture"
+                >
+                  <i className="bi bi-camera-fill"></i>
+                </button>
+              </div>
+            </div>
+
+            {/* Profile Info */}
+            <div className="profile-info">
+              <h2 className="profile-name">{getFullName()}</h2>
+              {state.career_title && (
+                <p className="profile-title">
+                  {state.career_title}
+                  {state.company && <span className="at-company"> @ {state.company}</span>}
+                </p>
+              )}
+              {state.bio && <p className="profile-bio">{state.bio}</p>}
+            </div>
+
+            {/* Quick Stats */}
+            <div className="profile-stats">
+              <div className="stat-item">
+                <i className="bi bi-geo-alt-fill"></i>
+                <span>{getLocation()}</span>
+              </div>
+              <div className="stat-item">
+                <i className="bi bi-envelope-fill"></i>
+                <span>{state.email || "No email"}</span>
+              </div>
+              <div className="stat-item">
+                <i className="bi bi-at"></i>
+                <span>@{state.username}</span>
+              </div>
+              {state.phone_number && (
+                <div className="stat-item">
+                  <i className="bi bi-telephone-fill"></i>
+                  <span>{state.phone_number}</span>
+                </div>
+              )}
+              <div className="stat-item">
+                <i className="bi bi-calendar-check-fill"></i>
+                <span>Joined {state.member_since || "—"}</span>
+              </div>
+            </div>
+
+            {/* Social Links */}
+            {(state.linkedin || state.github || state.instagram || state.website) && (
+              <div className="profile-social">
+                {state.linkedin && (
+                  <a href={state.linkedin} target="_blank" rel="noopener noreferrer" className="social-link linkedin">
+                    <i className="bi bi-linkedin"></i>
+                  </a>
+                )}
+                {state.github && (
+                  <a href={state.github} target="_blank" rel="noopener noreferrer" className="social-link github">
+                    <i className="bi bi-github"></i>
+                  </a>
+                )}
+                {state.instagram && (
+                  <a href={state.instagram} target="_blank" rel="noopener noreferrer" className="social-link instagram">
+                    <i className="bi bi-instagram"></i>
+                  </a>
+                )}
+                {state.website && (
+                  <a href={state.website} target="_blank" rel="noopener noreferrer" className="social-link website">
+                    <i className="bi bi-globe"></i>
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Right Column - Edit Forms */}
+        <main className="profile-main">
+          {/* Header */}
+          <div className="profile-header">
+            <div className="header-content">
+              <h1>Edit Profile</h1>
+              <p>Update your personal information and settings</p>
+            </div>
             <button
-              type="button"
-              className="upload-button"
-              onClick={() => setIsModalOpen(true)}
-              aria-label="Change profile picture"
+              className="save-btn"
+              onClick={saveProfile}
+              disabled={!hasChanges || saving}
             >
-              <i className="bi bi-image"></i>
+              {saving ? (
+                <SyncLoader loading={saving} size={6} color="#fff" />
+              ) : (
+                <>
+                  <i className="bi bi-check2"></i>
+                  Save Changes
+                </>
+              )}
             </button>
           </div>
 
-          <div className="account-avatar-meta">
-            <div className="account-meta-row">
-              <span className="account-meta-label">Username</span>
-              <span className="account-meta-value">
-                {state.username || "—"}
-              </span>
-            </div>
-            <div className="account-meta-row">
-              <span className="account-meta-label">Email</span>
-              <span className="account-meta-value">{state.email || "—"}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="account-card account-card--form">
-          <div className="account-card-header">
-            <h3>Personal Information</h3>
-            <p>Fields are saved when you click Save.</p>
-          </div>
-
-          <form className="profile-form" onSubmit={saveProfile}>
-            <div className="form-group-row">
-              <div className="form-group">
-                <label>First Name</label>
-                <input
-                  id="first_name"
-                  name="first_name"
-                  type="text"
-                  value={state.first_name}
-                  onChange={handleChange}
-                  onKeyDown={(e) => {
-                    if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
-                      e.preventDefault();
-                    }
-                  }}
-                  className={`form-control ${
-                    errors.first_name ? "is-invalid" : ""
-                  }`}
-                />
-                <div className="invalid-feedback">{errors.first_name}</div>
-              </div>
-
-              <div className="form-group">
-                <label>Last Name</label>
-                <input
-                  id="last_name"
-                  name="last_name"
-                  type="text"
-                  value={state.last_name}
-                  onChange={handleChange}
-                  onKeyDown={(e) => {
-                    if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
-                      e.preventDefault();
-                    }
-                  }}
-                  className={`form-control ${
-                    errors.last_name ? "is-invalid" : ""
-                  }`}
-                />
-                <div className="invalid-feedback">{errors.last_name}</div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Username</label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                value={state.username}
-                onChange={handleChange}
-                className={`form-control ${
-                  errors.username ? "is-invalid" : ""
-                }`}
-              />
-              <div className="invalid-feedback">{errors.username}</div>
-            </div>
-
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                id="email"
-                name="email"
-                type="text"
-                value={state.email}
-                onChange={handleChange}
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
-              />
-              <div className="invalid-feedback">{errors.email}</div>
-            </div>
-
-            <div className="form-group-row">
-              <div className="form-group">
-                <label>State</label>
-                <select
-                  id="state"
-                  name="state"
-                  value={state.state}
-                  onChange={handleChange}
-                  className={`form-control ${errors.state ? "is-invalid" : ""}`}
-                >
-                  <option disabled value=""></option>
-                  {usStates.map((state) => (
-                    <option key={state.abbreviation} value={state.abbreviation}>
-                      {state.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="invalid-feedback">{errors.state}</div>
-              </div>
-
-              <div className="form-group">
-                <label>City</label>
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  value={state.city}
-                  onKeyDown={(e) => {
-                    if (!/^[a-zA-Z]$/.test(e.key) && e.key !== "Backspace") {
-                      e.preventDefault();
-                    }
-                  }}
-                  onChange={handleChange}
-                  className={`form-control ${errors.city ? "is-invalid" : ""}`}
-                />
-                <div className="invalid-feedback">{errors.city}</div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Street Address</label>
-              <input
-                id="street_address"
-                name="street_address"
-                type="text"
-                value={state.street_address}
-                onChange={handleChange}
-                className={`form-control ${
-                  errors.street_address ? "is-invalid" : ""
-                }`}
-              />
-              <div className="invalid-feedback">{errors.street_address}</div>
-            </div>
-
-            <div className="form-group">
-              <label>Zip Code</label>
-              <input
-                id="zip_code"
-                name="zip_code"
-                type="text"
-                value={state.zip_code}
-                onKeyDown={(e) => {
-                  if (!/^[0-9]$/.test(e.key) && e.key !== "Backspace") {
-                    e.preventDefault();
-                  }
-                }}
-                onChange={handleChange}
-                className={`form-control ${
-                  errors.zip_code ? "is-invalid" : ""
-                }`}
-              />
-              <div className="invalid-feedback">{errors.zip_code}</div>
-            </div>
-
-            <div className="form-group">
-              <label>Birthdate</label>
-              <DatePicker
-                id="birthdate"
-                selected={state.birthdate ? new Date(state.birthdate) : null}
-                onChangeRaw={handleRawDateChange}
-                onFocus={(e) => {
-                  setErrors((prevErrors) => ({ ...prevErrors, birthdate: "" }));
-                }}
-                dateFormat="MM/dd/yyyy"
-                open={false}
-                className={`form-control ${
-                  errors.birthdate ? "is-invalid" : ""
-                }`}
-              />
-              <div className="invalid-feedback">{errors.birthdate}</div>
-            </div>
-
-            <div className="button-container">
+          {/* Tab Navigation */}
+          <div className="profile-tabs">
+            {tabs.map((tab) => (
               <button
-                type="submit"
-                className="button profile-button"
-                disabled={!hasChanges}
+                key={tab.id}
+                className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => setActiveTab(tab.id)}
               >
-                {loading ? (
-                  <SyncLoader loading={loading} size={10} color={"#22D6D6"} />
-                ) : (
-                  "Save"
-                )}
+                <i className={`bi ${tab.icon}`}></i>
+                <span>{tab.label}</span>
               </button>
-            </div>
-          </form>
-        </div>
+            ))}
+          </div>
+
+          {/* Form Content */}
+          <div className="profile-form-container glass-card">
+            <form className="profile-form" onSubmit={saveProfile}>
+              {/* Personal Tab */}
+              {activeTab === "personal" && (
+                <div className="form-section fade-in">
+                  <div className="section-header">
+                    <h3><i className="bi bi-person"></i> Personal Information</h3>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>First Name</label>
+                      <input
+                        name="first_name"
+                        type="text"
+                        value={state.first_name}
+                        onChange={handleChange}
+                        placeholder="Enter first name"
+                        className={errors.first_name ? "is-invalid" : ""}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Last Name</label>
+                      <input
+                        name="last_name"
+                        type="text"
+                        value={state.last_name}
+                        onChange={handleChange}
+                        placeholder="Enter last name"
+                        className={errors.last_name ? "is-invalid" : ""}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Username</label>
+                      <div className="input-with-prefix">
+                        <span className="prefix">@</span>
+                        <input
+                          name="username"
+                          type="text"
+                          value={state.username}
+                          onChange={handleChange}
+                          placeholder="username"
+                          className={errors.username ? "is-invalid" : ""}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Email</label>
+                      <input
+                        name="email"
+                        type="email"
+                        value={state.email}
+                        onChange={handleChange}
+                        placeholder="email@example.com"
+                        className={errors.email ? "is-invalid" : ""}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Phone</label>
+                      <input
+                        name="phone_number"
+                        type="tel"
+                        value={state.phone_number}
+                        onChange={handleChange}
+                        placeholder="+1 (555) 000-0000"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Birthdate</label>
+                      <DatePicker
+                        selected={state.birthdate ? new Date(state.birthdate) : null}
+                        onChangeRaw={handleRawDateChange}
+                        dateFormat="MM/dd/yyyy"
+                        placeholderText="MM/DD/YYYY"
+                        open={false}
+                        className={errors.birthdate ? "is-invalid" : ""}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Bio</label>
+                    <textarea
+                      name="bio"
+                      value={state.bio}
+                      onChange={handleChange}
+                      placeholder="Tell us about yourself..."
+                      rows={3}
+                      maxLength={500}
+                    />
+                    <span className="char-count">{state.bio?.length || 0}/500</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Professional Tab */}
+              {activeTab === "professional" && (
+                <div className="form-section fade-in">
+                  <div className="section-header">
+                    <h3><i className="bi bi-briefcase"></i> Professional Information</h3>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Job Title</label>
+                      <input
+                        name="career_title"
+                        type="text"
+                        value={state.career_title}
+                        onChange={handleChange}
+                        placeholder="e.g., Software Engineer"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Company</label>
+                      <input
+                        name="company"
+                        type="text"
+                        value={state.company}
+                        onChange={handleChange}
+                        placeholder="e.g., Google"
+                      />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>Website</label>
+                      <input
+                        name="website"
+                        type="url"
+                        value={state.website}
+                        onChange={handleChange}
+                        placeholder="https://yourwebsite.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Location Tab */}
+              {activeTab === "location" && (
+                <div className="form-section fade-in">
+                  <div className="section-header">
+                    <h3><i className="bi bi-geo-alt"></i> Location</h3>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Country</label>
+                      <select
+                        name="country"
+                        value={state.country}
+                        onChange={handleChange}
+                      >
+                        <option value="United States">United States</option>
+                        <option value="Canada">Canada</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Germany">Germany</option>
+                        <option value="France">France</option>
+                        <option value="Japan">Japan</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>State / Province</label>
+                      <select
+                        name="state"
+                        value={state.state}
+                        onChange={handleChange}
+                      >
+                        <option value="">Select State</option>
+                        {usStates.map((s) => (
+                          <option key={s.abbreviation} value={s.abbreviation}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>City</label>
+                      <input
+                        name="city"
+                        type="text"
+                        value={state.city}
+                        onChange={handleChange}
+                        placeholder="Enter city"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>ZIP Code</label>
+                      <input
+                        name="zip_code"
+                        type="text"
+                        value={state.zip_code}
+                        onChange={handleChange}
+                        placeholder="10001"
+                      />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>Street Address</label>
+                      <input
+                        name="street_address"
+                        type="text"
+                        value={state.street_address}
+                        onChange={handleChange}
+                        placeholder="123 Main St, Apt 4B"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Social Tab */}
+              {activeTab === "social" && (
+                <div className="form-section fade-in">
+                  <div className="section-header">
+                    <h3><i className="bi bi-link-45deg"></i> Social Links</h3>
+                  </div>
+
+                  <div className="social-grid">
+                    <div className="social-input-group">
+                      <div className="social-icon linkedin">
+                        <i className="bi bi-linkedin"></i>
+                      </div>
+                      <div className="social-input-content">
+                        <label>LinkedIn</label>
+                        <input
+                          name="linkedin"
+                          type="url"
+                          value={state.linkedin}
+                          onChange={handleChange}
+                          placeholder="https://linkedin.com/in/username"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="social-input-group">
+                      <div className="social-icon github">
+                        <i className="bi bi-github"></i>
+                      </div>
+                      <div className="social-input-content">
+                        <label>GitHub</label>
+                        <input
+                          name="github"
+                          type="url"
+                          value={state.github}
+                          onChange={handleChange}
+                          placeholder="https://github.com/username"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="social-input-group">
+                      <div className="social-icon instagram">
+                        <i className="bi bi-instagram"></i>
+                      </div>
+                      <div className="social-input-content">
+                        <label>Instagram</label>
+                        <input
+                          name="instagram"
+                          type="url"
+                          value={state.instagram}
+                          onChange={handleChange}
+                          placeholder="https://instagram.com/username"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
+        </main>
       </div>
+
+      {/* Profile Picture Modal */}
       <ProfilePicModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

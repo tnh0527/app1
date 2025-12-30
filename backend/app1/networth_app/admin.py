@@ -4,7 +4,6 @@ from .models import (
     FinancialAccount,
     AccountSnapshot,
     NetWorthSnapshot,
-    Subscription,
     CashFlowEntry,
     NetWorthMilestone,
     ChangeLog,
@@ -105,22 +104,6 @@ class NetWorthSnapshotAdmin(admin.ModelAdmin):
             obj.total_liabilities
         )
     formatted_liabilities.short_description = 'Liabilities'
-
-
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = [
-        'name', 'owner', 'formatted_amount', 'billing_cycle',
-        'category', 'next_billing_date', 'is_active'
-    ]
-    list_filter = ['billing_cycle', 'category', 'is_active', 'is_essential']
-    search_fields = ['name', 'owner__username', 'description']
-    readonly_fields = ['id', 'created_at', 'updated_at']
-    ordering = ['next_billing_date', 'name']
-    
-    def formatted_amount(self, obj):
-        return f"${obj.amount:,.2f}/{obj.billing_cycle}"
-    formatted_amount.short_description = 'Amount'
 
 
 @admin.register(CashFlowEntry)

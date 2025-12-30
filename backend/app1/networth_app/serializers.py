@@ -10,7 +10,6 @@ from .models import (
     FinancialAccount,
     AccountSnapshot,
     NetWorthSnapshot,
-    Subscription,
     CashFlowEntry,
     NetWorthMilestone,
     ChangeLog,
@@ -151,28 +150,6 @@ class NetWorthSnapshotSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
-    """Serializer for Subscription model."""
-    
-    monthly_cost = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True
-    )
-    annual_cost = serializers.DecimalField(
-        max_digits=12, decimal_places=2, read_only=True
-    )
-    
-    class Meta:
-        model = Subscription
-        fields = [
-            'id', 'name', 'description', 'amount', 'currency',
-            'billing_cycle', 'start_date', 'next_billing_date', 'end_date',
-            'category', 'color', 'icon', 'logo_url', 'is_active',
-            'is_essential', 'auto_renew', 'payment_account', 'notes',
-            'monthly_cost', 'annual_cost', 'created_at', 'updated_at',
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-
 class CashFlowEntrySerializer(serializers.ModelSerializer):
     """Serializer for CashFlowEntry model."""
     
@@ -210,7 +187,7 @@ class ChangeLogSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'change_type', 'description', 'amount_change',
             'percentage_change', 'related_account', 'related_milestone',
-            'related_subscription', 'importance', 'is_positive', 'created_at',
+            'importance', 'is_positive', 'created_at',
         ]
         read_only_fields = ['id', 'created_at']
 
@@ -300,7 +277,6 @@ class CashFlowSummarySerializer(serializers.Serializer):
     income = serializers.FloatField()
     expenses = serializers.FloatField()
     net_flow = serializers.FloatField()
-    subscriptions_total = serializers.FloatField()
     savings_rate = serializers.FloatField()
 
 

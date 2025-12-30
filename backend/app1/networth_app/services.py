@@ -16,21 +16,10 @@ from .models import (
     FinancialAccount,
     AccountSnapshot,
     NetWorthSnapshot,
-    Subscription as LegacySubscription,  # Keep for backward compatibility
     CashFlowEntry,
     NetWorthMilestone,
     ChangeLog,
 )
-
-# Import from new subscriptions_app for primary subscription data
-try:
-    from subscriptions_app.models import Subscription
-    from subscriptions_app.services import SubscriptionAnalyticsService
-    USE_NEW_SUBSCRIPTIONS = True
-except ImportError:
-    # Fallback to legacy model if subscriptions_app not available
-    Subscription = LegacySubscription
-    USE_NEW_SUBSCRIPTIONS = False
 
 
 class NetWorthService:
@@ -514,25 +503,11 @@ class CashFlowService:
             total=Sum('amount')
         ).order_by('-total')
         
-        # Get subscriptions total
-        if USE_NEW_SUBSCRIPTIONS:
-            sub_analytics = SubscriptionAnalyticsService(self.user)
-            subscription_total = float(sub_analytics.get_monthly_spend())
-        else:
-            subscriptions = LegacySubscription.objects.filter(
-                owner=self.user,
-                is_active=True
-            )
-            subscription_total = sum(
-                float(s.monthly_cost) for s in subscriptions
-            )
-        
         return {
             'period': f"{year}-{month:02d}",
             'income': float(income),
             'expenses': float(expenses),
             'net_flow': float(income - expenses),
-            'subscriptions_total': subscription_total,
             'expense_breakdown': [
                 {
                     'category': item['category'],
@@ -565,151 +540,6 @@ class CashFlowService:
             }
             for e in entries
         ]
-
-
-class SubscriptionService:
-    """
-    Service for subscription management.
-    
-    This service now reads from subscriptions_app when available,
-    with fallback to legacy networth_app Subscription model.
-    """
-    
-    def __init__(self, user):
-        self.user = user
-        self._use_new = USE_NEW_SUBSCRIPTIONS
-    
-    def _get_subscriptions_queryset(self, active_only=False):
-        """Get subscriptions queryset from appropriate source."""
-        if self._use_new:
-            qs = Subscription.objects.filter(user=self.user)
-            if active_only:
-                qs = qs.filter(status__in=['active', 'trial'])
-        else:
-            qs = LegacySubscription.objects.filter(owner=self.user)
-            if active_only:
-                qs = qs.filter(is_active=True)
-        return qs
-    
-    def get_summary(self) -> Dict:
-        """
-        Get subscription summary.
-        """
-        if self._use_new:
-            # Use new subscriptions_app analytics
-            analytics = SubscriptionAnalyticsService(self.user)
-            summary = analytics.get_dashboard_summary()
-            upcoming = analytics.get_upcoming_charges(30)
-            
-            # Build category breakdown
-            by_category = {}
-            subscriptions = self._get_subscriptions_queryset(active_only=True)
-            for sub in subscriptions:
-                category = sub.category
-                if category not in by_category:
-                    by_category[category] = {
-                        'count': 0,
-                        'monthly_cost': 0,
-                        'subscriptions': []
-                    }
-                by_category[category]['count'] += 1
-                by_category[category]['monthly_cost'] += float(sub.monthly_cost)
-                by_category[category]['subscriptions'].append({
-                    'id': str(sub.id),
-                    'name': sub.name,
-                    'amount': float(sub.amount),
-                    'cycle': sub.billing_cycle,
-                    'monthly_cost': float(sub.monthly_cost),
-                })
-            
-            return {
-                'total_count': summary['active_count'],
-                'monthly_total': summary['monthly_spend'],
-                'annual_total': summary['annual_burn'],
-                'by_category': by_category,
-                'upcoming_renewals': upcoming,
-            }
-        else:
-            # Legacy implementation
-            subscriptions = self._get_subscriptions_queryset(active_only=True)
-            
-            monthly_total = sum(float(s.monthly_cost) for s in subscriptions)
-            annual_total = monthly_total * 12
-            
-            by_category = {}
-            for sub in subscriptions:
-                category = sub.category
-                if category not in by_category:
-                    by_category[category] = {
-                        'count': 0,
-                        'monthly_cost': 0,
-                        'subscriptions': []
-                    }
-                by_category[category]['count'] += 1
-                by_category[category]['monthly_cost'] += float(sub.monthly_cost)
-                by_category[category]['subscriptions'].append({
-                    'id': str(sub.id),
-                    'name': sub.name,
-                    'amount': float(sub.amount),
-                    'cycle': sub.billing_cycle,
-                    'monthly_cost': float(sub.monthly_cost),
-                })
-            
-            # Get upcoming renewals (next 30 days)
-            today = date.today()
-            upcoming = subscriptions.filter(
-                next_billing_date__gte=today,
-                next_billing_date__lte=today + timedelta(days=30)
-            ).order_by('next_billing_date')
-            
-            return {
-                'total_count': subscriptions.count(),
-                'monthly_total': monthly_total,
-                'annual_total': annual_total,
-                'by_category': by_category,
-                'upcoming_renewals': [
-                    {
-                        'id': str(s.id),
-                        'name': s.name,
-                        'amount': float(s.amount),
-                        'date': s.next_billing_date.isoformat(),
-                        'days_until': (s.next_billing_date - today).days,
-                    }
-                    for s in upcoming
-                ],
-            }
-    
-    def get_all(self) -> List[Dict]:
-        """
-        Get all subscriptions.
-        """
-        subscriptions = self._get_subscriptions_queryset()
-        
-        if self._use_new:
-            subscriptions = subscriptions.order_by('next_billing_date', 'name')
-        else:
-            subscriptions = subscriptions.order_by('-is_active', 'next_billing_date', 'name')
-        
-        results = []
-        for s in subscriptions:
-            is_active = s.status in ['active', 'trial'] if self._use_new else s.is_active
-            results.append({
-                'id': str(s.id),
-                'name': s.name,
-                'description': getattr(s, 'description', ''),
-                'amount': float(s.amount),
-                'billing_cycle': s.billing_cycle,
-                'monthly_cost': float(s.monthly_cost),
-                'annual_cost': float(s.annual_cost),
-                'category': s.category,
-                'next_billing_date': s.next_billing_date.isoformat() if s.next_billing_date else None,
-                'is_active': is_active,
-                'is_essential': s.is_essential,
-                'color': getattr(s, 'color', '#208585'),
-                'status': getattr(s, 'status', 'active' if is_active else 'cancelled'),
-            })
-        
-        return results
 
 
 class InsightService:

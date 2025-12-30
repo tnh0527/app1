@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "stocks_app",
     "networth_app",
     "subscriptions_app",
+    "travel_app",
 ]
 
 MIDDLEWARE = [

@@ -13,7 +13,6 @@ from .models import (
     FinancialAccount,
     AccountSnapshot,
     NetWorthSnapshot,
-    Subscription,
     CashFlowEntry,
     NetWorthMilestone,
 )

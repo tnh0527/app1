@@ -1,0 +1,242 @@
+/* Bucket List Panel */
+
+.bucket-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.bucket-list .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-stats .stat {
+  font-size: 12px;
+  color: var(--clr-silver);
+}
+
+.add-goal-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.add-goal-btn:hover {
+  background: rgba(0, 212, 170, 0.3);
+}
+
+/* Add Goal Form */
+.add-goal-form {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(0, 212, 170, 0.2);
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+.add-goal-form input[type="text"] {
+  flex: 1;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--clr-white);
+  font-size: 14px;
+}
+
+.add-goal-form input[type="text"]::placeholder {
+  color: var(--clr-silver);
+}
+
+.add-goal-form input[type="text"]:focus {
+  outline: none;
+  border-color: #00d4aa;
+}
+
+.priority-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--clr-silver);
+}
+
+.priority-label input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.priority-label input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #00d4aa;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.submit-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+}
+
+/* Goals List */
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.goal-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.goal-item.achieved {
+  opacity: 0.7;
+}
+
+.goal-flag {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.goal-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-info h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--clr-white);
+  margin: 0;
+}
+
+.goal-info p {
+  font-size: 12px;
+  color: var(--clr-silver);
+  margin: 2px 0 0;
+}
+
+.goal-priority {
+  display: flex;
+  align-items: center;
+}
+
+.priority-stars {
+  font-size: 12px;
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+
+.achieve-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.achieve-btn:hover {
+  background: #00d4aa;
+  color: white;
+}
+
+.achieved-badge {
+  color: #00d4aa;
+  font-size: 20px;
+}
+
+/* Achieved Header */
+.achieved-header {
+  padding: 12px 0 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 8px;
+}
+
+.achieved-header span {
+  font-size: 12px;
+  color: var(--clr-silver);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Empty State */
+.empty-goals {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--clr-silver);
+  text-align: center;
+}
+
+.empty-goals i {
+  font-size: 36px;
+  color: rgba(0, 212, 170, 0.3);
+  margin-bottom: 12px;
+}
+
+.empty-goals p {
+  font-size: 14px;
+  color: var(--clr-white);
+  margin: 0 0 4px;
+}
+
+.empty-goals span {
+  font-size: 12px;
+}
+

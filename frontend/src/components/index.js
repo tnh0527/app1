@@ -41,7 +41,6 @@ export {
   NetWorthTimeline,
   AssetLiabilityBreakdown,
   WhatChanged,
-  SubscriptionsPanel,
   CashFlowPanel,
   MilestonesPanel,
   AccountsPanel,

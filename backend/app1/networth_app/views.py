@@ -18,7 +18,6 @@ from .models import (
     FinancialAccount,
     AccountSnapshot,
     NetWorthSnapshot,
-    Subscription,
     CashFlowEntry,
     NetWorthMilestone,
     ChangeLog,
@@ -31,7 +30,6 @@ from .serializers import (
     AccountSnapshotCreateSerializer,
     BulkSnapshotSerializer,
     NetWorthSnapshotSerializer,
-    SubscriptionSerializer,
     CashFlowEntrySerializer,
     NetWorthMilestoneSerializer,
     ChangeLogSerializer,
@@ -40,7 +38,6 @@ from .serializers import (
 from .services import (
     NetWorthService,
     CashFlowService,
-    SubscriptionService,
     InsightService,
     MilestoneService,
 )
@@ -202,35 +199,6 @@ class NetWorthSnapshotViewSet(viewsets.ReadOnlyModelViewSet):
             NetWorthSnapshotSerializer(snapshot).data,
             status=status.HTTP_201_CREATED
         )
-
-
-class SubscriptionViewSet(viewsets.ModelViewSet):
-    """ViewSet for subscriptions."""
-    
-    serializer_class = SubscriptionSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return Subscription.objects.filter(
-            owner=self.request.user
-        ).order_by('-is_active', 'next_billing_date')
-    
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-    
-    @action(detail=False, methods=['get'])
-    def summary(self, request):
-        """Get subscription summary."""
-        service = SubscriptionService(request.user)
-        return Response(service.get_summary())
-    
-    @action(detail=True, methods=['post'])
-    def toggle_active(self, request, pk=None):
-        """Toggle subscription active status."""
-        subscription = self.get_object()
-        subscription.is_active = not subscription.is_active
-        subscription.save(update_fields=['is_active', 'updated_at'])
-        return Response(SubscriptionSerializer(subscription).data)
 
 
 class CashFlowEntryViewSet(viewsets.ModelViewSet):
@@ -396,7 +364,6 @@ class FullDashboardView(APIView):
         
         nw_service = NetWorthService(user)
         cf_service = CashFlowService(user)
-        sub_service = SubscriptionService(user)
         insight_service = InsightService(user)
         milestone_service = MilestoneService(user)
         
@@ -418,7 +385,6 @@ class FullDashboardView(APIView):
             'forecast': nw_service.get_forecast(12),
             'accounts': nw_service.get_accounts_breakdown(),
             'cash_flow': cf_service.get_monthly_summary(),
-            'subscriptions': sub_service.get_summary(),
             'insights': {
                 'recent_changes': insight_service.get_recent_changes(10),
                 'monthly_insights': insight_service.get_monthly_insights(),

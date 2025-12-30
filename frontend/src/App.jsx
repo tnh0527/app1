@@ -11,6 +11,7 @@ import {
   Schedule,
   Settings,
   Subscriptions,
+  Travel,
   Weather,
 } from "./pages";
 
@@ -45,6 +46,10 @@ function App() {
             {
               path: "/subscriptions/*",
               element: <Subscriptions />,
+            },
+            {
+              path: "/travel/*",
+              element: <Travel />,
             },
             {
               path: "/settings/*",

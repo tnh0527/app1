@@ -19,6 +19,8 @@ export const navigationLinks = [
 
   { id: 5, title: "Subscriptions", image: iconsImgs.bills, path: "/subscriptions" },
 
+  { id: 6, title: "Travel", image: iconsImgs.plane, path: "/travel" },
+
   {
     id: 9,
     title: "My Account",

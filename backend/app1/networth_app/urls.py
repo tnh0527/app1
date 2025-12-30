@@ -11,7 +11,6 @@ from .views import (
     FinancialAccountViewSet,
     AccountSnapshotViewSet,
     NetWorthSnapshotViewSet,
-    SubscriptionViewSet,
     CashFlowEntryViewSet,
     NetWorthMilestoneViewSet,
     ChangeLogViewSet,
@@ -27,7 +26,6 @@ router = DefaultRouter()
 router.register(r'accounts', FinancialAccountViewSet, basename='financial-account')
 router.register(r'snapshots', AccountSnapshotViewSet, basename='account-snapshot')
 router.register(r'networth-snapshots', NetWorthSnapshotViewSet, basename='networth-snapshot')
-router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
 router.register(r'cashflow', CashFlowEntryViewSet, basename='cashflow-entry')
 router.register(r'milestones', NetWorthMilestoneViewSet, basename='milestone')
 router.register(r'changelog', ChangeLogViewSet, basename='changelog')

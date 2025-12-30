@@ -1,0 +1,425 @@
+/* Travel Hero Section */
+
+.travel-hero {
+  margin-bottom: 24px;
+}
+
+/* Upcoming Trip Mode - Countdown */
+.travel-hero.upcoming-mode .hero-countdown-card {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 170, 0.15) 0%,
+    rgba(3, 22, 34, 0.95) 50%,
+    rgba(5, 14, 46, 0.9) 100%
+  );
+  border-radius: 20px;
+  padding: 32px 40px;
+  border: 1px solid rgba(0, 212, 170, 0.3);
+  overflow: hidden;
+}
+
+.hero-glow {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(0, 212, 170, 0.3) 0%,
+    transparent 70%
+  );
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.countdown-content {
+  position: relative;
+  z-index: 1;
+}
+
+.destination-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.country-flag {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.destination-text h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--clr-white);
+  margin: 0;
+}
+
+.destination-text p {
+  font-size: 16px;
+  color: var(--clr-silver);
+  margin: 4px 0 0;
+}
+
+/* Countdown Display */
+.countdown-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0, 212, 170, 0.1);
+  padding: 16px 24px;
+  border-radius: 12px;
+  min-width: 80px;
+}
+
+.countdown-value {
+  font-size: 42px;
+  font-weight: 700;
+  color: #00d4aa;
+  line-height: 1;
+}
+
+.countdown-label {
+  font-size: 12px;
+  color: var(--clr-silver);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.countdown-separator {
+  font-size: 32px;
+  color: rgba(0, 212, 170, 0.5);
+  font-weight: 300;
+}
+
+/* Trip Meta */
+.trip-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.trip-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--clr-silver);
+  font-size: 14px;
+}
+
+.trip-dates i {
+  color: #00d4aa;
+}
+
+/* Quick Stats */
+.trip-quick-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.quick-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--clr-silver);
+  font-size: 13px;
+}
+
+.quick-stat i {
+  color: #00d4aa;
+}
+
+.budget-mini-gauge {
+  width: 60px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4aa, #00a388);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Hero Actions */
+.hero-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.hero-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.hero-btn.primary {
+  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  color: white;
+}
+
+.hero-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+}
+
+.hero-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--clr-silver);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--clr-white);
+}
+
+/* Hero Decoration */
+.hero-decoration {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.trip-type-badge {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+}
+
+.trip-type-badge.vacation {
+  background: rgba(0, 212, 170, 0.2);
+  color: #00d4aa;
+}
+
+.trip-type-badge.business {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.trip-type-badge.adventure {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.trip-type-badge.city_break {
+  background: rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+}
+
+.trip-type-badge.beach {
+  background: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+}
+
+.trip-type-badge.road_trip {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.trip-type-badge.backpacking {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+/* Stats Mode */
+.travel-hero.stats-mode .hero-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(3, 22, 34, 0.9) 0%,
+    rgba(5, 14, 46, 0.8) 100%
+  );
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 212, 170, 0.3);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.stat-card.countries .stat-icon {
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+}
+
+.stat-card.trips .stat-icon {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.stat-card.days .stat-icon {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.stat-card.spend .stat-icon {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--clr-white);
+  display: block;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--clr-silver);
+}
+
+.stat-accent {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.3;
+}
+
+.stat-card.countries .stat-accent {
+  background: #00d4aa;
+}
+
+.stat-card.trips .stat-accent {
+  background: #3b82f6;
+}
+
+.stat-card.days .stat-accent {
+  background: #a855f7;
+}
+
+.stat-card.spend .stat-accent {
+  background: #f59e0b;
+}
+
+/* No Trips CTA */
+.no-trips-cta {
+  margin-top: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 170, 0.1) 0%,
+    rgba(3, 22, 34, 0.9) 100%
+  );
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px dashed rgba(0, 212, 170, 0.3);
+  text-align: center;
+}
+
+.cta-content i {
+  font-size: 48px;
+  color: #00d4aa;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.cta-content h3 {
+  font-size: 20px;
+  color: var(--clr-white);
+  margin: 0 0 8px;
+}
+
+.cta-content p {
+  color: var(--clr-silver);
+  margin: 0;
+}
+
+/* Responsive */
+@media screen and (max-width: 1200px) {
+  .travel-hero.stats-mode .hero-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .hero-countdown-card {
+    padding: 24px;
+  }
+
+  .country-flag {
+    font-size: 36px;
+  }
+
+  .destination-text h2 {
+    font-size: 22px;
+  }
+
+  .countdown-item {
+    padding: 12px 16px;
+    min-width: 60px;
+  }
+
+  .countdown-value {
+    font-size: 28px;
+  }
+
+  .hero-decoration {
+    display: none;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .travel-hero.stats-mode .hero-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

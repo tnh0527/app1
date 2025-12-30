@@ -18,8 +18,6 @@ const getChangeIcon = (type) => {
     value_decrease: "bi-graph-down",
     milestone_achieved: "bi-trophy",
     debt_paid_off: "bi-check-circle",
-    subscription_added: "bi-calendar-plus",
-    subscription_cancelled: "bi-calendar-x",
     net_worth_increase: "bi-arrow-up-right",
     net_worth_decrease: "bi-arrow-down-right",
   };

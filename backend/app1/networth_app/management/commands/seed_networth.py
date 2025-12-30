@@ -15,7 +15,6 @@ from networth_app.models import (
     FinancialAccount,
     AccountSnapshot,
     NetWorthSnapshot,
-    Subscription,
     CashFlowEntry,
     NetWorthMilestone,
 )
@@ -59,7 +58,6 @@ class Command(BaseCommand):
         with transaction.atomic():
             accounts = self.create_accounts(user)
             self.create_snapshots(accounts)
-            self.create_subscriptions(user)
             self.create_cashflow(user, accounts)
             self.create_milestones(user)
             self.generate_networth_snapshots(user)
@@ -71,7 +69,6 @@ class Command(BaseCommand):
         self.stdout.write('Clearing existing data...')
         
         FinancialAccount.objects.filter(owner=user).delete()
-        Subscription.objects.filter(owner=user).delete()
         CashFlowEntry.objects.filter(owner=user).delete()
         NetWorthMilestone.objects.filter(owner=user).delete()
         NetWorthSnapshot.objects.filter(owner=user).delete()
@@ -281,88 +278,6 @@ class Command(BaseCommand):
                     recorded_at=snapshot_date,
                     source='manual_entry',
                 )
-    
-    def create_subscriptions(self, user):
-        """Create sample subscriptions."""
-        self.stdout.write('Creating subscriptions...')
-        
-        today = date.today()
-        
-        subscriptions = [
-            {
-                'name': 'Netflix',
-                'amount': Decimal('15.99'),
-                'billing_cycle': 'monthly',
-                'category': 'streaming',
-                'color': '#e50914',
-            },
-            {
-                'name': 'Spotify',
-                'amount': Decimal('10.99'),
-                'billing_cycle': 'monthly',
-                'category': 'streaming',
-                'color': '#1db954',
-            },
-            {
-                'name': 'Adobe Creative Cloud',
-                'amount': Decimal('54.99'),
-                'billing_cycle': 'monthly',
-                'category': 'software',
-                'color': '#ff0000',
-            },
-            {
-                'name': 'GitHub Pro',
-                'amount': Decimal('4.00'),
-                'billing_cycle': 'monthly',
-                'category': 'software',
-                'color': '#24292f',
-            },
-            {
-                'name': 'Gym Membership',
-                'amount': Decimal('45.00'),
-                'billing_cycle': 'monthly',
-                'category': 'health',
-                'color': '#10b981',
-                'is_essential': True,
-            },
-            {
-                'name': 'Amazon Prime',
-                'amount': Decimal('139.00'),
-                'billing_cycle': 'annual',
-                'category': 'membership',
-                'color': '#ff9900',
-            },
-            {
-                'name': 'Car Insurance',
-                'amount': Decimal('890.00'),
-                'billing_cycle': 'semiannual',
-                'category': 'insurance',
-                'color': '#3b82f6',
-                'is_essential': True,
-            },
-            {
-                'name': 'iCloud Storage',
-                'amount': Decimal('2.99'),
-                'billing_cycle': 'monthly',
-                'category': 'software',
-                'color': '#007aff',
-            },
-        ]
-        
-        for i, sub_data in enumerate(subscriptions):
-            next_billing = today + timedelta(days=random.randint(1, 30))
-            
-            Subscription.objects.create(
-                owner=user,
-                name=sub_data['name'],
-                amount=sub_data['amount'],
-                billing_cycle=sub_data['billing_cycle'],
-                category=sub_data['category'],
-                color=sub_data['color'],
-                is_essential=sub_data.get('is_essential', False),
-                start_date=today - timedelta(days=random.randint(30, 365)),
-                next_billing_date=next_billing,
-            )
     
     def create_cashflow(self, user, accounts):
         """Create sample cash flow entries."""

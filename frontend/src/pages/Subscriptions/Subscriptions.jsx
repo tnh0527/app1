@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./Subscriptions.css";
 import { dashboardApi } from "../../api/subscriptionsApi";
 import {
@@ -12,31 +12,63 @@ import {
   AddSubscriptionModal,
   SubscriptionDetailDrawer,
 } from "../../components/Subscriptions";
+import { SubscriptionsSkeleton } from "./SubscriptionsSkeleton";
+import {
+  ErrorState,
+  TimeoutState,
+  EmptyState,
+} from "../../components/shared/LoadingStates";
+
+const REQUEST_TIMEOUT = 15000; // 15 seconds timeout
 
 const Subscriptions = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isTimedOut, setIsTimedOut] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
   const [filter, setFilter] = useState("all");
+  const timeoutRef = useRef(null);
 
   const fetchDashboardData = useCallback(async () => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    setLoading(true);
+    setError(null);
+    setIsTimedOut(false);
+
+    // Set up timeout
+    timeoutRef.current = setTimeout(() => {
+      setIsTimedOut(true);
+      setLoading(false);
+    }, REQUEST_TIMEOUT);
+
     try {
-      setLoading(true);
       const data = await dashboardApi.getFullDashboard();
+      clearTimeout(timeoutRef.current);
       setDashboardData(data);
       setError(null);
     } catch (err) {
+      clearTimeout(timeoutRef.current);
       console.error("Failed to fetch subscription data:", err);
       setError("Failed to load subscription data. Please try again.");
     } finally {
+      clearTimeout(timeoutRef.current);
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchDashboardData();
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [fetchDashboardData]);
 
   const handleRefresh = async () => {
@@ -61,27 +93,33 @@ const Subscriptions = () => {
     fetchDashboardData();
   };
 
+  // Loading state - show skeleton
   if (loading && !dashboardData) {
+    return <SubscriptionsSkeleton />;
+  }
+
+  // Timeout state
+  if (isTimedOut && !dashboardData) {
     return (
       <div className="subscriptions-page">
-        <div className="subscriptions-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading your subscriptions...</p>
-        </div>
+        <TimeoutState
+          title="Request Timed Out"
+          message="The server took too long to respond. Please check your connection and try again."
+          onRetry={fetchDashboardData}
+        />
       </div>
     );
   }
 
+  // Error state
   if (error && !dashboardData) {
     return (
       <div className="subscriptions-page">
-        <div className="subscriptions-error">
-          <i className="bi bi-exclamation-triangle"></i>
-          <p>{error}</p>
-          <button onClick={fetchDashboardData} className="retry-btn">
-            Try Again
-          </button>
-        </div>
+        <ErrorState
+          title="Failed to Load Subscriptions"
+          message={error}
+          onRetry={fetchDashboardData}
+        />
       </div>
     );
   }

@@ -36,7 +36,11 @@ const MainCalendar = ({ onEventClick, onSlotClick }) => {
       {isLoading && (
         <div className="calendar-loading-overlay">
           <div className="calendar-loading">
-            <span className="loading-spinner"></span>
+            <div className="calendar-loading-spinner">
+              <div className="spinner-ring"></div>
+              <div className="spinner-ring"></div>
+              <div className="spinner-ring"></div>
+            </div>
             <span>Loading events...</span>
           </div>
         </div>

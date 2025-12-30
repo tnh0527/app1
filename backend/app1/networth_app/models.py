@@ -374,131 +374,6 @@ class NetWorthSnapshot(models.Model):
         return None
 
 
-class Subscription(models.Model):
-    """
-    Recurring subscription or expense tracking.
-    
-    Integrates with the Calendar for renewal reminders.
-    """
-    
-    class BillingCycle(models.TextChoices):
-        WEEKLY = 'weekly', 'Weekly'
-        BIWEEKLY = 'biweekly', 'Bi-weekly'
-        MONTHLY = 'monthly', 'Monthly'
-        QUARTERLY = 'quarterly', 'Quarterly'
-        SEMIANNUAL = 'semiannual', 'Semi-Annual'
-        ANNUAL = 'annual', 'Annual'
-    
-    class Category(models.TextChoices):
-        STREAMING = 'streaming', 'Streaming & Entertainment'
-        SOFTWARE = 'software', 'Software & Apps'
-        UTILITIES = 'utilities', 'Utilities'
-        INSURANCE = 'insurance', 'Insurance'
-        MEMBERSHIP = 'membership', 'Memberships'
-        FINANCIAL = 'financial', 'Financial Services'
-        HEALTH = 'health', 'Health & Fitness'
-        EDUCATION = 'education', 'Education'
-        OTHER = 'other', 'Other'
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='subscriptions'
-    )
-    
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    
-    # Billing
-    amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.01'))]
-    )
-    currency = models.CharField(max_length=3, default='USD')
-    billing_cycle = models.CharField(
-        max_length=20,
-        choices=BillingCycle.choices,
-        default=BillingCycle.MONTHLY
-    )
-    
-    # Dates
-    start_date = models.DateField()
-    next_billing_date = models.DateField(db_index=True)
-    end_date = models.DateField(null=True, blank=True)
-    
-    # Categorization
-    category = models.CharField(
-        max_length=20,
-        choices=Category.choices,
-        default=Category.OTHER
-    )
-    
-    # Display
-    color = models.CharField(max_length=7, default='#208585')
-    icon = models.CharField(max_length=50, blank=True)
-    logo_url = models.URLField(blank=True)
-    
-    # Status
-    is_active = models.BooleanField(default=True)
-    is_essential = models.BooleanField(
-        default=False,
-        help_text='Mark as essential expense'
-    )
-    auto_renew = models.BooleanField(default=True)
-    
-    # Integration
-    calendar_event_id = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text='Link to Calendar event for reminders'
-    )
-    
-    # Payment method link
-    payment_account = models.ForeignKey(
-        FinancialAccount,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='subscriptions_paid',
-        help_text='Account used to pay this subscription'
-    )
-    
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['next_billing_date', 'name']
-        indexes = [
-            models.Index(fields=['owner', 'is_active']),
-            models.Index(fields=['owner', 'next_billing_date']),
-            models.Index(fields=['category']),
-        ]
-    
-    def __str__(self):
-        return f"{self.name} - ${self.amount}/{self.billing_cycle}"
-    
-    @property
-    def monthly_cost(self):
-        """Calculate the monthly equivalent cost."""
-        multipliers = {
-            'weekly': Decimal('4.33'),
-            'biweekly': Decimal('2.17'),
-            'monthly': Decimal('1'),
-            'quarterly': Decimal('0.33'),
-            'semiannual': Decimal('0.17'),
-            'annual': Decimal('0.083'),
-        }
-        return self.amount * multipliers.get(self.billing_cycle, 1)
-    
-    @property
-    def annual_cost(self):
-        """Calculate the annual cost."""
-        return self.monthly_cost * 12
-
-
 class CashFlowEntry(models.Model):
     """
     Income or expense entry for cash flow tracking.
@@ -706,8 +581,6 @@ class ChangeLog(models.Model):
         VALUE_DECREASE = 'value_decrease', 'Value Decreased'
         MILESTONE_ACHIEVED = 'milestone_achieved', 'Milestone Achieved'
         DEBT_PAID_OFF = 'debt_paid_off', 'Debt Paid Off'
-        SUBSCRIPTION_ADDED = 'subscription_added', 'Subscription Added'
-        SUBSCRIPTION_CANCELLED = 'subscription_cancelled', 'Subscription Cancelled'
         NET_WORTH_INCREASE = 'net_worth_increase', 'Net Worth Increased'
         NET_WORTH_DECREASE = 'net_worth_decrease', 'Net Worth Decreased'
     
@@ -768,13 +641,6 @@ class ChangeLog(models.Model):
     )
     related_milestone = models.ForeignKey(
         NetWorthMilestone,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='changes'
-    )
-    related_subscription = models.ForeignKey(
-        Subscription,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
