@@ -8,35 +8,52 @@
   flex-direction: column;
   height: 100%;
   min-height: 100vh;
-  width: 100%;
-  max-width: 100vw;
   background: var(--clr-secondary);
   overflow: hidden;
   flex: 1;
+  /* Allow the spacer to push content, don't force full width */
+  width: 0;
+  min-width: 0;
+  padding-right: var(--page-horizontal-padding);
+  padding-left: var(--page-horizontal-padding);
 }
 
 /* Main Content Area - Two Column Layout */
 .schedule-content {
-  display: flex;
-  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  grid-auto-rows: 1fr; /* make both columns match height */
   gap: 20px;
-  padding: 20px;
-  padding-right: 55px;
+  padding: 0;
   overflow: hidden;
+  align-items: stretch; /* stretch children to equal height */
+  min-height: 0;
 }
 
 /* Responsive adjustments */
 @media screen and (max-width: 1400px) {
+  .schedule-page {
+    padding-right: calc(var(--page-horizontal-padding) * 0.625);
+    padding-left: calc(var(--page-horizontal-padding) * 0.625);
+  }
+
   .schedule-content {
-    padding: 16px;
+    padding: 0;
     gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
   }
 }
 
 @media screen and (max-width: 1200px) {
+  .schedule-page {
+    padding-right: calc(var(--page-horizontal-padding) * 0.5);
+    padding-left: calc(var(--page-horizontal-padding) * 0.5);
+  }
+
   .schedule-content {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     overflow-y: auto;
+    align-items: stretch;
   }
 
   .main-calendar {
@@ -50,8 +67,13 @@
 }
 
 @media screen and (max-width: 768px) {
+  .schedule-page {
+    padding-right: calc(var(--page-horizontal-padding) * 0.375);
+    padding-left: calc(var(--page-horizontal-padding) * 0.375);
+  }
+
   .schedule-content {
-    padding: 12px;
+    padding: 0;
     gap: 12px;
   }
 }

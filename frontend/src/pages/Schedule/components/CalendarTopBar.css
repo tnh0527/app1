@@ -2,8 +2,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 24px;
+  gap: 12px 16px;
+  padding: clamp(12px, 1.8vw, 18px) clamp(14px, 2vw, 24px);
   background: linear-gradient(
     135deg,
     rgba(3, 22, 34, 0.95) 0%,
@@ -17,13 +17,19 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  margin-top: 12px;
   margin-bottom: 20px;
+  box-sizing: border-box;
+  overflow: hidden; /* ensure inner content cannot overflow the curved container */
+  flex-wrap: wrap; /* allow groups to wrap before overlapping */
 }
 
 .calendar-top-bar-left {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
+  flex: 1 1 320px;
 }
 
 .sidebar-toggler {
@@ -73,10 +79,10 @@
 }
 
 .calendar-date-label {
-  font-size: 20px;
+  font-size: clamp(18px, 2vw, 20px);
   font-weight: 700;
   color: var(--clr-white);
-  min-width: 240px;
+  min-width: clamp(180px, 22vw, 240px);
   text-align: center;
   letter-spacing: -0.02em;
 }
@@ -103,6 +109,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1 1 360px;
+  min-width: min(420px, 100%);
 }
 
 .calendar-view-switcher {
@@ -113,6 +121,8 @@
   background: rgba(47, 55, 65, 0.4);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .view-btn {
@@ -159,12 +169,19 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1 1 320px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 10px;
 }
 
 .calendar-search {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1 1 220px;
+  min-width: 180px;
 }
 
 .search-icon {
@@ -176,7 +193,8 @@
 }
 
 .search-input {
-  width: 200px;
+  width: clamp(180px, 22vw, 240px);
+  max-width: 100%;
   height: 38px;
   padding: 0 36px;
   border-radius: 10px;
@@ -195,7 +213,7 @@
   outline: none;
   border-color: var(--clr-pumpkin);
   background: rgba(47, 55, 65, 0.8);
-  width: 240px;
+  width: clamp(200px, 28vw, 280px);
 }
 
 .search-clear {
@@ -230,6 +248,7 @@
   font-size: 16px;
   transition: all 0.2s ease;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 0 0 auto;
 }
 
 .focus-mode-btn:hover {
@@ -264,6 +283,7 @@
   font-size: 13px;
   transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(32, 133, 133, 0.3);
+  flex: 0 0 auto;
 }
 
 .add-event-btn:hover {
@@ -275,23 +295,50 @@
   font-size: 16px;
 }
 
-.add-reminder-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(47, 55, 65, 0.6);
+.reminders-indicator {
+  position: relative;
+  padding: 8px;
+  min-width: 0;
+  background: transparent;
   color: var(--clr-yellow);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 18px;
+  border: none;
+  cursor: default;
+  box-shadow: none;
 }
 
-.add-reminder-btn:hover {
-  background: rgba(254, 200, 10, 0.2);
-  transform: scale(1.05);
+.reminders-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--clr-scarlet);
+  color: var(--clr-white);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(254, 30, 0, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
 }
 
 /* Responsive */
@@ -316,6 +363,18 @@
 
   .search-input:focus {
     width: 180px;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .calendar-top-bar-left,
+  .calendar-top-bar-center,
+  .calendar-top-bar-right {
+    flex: 1 1 100%;
+  }
+
+  .calendar-top-bar-center {
+    justify-content: flex-start;
   }
 }
 

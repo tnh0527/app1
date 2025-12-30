@@ -15,7 +15,6 @@ export const navigationLinks = [
 
   { id: 3, title: "Weather", image: iconsImgs.weather, path: "/weather" },
 
-  { id: 4, title: "Market Insight", image: iconsImgs.report, path: "/insight" },
   {
     id: 9,
     title: "My Account",

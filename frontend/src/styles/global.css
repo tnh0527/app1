@@ -36,6 +36,20 @@ body {
 
   --font-family-bai: "Bai Jamjuree", sans-serif;
   --transition-default: all 300ms ease-in-out;
+  --page-horizontal-padding: 32px;
+  --page-vertical-padding: clamp(12px, 1.2vh, 20px);
+}
+
+/* Apply vertical padding to page root containers (e.g. schedule-page, weather-page) */
+[class$="-page"] {
+  padding-top: var(--page-vertical-padding);
+  padding-bottom: var(--page-vertical-padding);
+}
+
+/* Weather page uses 'weather-dashboard' as the root wrapper */
+.weather-dashboard {
+  padding-top: var(--page-vertical-padding);
+  padding-bottom: var(--page-vertical-padding);
 }
 
 body {
@@ -95,6 +109,30 @@ button {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  background: var(--clr-secondary);
+}
+
+/* Sidebar spacer to offset fixed sidebar */
+.sidebar-spacer {
+  width: calc(240px + 24px); /* sidebar width + margins */
+  min-width: calc(240px + 24px);
+  flex-shrink: 0;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-spacer.collapsed {
+  width: calc(80px + 24px); /* collapsed width + margins */
+  min-width: calc(80px + 24px);
+}
+
+/* Responsive spacer for smaller screens */
+@media screen and (max-width: 1248px) {
+  .sidebar-spacer,
+  .sidebar-spacer.collapsed {
+    width: calc(80px + 16px); /* collapsed width + margins */
+    min-width: calc(80px + 16px);
+  }
 }
 
 /* commons */

@@ -6,7 +6,6 @@ import {
   AppShell,
   Dashboard,
   EditProfile,
-  Insight,
   Login,
   Schedule,
   Settings,
@@ -36,10 +35,6 @@ function App() {
             {
               path: "/weather/*",
               element: <Weather />,
-            },
-            {
-              path: "/insight/*",
-              element: <Insight />,
             },
             {
               path: "/settings/*",

@@ -149,7 +149,9 @@ const SunriseSunset = ({ sunData, timeZone }) => {
         !sunData || Object.keys(sunData).length === 0 ? "skeleton" : ""
       }`}
     >
-      <h4>Sunrise & Sunset</h4>
+      <h4>
+        <i className="bi bi-sunrise title-icon"></i>Sunrise & Sunset
+      </h4>
       {!sunData || Object.keys(sunData).length === 0 ? null : (
         <>
           <div className="card sunrise-sunset">

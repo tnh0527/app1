@@ -12,8 +12,9 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 200px);
-  min-height: 600px;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0; /* allow parent to control overall height and enable internal scrolling */
 }
 
 /* Header */
@@ -134,7 +135,8 @@
 
 /* Body */
 .day-view-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0; /* required so overflow works inside flex layout */
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -183,7 +185,27 @@
 }
 
 .day-time-slot--current {
-  background: rgba(32, 133, 133, 0.05);
+  background: linear-gradient(
+    180deg,
+    rgba(32, 133, 133, 0.06) 0%,
+    rgba(32, 133, 133, 0.01) 100%
+  );
+  position: relative;
+}
+
+.day-time-slot--current::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--clr-pumpkin),
+    rgba(32, 133, 133, 0.6)
+  );
+  border-radius: 0 0 3px 3px;
 }
 
 .time-slot-hover {

@@ -97,3 +97,11 @@
     font-size: 4vw;
   }
 }
+
+/* Title icon styling */
+h4 .title-icon {
+  margin-right: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: inherit;
+}

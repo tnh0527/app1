@@ -12,8 +12,9 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 200px);
-  min-height: 600px;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0; /* allow parent to constrain height and enable internal scrolling */
 }
 
 /* Header */
@@ -127,7 +128,8 @@
 .week-view-body {
   display: grid;
   grid-template-columns: 70px 1fr;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0; /* necessary for children to scroll inside flex container */
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -166,9 +168,24 @@
 .week-day-column--today {
   background: linear-gradient(
     180deg,
-    rgba(32, 133, 133, 0.05) 0%,
-    transparent 100%
+    rgba(32, 133, 133, 0.06) 0%,
+    rgba(32, 133, 133, 0.01) 100%
   );
+}
+
+.week-day-column--today::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--clr-pumpkin),
+    rgba(32, 133, 133, 0.6)
+  );
+  border-radius: 0 0 3px 3px;
 }
 
 /* Time slots */

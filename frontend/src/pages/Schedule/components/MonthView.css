@@ -90,12 +90,14 @@
 }
 
 /* Today styling */
+/* Today styling: gradient background top->bottom and a subtle top bar */
 .month-day-cell--today {
   background: linear-gradient(
-    135deg,
-    rgba(32, 133, 133, 0.15) 0%,
-    rgba(32, 133, 133, 0.05) 100%
+    180deg,
+    rgba(32, 133, 133, 0.14) 0%,
+    rgba(32, 133, 133, 0.03) 100%
   );
+  position: relative;
 }
 
 .month-day-cell--today::before {
@@ -104,19 +106,39 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: linear-gradient(
     90deg,
     var(--clr-pumpkin),
-    rgba(32, 133, 133, 0.5)
+    rgba(32, 133, 133, 0.6)
   );
-  border-radius: 0 0 2px 2px;
+  border-radius: 0 0 3px 3px;
 }
 
 /* Selected styling */
 .month-day-cell--selected {
-  background: rgba(6, 84, 129, 0.3);
-  box-shadow: inset 0 0 0 2px var(--clr-pumpkin);
+  /* Selected cell: only top accent and a subtle top->bottom gradient */
+  background: linear-gradient(
+    180deg,
+    rgba(32, 133, 133, 0.12) 0%,
+    rgba(32, 133, 133, 0.02) 100%
+  );
+  position: relative;
+}
+
+.month-day-cell--selected::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--clr-pumpkin),
+    rgba(32, 133, 133, 0.6)
+  );
+  border-radius: 0 0 3px 3px;
 }
 
 /* Heat levels for busy days */

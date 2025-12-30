@@ -234,18 +234,20 @@ const CurrentWeather = ({
           </div>
 
           <div className="temp-toggle">
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={currentWeather.unit === "C"}
-                onChange={handleToggle}
-              />
-              <span className="slider"></span>
-              <div className="labels">
-                <span>F</span>
-                <span>C</span>
-              </div>
-            </label>
+            <div className="temp-unit-toggle">
+              <button 
+                className={`unit-btn ${currentWeather.unit !== "C" ? "active" : ""}`}
+                onClick={currentWeather.unit === "C" ? handleToggle : undefined}
+              >
+                F
+              </button>
+              <button 
+                className={`unit-btn ${currentWeather.unit === "C" ? "active" : ""}`}
+                onClick={currentWeather.unit !== "C" ? handleToggle : undefined}
+              >
+                C
+              </button>
+            </div>
           </div>
         </div>
 

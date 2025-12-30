@@ -10,6 +10,13 @@
   pointer-events: none;
   z-index: 2;
   overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+/* Fade out class for the 3-second effect duration */
+.weather-fx--fading {
+  opacity: 0;
 }
 
 .fx-layer {

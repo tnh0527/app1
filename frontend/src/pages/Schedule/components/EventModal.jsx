@@ -5,6 +5,8 @@ import {
   PRIORITY_COLORS,
   EVENT_COLORS,
 } from "../context/CalendarContext";
+import CustomDatePicker from "./CustomDatePicker";
+import CustomTimePicker from "./CustomTimePicker";
 import "./EventModal.css";
 
 const RECURRENCE_OPTIONS = [
@@ -73,7 +75,7 @@ const EventModal = () => {
   // Initialize form when modal opens
   useEffect(() => {
     if (isEventModalOpen) {
-      if (editingEvent) {
+      if (editingEvent && editingEvent.start_at) {
         // Editing existing event
         setTitle(editingEvent.title || "");
         setDescription(editingEvent.description || "");
@@ -402,40 +404,39 @@ const EventModal = () => {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Start</label>
-                    <div className="datetime-inputs">
-                      <input
-                        type="date"
-                        className="form-input"
+                    <div
+                      className={`datetime-inputs ${
+                        !allDay ? "stack-time" : ""
+                      }`}
+                    >
+                      <CustomDatePicker
                         value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
+                        onChange={setStartDate}
                       />
+
                       {!allDay && (
-                        <input
-                          type="time"
-                          className="form-input form-input--time"
+                        <CustomTimePicker
                           value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
+                          onChange={setStartTime}
                         />
                       )}
                     </div>
                   </div>
+
                   <div className="form-group">
                     <label className="form-label">End</label>
-                    <div className="datetime-inputs">
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                      />
+                    <div
+                      className={`datetime-inputs ${
+                        !allDay ? "stack-time" : ""
+                      }`}
+                    >
+                      <CustomDatePicker value={endDate} onChange={setEndDate} />
+
                       {!allDay && (
-                        <input
-                          type="time"
-                          className={`form-input form-input--time ${
-                            errors.endTime ? "form-input--error" : ""
-                          }`}
+                        <CustomTimePicker
                           value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)}
+                          onChange={setEndTime}
+                          error={!!errors.endTime}
                         />
                       )}
                     </div>

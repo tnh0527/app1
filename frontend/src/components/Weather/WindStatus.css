@@ -1,6 +1,12 @@
 .wind-status {
   margin-right: 10px;
 }
+.wind-status h4 .title-icon {
+  margin-right: 10px;
+  font-size: 18px;
+  color: cyan;
+  font-weight: 700;
+}
 .wind-visual {
   position: relative;
 

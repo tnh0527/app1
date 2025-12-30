@@ -22,6 +22,18 @@ const COMPONENT_MAP = {
   cloud_cover: CloudCover,
 };
 
+const ICON_MAP = {
+  wind: "bi-wind",
+  uv: "bi-sun",
+  sunrise: "bi-sunrise",
+  humidity: "bi-droplet-half",
+  air_quality: "bi-lungs",
+  feels_like: "bi-thermometer-half",
+  visibility: "bi-eye",
+  pressure: "bi-speedometer2",
+  cloud_cover: "bi-clouds",
+};
+
 const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
   const Component = COMPONENT_MAP[type];
   const [isOpen, setIsOpen] = useState(false);
@@ -51,7 +63,11 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
       case "air_quality":
         return { airQuality: data.AQI };
       case "feels_like":
-        return { feels: data.feelsLikeData };
+        return {
+          feels: data.feelsLikeData,
+          windData: data.windData,
+          humidData: data.humidData,
+        };
       case "visibility":
         return {
           visibilityData: data.visibilityData,
@@ -75,6 +91,7 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
   const props = getProps(type, data);
   const currentLabel =
     options?.find((opt) => opt.value === type)?.label || type;
+  const currentIcon = ICON_MAP[type] || "bi-circle";
 
   const handleOptionClick = (value) => {
     onChange(slotId, value);
@@ -92,6 +109,7 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
               setIsOpen(!isOpen);
             }}
           >
+            <i className={`bi ${currentIcon} card-type-icon`} />
             <span>{currentLabel}</span>
             <i
               className={`bi bi-chevron-down dropdown-arrow ${
@@ -112,6 +130,10 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
                     handleOptionClick(opt.value);
                   }}
                 >
+                  <i
+                    className={`bi ${ICON_MAP[opt.value] || "bi-circle"}"`}
+                    style={{ marginRight: 8 }}
+                  ></i>
                   {opt.label}
                 </li>
               ))}
@@ -121,6 +143,7 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
       )}
       <div
         className="card-content-wrapper"
+        data-type={type}
         onClick={() => onCardClick && onCardClick(type, props)}
       >
         {Component ? <Component {...props} /> : <div>Select a card</div>}

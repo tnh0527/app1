@@ -131,12 +131,7 @@ const CalendarSidebar = () => {
         </div>
 
         <div className="panel-content">
-          {isRemindersLoading ? (
-            <div className="panel-loading">
-              <span className="loading-spinner"></span>
-              <span>Loading...</span>
-            </div>
-          ) : dueReminders.length > 0 ? (
+          {dueReminders.length > 0 ? (
             <div className="reminders-list">
               {dueReminders.map((reminder) => (
                 <div key={reminder.id} className="reminder-card">
@@ -269,16 +264,6 @@ const CalendarSidebar = () => {
           </div>
         </div>
       </div>
-
-      {/* Quick Add */}
-      <button
-        type="button"
-        className="sidebar-quick-add"
-        onClick={() => openEventModal()}
-      >
-        <i className="bi bi-plus-lg"></i>
-        <span>Quick Add Event</span>
-      </button>
     </div>
   );
 };

@@ -1,5 +1,4 @@
 import { useContext } from "react";
-import { iconsImgs } from "../../../utils/images";
 import { SidebarContext } from "../../../contexts/SidebarContext";
 import { useCalendar, CALENDAR_VIEWS } from "../context/CalendarContext";
 import "./CalendarTopBar.css";
@@ -17,6 +16,7 @@ const CalendarTopBar = () => {
     setSearchQuery,
     focusMode,
     setFocusMode,
+    dueReminders,
   } = useCalendar();
 
   const getDateRangeLabel = () => {
@@ -74,15 +74,6 @@ const CalendarTopBar = () => {
   return (
     <div className="calendar-top-bar">
       <div className="calendar-top-bar-left">
-        <button
-          type="button"
-          className="sidebar-toggler"
-          onClick={() => toggleSidebar()}
-          aria-label="Toggle sidebar"
-        >
-          <img src={iconsImgs.menu} alt="" />
-        </button>
-
         <div className="calendar-navigation">
           <button
             type="button"
@@ -175,14 +166,15 @@ const CalendarTopBar = () => {
           <span>Event</span>
         </button>
 
-        <button
-          type="button"
-          className="add-reminder-btn"
-          onClick={() => openEventModal(null, { isReminder: true })}
-          title="Add Reminder"
+        <div
+          className="reminders-indicator"
+          title={`${dueReminders?.length || 0} pending reminders`}
         >
-          <i className="bi bi-bell"></i>
-        </button>
+          <i className="bi bi-bell-fill"></i>
+          {dueReminders?.length > 0 && (
+            <span className="reminders-badge">{dueReminders.length}</span>
+          )}
+        </div>
       </div>
     </div>
   );

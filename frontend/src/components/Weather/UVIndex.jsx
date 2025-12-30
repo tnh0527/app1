@@ -48,7 +48,9 @@ const UVIndex = ({ hourlyUVIndex }) => {
 
   return (
     <div className={`highlight ${!currentUVIndex ? "skeleton" : ""}`}>
-      <h4>UV Index</h4>
+      <h4>
+        <i className="bi bi-sun title-icon"></i>UV Index
+      </h4>
       {!currentUVIndex ? null : (
         <div className="card uv-index">
           <div className="index-gauge">

@@ -1,12 +1,12 @@
 import "./Sidebar.css";
 import { navigationLinks } from "../../data/data";
-import { useState, useContext, useEffect } from "react";
+import { useContext } from "react";
 import { SidebarContext } from "../../contexts/SidebarContext";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { ProfilePicModal } from "../Modals";
 import { useAuth } from "../../contexts/AuthContext";
 import { ProfileContext } from "../../contexts/ProfileContext";
-import { personsImgs, iconsImgs } from "../../utils/images";
+import { personsImgs } from "../../utils/images";
 import { Tooltip } from "react-tooltip";
 import authApi from "../../api/authApi";
 
@@ -18,7 +18,8 @@ const Sidebar = () => {
 
   const navigate = useNavigate();
 
-  const sidebarClass = isSidebarOpen ? "sidebar-change" : "";
+  // Apply collapsed styles only when sidebar is closed
+  const sidebarClass = isSidebarOpen ? "" : "sidebar-change";
 
   const handleLogout = async () => {
     try {
@@ -32,12 +33,23 @@ const Sidebar = () => {
   };
 
   const getNameBar = () => {
-    if (profile) {
-      const { username } = profile;
-      if (username) {
-        return username;
-      }
-    }
+    if (!profile) return "User";
+
+    // Prefer first + last name when both are available, otherwise fall back to username
+    const first =
+      profile.first_name ||
+      profile.firstName ||
+      profile.first ||
+      profile.givenName;
+    const last =
+      profile.last_name ||
+      profile.lastName ||
+      profile.last ||
+      profile.familyName;
+    if (first && last) return `${first} ${last}`;
+
+    if (profile.username) return profile.username;
+
     return "User";
   };
 
@@ -61,33 +73,27 @@ const Sidebar = () => {
       <button
         className="toggle-button"
         onClick={toggleSidebar}
+        aria-expanded={isSidebarOpen}
+        aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         data-tooltip-id="sidebar-tooltip"
         data-tooltip-content="Toggle sidebar"
         data-tooltip-place="right"
       >
-        {isSidebarOpen ? (
-          <i className="bi bi-caret-left-fill"></i>
-        ) : (
-          <i className="bi bi-caret-right-fill"></i>
-        )}
+        <span className={`toggle-icon ${isSidebarOpen ? "open" : "closed"}`}>
+          <i
+            className={`bi ${
+              isSidebarOpen ? "bi-caret-left-fill" : "bi-caret-right-fill"
+            }`}
+          ></i>
+        </span>
       </button>
 
+      {/* Logo Header */}
       <div className="sidebar-header">
         <div className="app-logo">
           <img src="/nexus_logo.svg" alt="Logo" />
         </div>
-        <span className="info-name">{getNameBar()}</span>
-        <div className="info-img img-fit-cover">
-          <Link
-            to="/account"
-            data-tooltip-id="profile-tooltip"
-            data-tooltip-content="My account"
-            data-tooltip-place="bottom"
-          >
-            <img src={profilePic || personsImgs.default_user} alt="user pic" />
-          </Link>
-        </div>
-        <ProfilePicModal onUpload={setProfilePic} />
+        <span className="app-name">Nexus</span>
       </div>
 
       <Tooltip id="sidebar-tooltip" style={{ zIndex: "999" }} />
@@ -128,10 +134,10 @@ const Sidebar = () => {
           </ul>
         </div>
 
-        {/* Bottom links placed after the main navigation */}
+        {/* Bottom links - excluding Log Out which is in profile section */}
         <div className="bottom-links">
           <ul className="nav-list">
-            {navigationLinks.slice(-3).map((navigationLink) => (
+            {navigationLinks.slice(-3, -1).map((navigationLink) => (
               <li className="nav-item" key={navigationLink.id}>
                 <a
                   className={`nav-link ${
@@ -153,6 +159,31 @@ const Sidebar = () => {
           </ul>
         </div>
       </nav>
+
+      {/* Profile Section at Bottom with Logout */}
+      <div className="sidebar-profile">
+        <div className="profile-img img-fit-cover">
+          <Link
+            to="/account"
+            data-tooltip-id="profile-tooltip"
+            data-tooltip-content="My account"
+            data-tooltip-place="right"
+          >
+            <img src={profilePic || personsImgs.default_user} alt="user pic" />
+          </Link>
+        </div>
+        <span className="profile-name">{getNameBar()}</span>
+        <ProfilePicModal onUpload={setProfilePic} />
+        <button
+          className="logout-btn"
+          onClick={handleLogout}
+          data-tooltip-id="sidebar-tooltip"
+          data-tooltip-content="Log out"
+          data-tooltip-place="top"
+        >
+          <i className="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import "./WeatherEffects.css";
+
+// Duration in milliseconds for the weather effects to show on page navigation
+const EFFECTS_DISPLAY_DURATION = 3000; // 3 seconds
 
 // Anomaly thresholds (in Fahrenheit for temp, mph for wind)
 const THRESHOLDS = {
@@ -135,6 +138,27 @@ const generateParticles = (count, config) =>
   [...Array(count)].map((_, i) => ({ id: i, ...config(i) }));
 
 const WeatherEffects = ({ condition, temperature, windSpeed, feelsLike }) => {
+  // State to control visibility - effects only show for 3 seconds on mount
+  const [isVisible, setIsVisible] = useState(true);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+
+  useEffect(() => {
+    // Start fade-out transition slightly before hiding
+    const fadeTimer = setTimeout(() => {
+      setIsFadingOut(true);
+    }, EFFECTS_DISPLAY_DURATION - 500); // Start fading 500ms before hiding
+
+    // Hide effects after duration
+    const hideTimer = setTimeout(() => {
+      setIsVisible(false);
+    }, EFFECTS_DISPLAY_DURATION);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []); // Empty dependency array = only on mount
+
   const activeEffects = useMemo(
     () => getActiveEffects(condition, temperature, windSpeed, feelsLike),
     [condition, temperature, windSpeed, feelsLike]
@@ -220,11 +244,11 @@ const WeatherEffects = ({ condition, temperature, windSpeed, feelsLike }) => {
     []
   );
 
-  if (activeEffects.length === 0) return null;
+  if (activeEffects.length === 0 || !isVisible) return null;
 
   return (
     <div
-      className="weather-fx"
+      className={`weather-fx ${isFadingOut ? "weather-fx--fading" : ""}`}
       data-effects={activeEffects.map((e) => e.type).join(" ")}
     >
       {/* RAIN */}

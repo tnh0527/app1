@@ -421,6 +421,74 @@
   color: #fff;
 }
 
+/* Graph Container Styles */
+.graph-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.graph-header {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.graph-wrapper {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow-x: auto;
+}
+
+.weather-graph {
+  width: 100%;
+  min-width: 700px;
+  height: 200px;
+  display: block;
+}
+
+.graph-point {
+  transition: r 0.2s ease;
+  cursor: pointer;
+}
+
+.graph-point:hover {
+  r: 6;
+  opacity: 0.8;
+}
+
+.graph-legend {
+  display: flex;
+  gap: 20px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+}
+
+.legend-color {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+  display: inline-block;
+  background: currentColor;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .weather-modal-content {
@@ -457,5 +525,13 @@
   .timezone-info-card {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .graph-wrapper {
+    padding: 10px;
+  }
+
+  .weather-graph {
+    min-width: 500px;
   }
 }

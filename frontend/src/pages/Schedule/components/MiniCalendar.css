@@ -119,13 +119,28 @@
 
 .mini-cal-day--today {
   background: linear-gradient(
-    135deg,
-    var(--clr-pumpkin) 0%,
-    rgba(32, 133, 133, 0.6) 100%
+    180deg,
+    rgba(32, 133, 133, 0.26) 0%,
+    rgba(32, 133, 133, 0.08) 100%
   );
   color: var(--clr-white);
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(32, 133, 133, 0.3);
+  position: relative;
+}
+
+.mini-cal-day--today::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--clr-pumpkin),
+    rgba(32, 133, 133, 0.6)
+  );
+  border-radius: 0 0 3px 3px;
 }
 
 .mini-cal-day--today:hover {
@@ -133,9 +148,27 @@
 }
 
 .mini-cal-day--selected {
-  background: rgba(6, 84, 129, 0.6);
-  border-color: var(--clr-pumpkin);
-  box-shadow: 0 0 0 2px rgba(32, 133, 133, 0.3);
+  background: linear-gradient(
+    180deg,
+    rgba(32, 133, 133, 0.2) 0%,
+    rgba(32, 133, 133, 0.04) 100%
+  );
+  position: relative;
+}
+
+.mini-cal-day--selected::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--clr-pumpkin),
+    rgba(32, 133, 133, 0.6)
+  );
+  border-radius: 0 0 3px 3px;
 }
 
 .mini-cal-day--selected.mini-cal-day--today {

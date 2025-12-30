@@ -193,3 +193,11 @@
 .local-time .time {
   padding-left: 4px;
 }
+
+/* Title icon styling for Sunrise & Sunset header */
+h4 .title-icon {
+  margin-right: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: inherit;
+}
