@@ -1,0 +1,145 @@
+/* Category Breakdown */
+
+.category-breakdown {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-breakdown .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.category-breakdown .panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.category-breakdown .panel-title i {
+  color: #8b5cf6;
+}
+
+.breakdown-content {
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 180px;
+  height: 180px;
+  margin: 0 auto;
+}
+
+.chart-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.center-label {
+  font-size: 11px;
+  color: var(--clr-silver);
+  text-transform: uppercase;
+}
+
+.center-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--clr-white);
+}
+
+.center-subtext {
+  font-size: 11px;
+  color: var(--clr-silver);
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.category-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.category-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.category-name {
+  font-size: 13px;
+  color: var(--clr-white);
+}
+
+.category-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-value .value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clr-white);
+}
+
+.category-value .percentage {
+  font-size: 11px;
+  color: var(--clr-silver);
+  min-width: 32px;
+  text-align: right;
+}
+
+.breakdown-content .no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--clr-silver);
+  gap: 12px;
+}
+
+.breakdown-content .no-data i {
+  font-size: 32px;
+  opacity: 0.5;
+}
+

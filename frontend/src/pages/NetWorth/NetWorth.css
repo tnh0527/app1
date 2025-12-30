@@ -1,0 +1,342 @@
+/* Net Worth Dashboard Page Styles */
+
+.networth-page {
+  flex: 1;
+  min-width: 0;
+  padding: var(--page-vertical-padding) var(--page-horizontal-padding);
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--clr-secondary) 0%, #050e2e 100%);
+  overflow-x: hidden;
+}
+
+/* Loading & Error States */
+.networth-loading,
+.networth-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+  color: var(--clr-silver);
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(32, 133, 133, 0.2);
+  border-top-color: var(--clr-pumpkin);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.networth-error i {
+  font-size: 48px;
+  color: var(--clr-scarlet);
+}
+
+.retry-btn {
+  padding: 10px 24px;
+  background: var(--clr-pumpkin);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: #1a7a7a;
+  transform: translateY(-2px);
+}
+
+/* Header */
+.networth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-title h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--clr-white);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  font-size: 14px;
+  color: var(--clr-silver);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, var(--clr-pumpkin) 0%, #1a7a7a 100%);
+  color: white;
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(32, 133, 133, 0.3);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--clr-silver);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--clr-white);
+  border-color: var(--clr-pumpkin);
+}
+
+/* Main Grid */
+.networth-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto;
+  gap: 20px;
+  width: 100%;
+}
+
+.grid-item {
+  background: linear-gradient(
+    135deg,
+    rgba(3, 22, 34, 0.9) 0%,
+    rgba(5, 14, 46, 0.8) 100%
+  );
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* allow children to shrink and enable internal scrolling */
+}
+
+.grid-item:hover {
+  border-color: rgba(32, 133, 133, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Grid Layout */
+.timeline-section {
+  grid-column: span 8;
+}
+
+.breakdown-section {
+  grid-column: span 4;
+}
+
+.changes-section {
+  grid-column: span 4;
+}
+
+.accounts-section {
+  grid-column: span 8;
+}
+
+/* Limit height for side-by-side panels and enable internal scrolling */
+.changes-section,
+.accounts-section {
+  max-height: 560px; /* same height for both panels */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* allow children to scroll */
+}
+
+.changes-section .changes-panel,
+.accounts-section .accounts-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.cashflow-section {
+  grid-column: span 4;
+}
+
+.subscriptions-section {
+  grid-column: span 4;
+}
+
+.milestones-section {
+  grid-column: span 4;
+}
+
+/* Panel Header Style */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-title i {
+  color: var(--clr-pumpkin);
+}
+
+.panel-content {
+  padding: 20px 24px;
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Responsive */
+@media screen and (max-width: 1400px) {
+  .networth-page {
+    padding: var(--page-vertical-padding) 20px;
+  }
+
+  .timeline-section {
+    grid-column: span 12;
+  }
+
+  .breakdown-section {
+    grid-column: span 6;
+  }
+
+  .changes-section {
+    grid-column: span 6;
+  }
+
+  .accounts-section {
+    grid-column: span 12;
+  }
+
+  .cashflow-section,
+  .subscriptions-section,
+  .milestones-section {
+    grid-column: span 4;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .networth-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .breakdown-section,
+  .changes-section {
+    grid-column: span 12;
+  }
+
+  .cashflow-section,
+  .subscriptions-section,
+  .milestones-section {
+    grid-column: span 6;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .networth-page {
+    padding: 16px;
+  }
+
+  .header-title h1 {
+    font-size: 24px;
+  }
+
+  .cashflow-section,
+  .subscriptions-section,
+  .milestones-section {
+    grid-column: span 12;
+  }
+
+  .action-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grid-item {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.grid-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.grid-item:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.grid-item:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.grid-item:nth-child(4) {
+  animation-delay: 0.25s;
+}
+.grid-item:nth-child(5) {
+  animation-delay: 0.3s;
+}
+.grid-item:nth-child(6) {
+  animation-delay: 0.35s;
+}
+.grid-item:nth-child(7) {
+  animation-delay: 0.4s;
+}

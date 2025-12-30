@@ -1,0 +1,143 @@
+/* Upcoming Panel */
+
+.upcoming-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.upcoming-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.upcoming-panel .panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.upcoming-panel .panel-title i {
+  color: #8b5cf6;
+}
+
+.upcoming-total {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-white);
+}
+
+.upcoming-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.no-upcoming {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--clr-silver);
+  gap: 8px;
+  text-align: center;
+}
+
+.no-upcoming i {
+  font-size: 32px;
+  color: var(--clr-green);
+  opacity: 0.6;
+}
+
+.no-upcoming p {
+  font-size: 13px;
+}
+
+.upcoming-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.upcoming-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.upcoming-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 40px;
+  padding: 6px 10px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 8px;
+}
+
+.date-day {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--clr-white);
+  line-height: 1;
+}
+
+.date-month {
+  font-size: 10px;
+  color: #a78bfa;
+  text-transform: uppercase;
+}
+
+.upcoming-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.upcoming-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--clr-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upcoming-cycle {
+  font-size: 11px;
+  color: var(--clr-silver);
+  text-transform: capitalize;
+}
+
+.upcoming-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.upcoming-amount .amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--clr-white);
+}
+
+.upcoming-amount .days-until {
+  font-size: 10px;
+  color: var(--clr-silver);
+}
+

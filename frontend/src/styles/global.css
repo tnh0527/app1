@@ -112,6 +112,13 @@ button {
   background: var(--clr-secondary);
 }
 
+/* Ensure all page containers expand to fill available space */
+.app > [class$="-page"],
+.app > [class*="-dashboard"] {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Sidebar spacer to offset fixed sidebar */
 .sidebar-spacer {
   width: calc(240px + 24px); /* sidebar width + margins */

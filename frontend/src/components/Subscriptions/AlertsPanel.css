@@ -1,0 +1,143 @@
+/* Alerts Panel */
+
+.alerts-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.alerts-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.alerts-panel .panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.alerts-panel .panel-title i {
+  color: #f97316;
+}
+
+.alert-count {
+  background: #f97316;
+  color: white;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.alerts-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.alert-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.alert-item.info {
+  border-left-color: #3b82f6;
+}
+
+.alert-item.warning {
+  border-left-color: #f97316;
+}
+
+.alert-item.critical {
+  border-left-color: #ef4444;
+}
+
+.alert-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alert-item.info .alert-icon {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.alert-item.warning .alert-icon {
+  background: rgba(249, 115, 22, 0.2);
+  color: #f97316;
+}
+
+.alert-item.critical .alert-icon {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-subscription {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--clr-white);
+}
+
+.alert-message {
+  font-size: 12px;
+  color: var(--clr-silver);
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.alert-time {
+  font-size: 10px;
+  color: var(--clr-silver);
+  opacity: 0.7;
+}
+
+.alert-dismiss {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-silver);
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.alert-item:hover .alert-dismiss {
+  opacity: 1;
+}
+
+.alert-dismiss:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--clr-white);
+}
+

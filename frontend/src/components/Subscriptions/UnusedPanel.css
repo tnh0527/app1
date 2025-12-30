@@ -1,0 +1,133 @@
+/* Unused Panel */
+
+.unused-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.unused-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.unused-panel .panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-white);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.unused-panel .panel-title i {
+  color: #f97316;
+}
+
+.potential-savings {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.savings-label {
+  font-size: 10px;
+  color: var(--clr-silver);
+  text-transform: uppercase;
+}
+
+.savings-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--clr-green);
+}
+
+.unused-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.unused-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: rgba(249, 115, 22, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(249, 115, 22, 0.1);
+  transition: all 0.2s ease;
+}
+
+.unused-item:hover {
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.unused-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unused-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--clr-white);
+}
+
+.unused-cost {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f97316;
+}
+
+.unused-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--clr-silver);
+}
+
+.unused-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.unused-actions .action-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.unused-actions .action-btn.used {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.unused-actions .action-btn.used:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.unused-actions .action-btn.cancel {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.unused-actions .action-btn.cancel:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+

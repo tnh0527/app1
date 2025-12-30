@@ -1,0 +1,133 @@
+/* Cash Flow Panel Styles */
+
+.cashflow-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.cf-period {
+  font-size: 12px;
+  color: var(--clr-silver);
+}
+
+.cashflow-content {
+  padding: 16px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Net Flow Card */
+.net-flow-card {
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.net-flow-card.positive {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 254, 147, 0.1) 0%,
+    rgba(0, 254, 147, 0.05) 100%
+  );
+  border: 1px solid rgba(0, 254, 147, 0.2);
+}
+
+.net-flow-card.negative {
+  background: linear-gradient(
+    135deg,
+    rgba(254, 30, 0, 0.1) 0%,
+    rgba(254, 30, 0, 0.05) 100%
+  );
+  border: 1px solid rgba(254, 30, 0, 0.2);
+}
+
+.nf-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.nf-label {
+  font-size: 12px;
+  color: var(--clr-silver);
+  text-transform: uppercase;
+}
+
+.net-flow-card.positive .nf-header i {
+  color: var(--clr-green);
+}
+
+.net-flow-card.negative .nf-header i {
+  color: var(--clr-scarlet);
+}
+
+.nf-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.net-flow-card.positive .nf-value {
+  color: var(--clr-green);
+}
+
+.net-flow-card.negative .nf-value {
+  color: var(--clr-scarlet);
+}
+
+.nf-savings {
+  font-size: 12px;
+  color: var(--clr-silver);
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.nf-savings .positive {
+  color: var(--clr-green);
+  font-weight: 600;
+}
+
+.nf-savings .negative {
+  color: var(--clr-scarlet);
+  font-weight: 600;
+}
+
+/* Chart */
+.cf-chart {
+  height: 100px;
+}
+
+/* Breakdown */
+.cf-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+.expense-category {
+  font-size: 12px;
+  color: var(--clr-silver);
+}
+
+.expense-amount {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--clr-white);
+}
+

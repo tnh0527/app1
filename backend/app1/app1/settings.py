@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "schedule_app",
     "weather_app",
     "stocks_app",
+    "networth_app",
+    "subscriptions_app",
 ]
 
 MIDDLEWARE = [

@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
+    "@modelcontextprotocol/server-puppeteer": "^2025.5.12",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
@@ -32,6 +33,9 @@
     "react-router-dom": "^6.26.2",
     "react-spinners": "^0.14.1",
     "react-tooltip": "^5.28.0"
+  },
+  "overrides": {
+    "@modelcontextprotocol/sdk": "^1.25.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

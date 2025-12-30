@@ -7,8 +7,10 @@ import {
   Dashboard,
   EditProfile,
   Login,
+  NetWorth,
   Schedule,
   Settings,
+  Subscriptions,
   Weather,
 } from "./pages";
 
@@ -35,6 +37,14 @@ function App() {
             {
               path: "/weather/*",
               element: <Weather />,
+            },
+            {
+              path: "/networth/*",
+              element: <NetWorth />,
+            },
+            {
+              path: "/subscriptions/*",
+              element: <Subscriptions />,
             },
             {
               path: "/settings/*",

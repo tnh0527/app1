@@ -1,0 +1,204 @@
+/* What Changed Panel Styles */
+
+.changes-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-subtitle {
+  font-size: 12px;
+  color: var(--clr-silver);
+}
+
+.changes-content {
+  padding: 16px 24px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Monthly Summary */
+.monthly-summary {
+  background: linear-gradient(
+    135deg,
+    rgba(32, 133, 133, 0.1) 0%,
+    rgba(32, 133, 133, 0.05) 100%
+  );
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 3px solid var(--clr-pumpkin);
+}
+
+.summary-text {
+  font-size: 14px;
+  color: var(--clr-white);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Highlights */
+.highlights-section,
+.alerts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.highlight-item.positive {
+  background: rgba(0, 254, 147, 0.1);
+  color: var(--clr-green);
+}
+
+.highlight-item.alert {
+  background: rgba(254, 30, 0, 0.1);
+  color: var(--clr-scarlet);
+}
+
+.highlight-item i {
+  font-size: 14px;
+}
+
+/* Changes List */
+.changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.change-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.change-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.change-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.change-icon.positive {
+  background: rgba(0, 254, 147, 0.1);
+  color: var(--clr-green);
+}
+
+.change-icon.negative {
+  background: rgba(254, 30, 0, 0.1);
+  color: var(--clr-scarlet);
+}
+
+.change-icon i {
+  font-size: 14px;
+}
+
+.change-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.change-description {
+  font-size: 13px;
+  color: var(--clr-white);
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+}
+
+.change-time {
+  font-size: 11px;
+  color: var(--clr-silver);
+}
+
+.change-amount {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.change-amount span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.change-amount.positive span:first-child {
+  color: var(--clr-green);
+}
+
+.change-amount.negative span:first-child {
+  color: var(--clr-scarlet);
+}
+
+.change-percent {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  color: var(--clr-silver) !important;
+}
+
+/* No Changes */
+.no-changes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.no-changes i {
+  font-size: 36px;
+  color: var(--clr-pumpkin);
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+.no-changes p {
+  font-size: 14px;
+  color: var(--clr-white);
+  margin: 0 0 4px 0;
+}
+
+.no-changes span {
+  font-size: 12px;
+  color: var(--clr-silver);
+}
+
+/* Scrollbar */
+.changes-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.changes-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.changes-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.changes-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
