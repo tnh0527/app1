@@ -5,30 +5,33 @@ export const profileNavLink = [
     id: 1,
     title: "Edit Profile",
     image: iconsImgs.edit,
-    path: "/account",
+    path: "/profile",
   },
 ];
 export const navigationLinks = [
-  { id: 1, title: "Home", image: iconsImgs.home, path: "/home" },
+  { id: 1, title: "Dashboard", image: iconsImgs.home, path: "/dashboard" },
 
-  { id: 2, title: "Schedule", image: iconsImgs.calendar, path: "/schedule" },
+  { id: 2, title: "Calendar", image: iconsImgs.calendar, path: "/calendar" },
 
   { id: 3, title: "Weather", image: iconsImgs.weather, path: "/weather" },
 
-  { id: 4, title: "Net Worth", image: iconsImgs.wealth, path: "/networth" },
+  { id: 4, title: "Financials", image: iconsImgs.wealth, path: "/financials" },
 
-  { id: 5, title: "Subscriptions", image: iconsImgs.bills, path: "/subscriptions" },
+  {
+    id: 5,
+    title: "Subscriptions",
+    image: iconsImgs.bills,
+    path: "/subscriptions",
+  },
 
   { id: 6, title: "Travel", image: iconsImgs.plane, path: "/travel" },
 
   {
-    id: 9,
-    title: "My Account",
-    image: iconsImgs.user,
-    path: "/account",
-    children: profileNavLink,
+    id: 12,
+    title: "AI Foundry",
+    image: iconsImgs.report,
+    path: "/ai-foundry",
   },
-  { id: 11, title: "Settings", image: iconsImgs.gears, path: "/settings" },
   { id: 10, title: "Log Out", image: iconsImgs.exit },
 ];
 

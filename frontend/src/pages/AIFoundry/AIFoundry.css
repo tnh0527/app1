@@ -1,0 +1,28 @@
+.ai-foundry-page {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--clr-white);
+}
+
+.ai-foundry-container {
+  text-align: center;
+}
+
+.ai-foundry-container h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(to right, #00d4aa, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.coming-soon {
+  font-size: 1.5rem;
+  color: var(--clr-silver);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

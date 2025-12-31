@@ -24,7 +24,6 @@ urlpatterns = [
     path("profile/", include("profile_app.urls")),
     path("events/", include("schedule_app.urls")),
     path("api/", include("weather_app.urls")),
-    path("api/", include("stocks_app.urls")),
     path("api/networth/", include("networth_app.urls")),
     path("api/subscriptions/", include("subscriptions_app.urls")),
     path("api/travel/", include("travel_app.urls")),

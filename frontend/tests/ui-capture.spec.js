@@ -3,11 +3,11 @@ import path from "node:path";
 import { mkdir } from "node:fs/promises";
 
 const routes = [
-  { name: "home", path: "/home" },
-  { name: "schedule", path: "/schedule" },
+  { name: "dashboard", path: "/dashboard" },
+  { name: "calendar", path: "/calendar" },
   { name: "weather", path: "/weather" },
   { name: "settings", path: "/settings" },
-  { name: "account", path: "/account" },
+  { name: "profile", path: "/profile" },
 ];
 
 async function ensureAuthed(page) {
@@ -27,7 +27,7 @@ async function ensureAuthed(page) {
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: /log in/i }).click();
 
-  await page.waitForURL(/\/home/, { timeout: 30_000 });
+  await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
   await expect(page).not.toHaveURL("/");
 }
 

@@ -102,7 +102,7 @@ const Sidebar = () => {
       <nav className="navigation">
         <div className="top-links">
           <ul className="nav-list">
-            {navigationLinks.slice(0, -3).map((navigationLink) => (
+            {navigationLinks.slice(0, -2).map((navigationLink) => (
               <li className="nav-item" key={navigationLink.id}>
                 <div className="profile-icon">
                   <a
@@ -137,7 +137,7 @@ const Sidebar = () => {
         {/* Bottom links - excluding Log Out which is in profile section */}
         <div className="bottom-links">
           <ul className="nav-list">
-            {navigationLinks.slice(-3, -1).map((navigationLink) => (
+            {navigationLinks.slice(-2, -1).map((navigationLink) => (
               <li className="nav-item" key={navigationLink.id}>
                 <a
                   className={`nav-link ${
@@ -160,29 +160,39 @@ const Sidebar = () => {
         </div>
       </nav>
 
-      {/* Profile Section at Bottom with Logout */}
+      {/* Profile Section at Bottom - Redesigned */}
       <div className="sidebar-profile">
-        <div className="profile-img img-fit-cover">
-          <Link
-            to="/account"
-            data-tooltip-id="profile-tooltip"
-            data-tooltip-content="My account"
-            data-tooltip-place="right"
-          >
-            <img src={profilePic || personsImgs.default_user} alt="user pic" />
-          </Link>
-        </div>
-        <span className="profile-name">{getNameBar()}</span>
-        <ProfilePicModal onUpload={setProfilePic} />
-        <button
-          className="logout-btn"
-          onClick={handleLogout}
-          data-tooltip-id="sidebar-tooltip"
-          data-tooltip-content="Log out"
-          data-tooltip-place="top"
+        <Link
+          to="/profile"
+          className={`profile-section-left profile-link ${
+            location.pathname === "/profile" ? "active" : ""
+          }`}
+          data-tooltip-id="profile-tooltip"
+          data-tooltip-content="View Profile"
+          data-tooltip-place="right"
         >
-          <i className="bi bi-box-arrow-right"></i>
-        </button>
+          <div className="profile-img img-fit-cover">
+            <img
+              src={profilePic || personsImgs.default_user}
+              alt="user pic"
+            />
+          </div>
+          <span className="profile-name">{getNameBar()}</span>
+        </Link>
+        <div className="profile-section-right">
+          <button
+            className="logout-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLogout();
+            }}
+            data-tooltip-id="sidebar-tooltip"
+            data-tooltip-content="Log out"
+            data-tooltip-place="top"
+          >
+            <i className="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
       </div>
     </div>
   );

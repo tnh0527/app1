@@ -68,7 +68,7 @@ const Login = () => {
       } else {
         await authApi.login({ username, password, remember_me: rememberMe });
         login(rememberMe);
-        navigate("/home");
+        navigate("/dashboard");
         console.log("Logged in successfully!");
       }
     } catch (error) {

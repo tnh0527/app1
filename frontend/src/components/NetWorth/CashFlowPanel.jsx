@@ -1,15 +1,4 @@
-import { useRef } from "react";
-import { Bar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-} from "chart.js";
 import "./CashFlowPanel.css";
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat("en-US", {
@@ -21,8 +10,6 @@ const formatCurrency = (value) => {
 };
 
 export const CashFlowPanel = ({ cashFlow }) => {
-  const chartRef = useRef(null);
-  
   const {
     period = "",
     income = 0,
@@ -34,65 +21,17 @@ export const CashFlowPanel = ({ cashFlow }) => {
 
   const isPositiveFlow = net_flow >= 0;
 
-  // Bar chart for income vs expenses
-  const barData = {
-    labels: ["Income", "Expenses"],
-    datasets: [
-      {
-        data: [income, expenses],
-        backgroundColor: ["rgba(0, 254, 147, 0.6)", "rgba(254, 30, 0, 0.6)"],
-        borderColor: ["#00fe93", "#fe1e00"],
-        borderWidth: 1,
-        borderRadius: 6,
-        barThickness: 40,
-      },
-    ],
-  };
+  const safeIncome = Math.max(income, 0);
+  const safeExpenses = Math.max(expenses, 0);
+  const barMax = Math.max(safeIncome, safeExpenses, 1);
+  const incomePct = Math.min(100, Math.round((safeIncome / barMax) * 100));
+  const expensePct = safeIncome
+    ? Math.min(100, Math.round((safeExpenses / safeIncome) * 100))
+    : Math.min(100, Math.round((safeExpenses / barMax) * 100));
 
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    indexAxis: "y",
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: "rgba(3, 22, 34, 0.95)",
-        titleColor: "#fff",
-        bodyColor: "#a8a5a6",
-        borderColor: "rgba(32, 133, 133, 0.3)",
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        callbacks: {
-          label: (context) => formatCurrency(context.parsed.x),
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          color: "rgba(255, 255, 255, 0.05)",
-        },
-        ticks: {
-          color: "#a8a5a6",
-          font: { size: 10 },
-          callback: (value) =>
-            value >= 1000 ? `$${(value / 1000).toFixed(0)}K` : `$${value}`,
-        },
-        border: { display: false },
-      },
-      y: {
-        grid: { display: false },
-        ticks: {
-          color: "#a8a5a6",
-          font: { size: 11 },
-        },
-        border: { display: false },
-      },
-    },
-  };
+  const scaleStops = Array.from({ length: 5 }, (_, i) =>
+    Math.round((barMax / 4) * i)
+  );
 
   // Top expense categories
   const topExpenses = [...expense_breakdown]
@@ -101,52 +40,100 @@ export const CashFlowPanel = ({ cashFlow }) => {
 
   return (
     <div className="cashflow-panel">
-      <div className="panel-header">
+      <div className="panel-header cf-header">
         <div className="panel-title">
-          <i className="bi bi-arrow-left-right"></i>
-          <span>Cash Flow</span>
+          <div className="cf-icon">
+            <i className="bi bi-arrow-left-right"></i>
+          </div>
+          <div className="cf-title-wrap">
+            <span>Cash Flow</span>
+            <small>Monthly snapshot</small>
+          </div>
         </div>
-        <span className="cf-period">{period}</span>
+        <span className="cf-period">{period || "—"}</span>
       </div>
 
       <div className="cashflow-content">
-        {/* Net Flow Highlight */}
-        <div className={`net-flow-card ${isPositiveFlow ? "positive" : "negative"}`}>
-          <div className="nf-header">
+        <div
+          className={`net-flow-card ${
+            isPositiveFlow ? "positive" : "negative"
+          }`}
+        >
+          <div className="nf-main">
             <span className="nf-label">Net Monthly Flow</span>
-            <i className={`bi ${isPositiveFlow ? "bi-arrow-up-right" : "bi-arrow-down-right"}`}></i>
-          </div>
-          <span className="nf-value">
-            {isPositiveFlow ? "+" : ""}
-            {formatCurrency(net_flow)}
-          </span>
-          <div className="nf-savings">
-            <span>Savings Rate:</span>
-            <span className={isPositiveFlow ? "positive" : "negative"}>
-              {savings_rate.toFixed(1)}%
+            <span className="nf-value">
+              {isPositiveFlow ? "+" : ""}
+              {formatCurrency(net_flow)}
             </span>
+            <span className="nf-sub">Income {formatCurrency(income)}</span>
+          </div>
+          <div className="nf-badge">
+            <div className="nf-icon-wrap">
+              <i
+                className={`bi ${
+                  isPositiveFlow ? "bi-arrow-up-right" : "bi-arrow-down-right"
+                }`}
+              ></i>
+            </div>
+            <div className="nf-savings">
+              <span>Savings Rate</span>
+              <span className={isPositiveFlow ? "positive" : "negative"}>
+                {savings_rate.toFixed(1)}%
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Income vs Expenses Bar */}
-        <div className="cf-chart">
-          <Bar ref={chartRef} data={barData} options={barOptions} />
+        <div className="flow-card">
+          <div className="flow-top">
+            <span className="flow-label">Income</span>
+            <div className="flow-legend">
+              <span className="legend-dot income"></span>
+              <span>Income {formatCurrency(income)}</span>
+              <span className="legend-dot expense"></span>
+              <span>Expenses {formatCurrency(expenses)}</span>
+            </div>
+          </div>
+
+          <div className="flow-track" aria-label="Income vs expenses">
+            <div className="flow-income" style={{ width: `${incomePct}%` }}>
+              <div
+                className="flow-expense"
+                style={{ width: `${expensePct}%` }}
+              ></div>
+            </div>
+          </div>
+
+          <div className="flow-scale">
+            {scaleStops.map((stop, idx) => (
+              <span key={idx}>{formatCurrency(stop)}</span>
+            ))}
+          </div>
         </div>
 
-        {/* Top Expenses */}
         {topExpenses.length > 0 && (
           <div className="cf-breakdown">
-            <h4 className="section-label">Top Expenses</h4>
-            {topExpenses.map((item, index) => (
-              <div key={index} className="expense-item">
-                <span className="expense-category">
-                  {item.category
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase())}
-                </span>
-                <span className="expense-amount">{formatCurrency(item.amount)}</span>
-              </div>
-            ))}
+            <div className="breakdown-head">
+              <h4 className="section-label">Top Expenses</h4>
+              <span className="expense-total">{formatCurrency(expenses)}</span>
+            </div>
+            <div className="expenses-list">
+              {topExpenses.map((item, index) => (
+                <div key={index} className="expense-item">
+                  <div className="expense-left">
+                    <span className="expense-dot"></span>
+                    <span className="expense-category">
+                      {item.category
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </span>
+                  </div>
+                  <span className="expense-amount">
+                    {formatCurrency(item.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -155,4 +142,3 @@ export const CashFlowPanel = ({ cashFlow }) => {
 };
 
 export default CashFlowPanel;
-

@@ -7,10 +7,10 @@ import EventModal from "./components/EventModal";
 import "./Schedule.css";
 
 /**
- * ScheduleContent - Inner component that uses calendar context
+ * CalendarContent - Inner component that uses calendar context
  * Uses context for modal state management
  */
-const ScheduleContent = () => {
+const CalendarContent = () => {
   const {
     isEventModalOpen,
     editingEvent,
@@ -123,15 +123,15 @@ const ScheduleContent = () => {
 };
 
 /**
- * Schedule - Main page component
+ * Calendar - Main page component
  * Wraps content with CalendarProvider for state management
  */
-const Schedule = () => {
+const Calendar = () => {
   return (
     <CalendarProvider>
-      <ScheduleContent />
+      <CalendarContent />
     </CalendarProvider>
   );
 };
 
-export default Schedule;
+export default Calendar;

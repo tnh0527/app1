@@ -54,8 +54,6 @@
   min-width: 0;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 0px 12px 24px rgba(0, 0, 0, 0.25),
     0px 20px 30px rgba(0, 0, 0, 0.2);
-  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
-    box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 @media (max-width: 768px) {
@@ -105,11 +103,11 @@
 
 .forecast-range-track {
   flex: 1;
-  height: 6px;
-  border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.2);
+  height: 8px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.25);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   min-width: 0;
 }
 
@@ -119,8 +117,10 @@
   bottom: 0;
   left: var(--left);
   width: var(--width);
-  border-radius: 10px;
-  background: linear-gradient(90deg, #54d0ff, #ffcf33, #ff8c00);
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--start-color), var(--end-color));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .forecast-icon i {
@@ -130,11 +130,6 @@
   justify-content: center;
   width: 100px;
   height: 100px;
-}
-.forecast-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0px 12px 20px rgba(0, 0, 0, 0.35),
-    0px 22px 40px rgba(0, 0, 0, 0.4);
 }
 .forecast-date {
   display: flex;
@@ -155,4 +150,59 @@
 .forecast-info p {
   color: white;
   font-size: 16px;
+}
+
+/* Heat Bar Styles */
+.forecast-heat-bar-container {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.forecast-heat-bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  position: relative;
+  overflow: visible;
+  min-width: 0;
+}
+
+.forecast-temp-labels {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forecast-heat-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6),
+    0 0 12px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  min-width: 4px;
+  opacity: 0.9;
+}
+
+.forecast-temp-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--clr-white);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.forecast-temp-low {
+  color: var(--clr-silver-v1);
+}
+
+.forecast-temp-high {
+  color: var(--clr-white);
 }

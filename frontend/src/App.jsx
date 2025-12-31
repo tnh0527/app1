@@ -1,18 +1,22 @@
 import "./styles/global.css";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import {
+  Navigate,
+  RouterProvider,
+  createBrowserRouter,
+} from "react-router-dom";
 import { ProfileProvider } from "./contexts";
 import { ProtectedLayout } from "./components";
 import {
   AppShell,
   Dashboard,
-  EditProfile,
+  Profile,
   Login,
-  NetWorth,
-  Schedule,
-  Settings,
+  Financials,
+  Calendar,
   Subscriptions,
   Travel,
   Weather,
+  AIFoundry,
 } from "./pages";
 
 function App() {
@@ -28,20 +32,32 @@ function App() {
           element: <AppShell />,
           children: [
             {
-              path: "/home/*",
+              path: "/dashboard/*",
               element: <Dashboard />,
             },
             {
+              path: "/home/*",
+              element: <Navigate to="/dashboard" replace />,
+            },
+            {
+              path: "/calendar/*",
+              element: <Calendar />,
+            },
+            {
               path: "/schedule/*",
-              element: <Schedule />,
+              element: <Navigate to="/calendar" replace />,
             },
             {
               path: "/weather/*",
               element: <Weather />,
             },
             {
+              path: "/financials/*",
+              element: <Financials />,
+            },
+            {
               path: "/networth/*",
-              element: <NetWorth />,
+              element: <Navigate to="/financials" replace />,
             },
             {
               path: "/subscriptions/*",
@@ -52,12 +68,12 @@ function App() {
               element: <Travel />,
             },
             {
-              path: "/settings/*",
-              element: <Settings />,
+              path: "/ai-foundry",
+              element: <AIFoundry />,
             },
             {
-              path: "/account",
-              element: <EditProfile />,
+              path: "/profile",
+              element: <Profile />,
             },
           ],
         },

@@ -1,2 +1,1 @@
-export { default as NetWorth } from "./NetWorth";
-
+export { default as Financials } from "./NetWorth";

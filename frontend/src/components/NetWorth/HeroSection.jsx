@@ -77,6 +77,14 @@ export const HeroSection = ({ summary }) => {
   const changeAmount = summary?.change_amount || 0;
   const changePercentage = summary?.change_percentage || 0;
   const trend = summary?.trend || "neutral";
+  const totalBase =
+    (summary?.total_assets || 0) + (summary?.total_liabilities || 0);
+  const assetsShare = totalBase
+    ? Math.min(100, Math.max(0, (summary.total_assets / totalBase) * 100))
+    : 0;
+  const liabilitiesShare = totalBase
+    ? Math.min(100, Math.max(0, (summary.total_liabilities / totalBase) * 100))
+    : 0;
 
   const getTrendIcon = () => {
     switch (trend) {
@@ -102,148 +110,116 @@ export const HeroSection = ({ summary }) => {
 
   return (
     <div className="hero-section">
-      {/* Main Net Worth Card */}
       <div className="hero-main-card">
-        <div className="hero-glow"></div>
+        <div className="hero-grid"></div>
+        <div className="hero-orb"></div>
         <div className="hero-content">
-          <div className="hero-label">
-            <i className="bi bi-bank2"></i>
-            <span>Total Net Worth</span>
+          <div className="hero-top">
+            <div className="chip">Total Net Worth</div>
+            <span className="meta">Updated monthly</span>
           </div>
+
           <div className="hero-value">
             <span className="currency-sign">$</span>
             <span className="value-number">
               {Math.floor(animatedNetWorth).toLocaleString()}
             </span>
             <span className="value-decimal">
-              .{String(Math.floor((animatedNetWorth % 1) * 100)).padStart(2, "0")}
+              .
+              {String(Math.floor((animatedNetWorth % 1) * 100)).padStart(
+                2,
+                "0"
+              )}
             </span>
           </div>
-          <div className={`hero-change ${getTrendClass()}`}>
-            <i className={`bi ${getTrendIcon()}`}></i>
-            <span className="change-amount">
-              {changeAmount >= 0 ? "+" : ""}
-              {formatCurrency(changeAmount)}
-            </span>
-            <span className="change-percentage">
-              ({changePercentage >= 0 ? "+" : ""}
-              {changePercentage.toFixed(1)}%)
-            </span>
-            <span className="change-period">vs last month</span>
+
+          <div className="hero-meta-row">
+            <div className={`trend-pill ${getTrendClass()}`}>
+              <i className={`bi ${getTrendIcon()}`}></i>
+              <span>
+                {changeAmount >= 0 ? "+" : ""}
+                {formatCurrency(changeAmount)}
+              </span>
+              <span className="pill-muted">
+                ({changePercentage >= 0 ? "+" : ""}
+                {changePercentage.toFixed(1)}%)
+              </span>
+            </div>
+            <span className="muted">vs last month</span>
           </div>
-        </div>
-        <div className="hero-decoration">
-          <svg viewBox="0 0 200 200" className="hero-pattern">
-            <defs>
-              <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="rgba(32, 133, 133, 0.3)" />
-                <stop offset="100%" stopColor="rgba(32, 133, 133, 0)" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx="100"
-              cy="100"
-              r="80"
-              fill="none"
-              stroke="url(#heroGradient)"
-              strokeWidth="2"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="60"
-              fill="none"
-              stroke="url(#heroGradient)"
-              strokeWidth="1"
-            />
-          </svg>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="hero-summary-cards">
-        {/* Assets Card */}
-        <div className="summary-card assets">
-          <div className="summary-icon">
-            <i className="bi bi-graph-up-arrow"></i>
-          </div>
-          <div className="summary-content">
-            <span className="summary-label">Total Assets</span>
-            <span className="summary-value positive">
+      <div className="hero-side">
+        <div className="summary-duo">
+          <div className="summary-card assets">
+            <div className="summary-head">
+              <div className="summary-icon">
+                <i className="bi bi-graph-up-arrow"></i>
+              </div>
+              <div className="summary-labels">
+                <span className="summary-label">Total Assets</span>
+                <span className="summary-sub">Growth fuel</span>
+              </div>
+            </div>
+            <div className="summary-value positive">
               {formatCurrency(animatedAssets)}
-            </span>
+            </div>
+            <div className="progress">
+              <div
+                className="progress-bar assets"
+                style={{ width: `${assetsShare}%` }}
+              />
+            </div>
+            <div className="progress-meta">
+              <span>{assetsShare.toFixed(0)}% of holdings</span>
+              <span className="muted">vs liabilities</span>
+            </div>
           </div>
-          <div className="summary-bar">
-            <div
-              className="bar-fill assets"
-              style={{
-                width: `${
-                  summary?.total_assets && summary?.net_worth
-                    ? Math.min(
-                        100,
-                        (summary.total_assets /
-                          (summary.total_assets + summary.total_liabilities)) *
-                          100
-                      )
-                    : 0
-                }%`,
-              }}
-            ></div>
-          </div>
-        </div>
 
-        {/* Liabilities Card */}
-        <div className="summary-card liabilities">
-          <div className="summary-icon">
-            <i className="bi bi-credit-card-2-back"></i>
-          </div>
-          <div className="summary-content">
-            <span className="summary-label">Total Liabilities</span>
-            <span className="summary-value negative">
+          <div className="summary-card liabilities">
+            <div className="summary-head">
+              <div className="summary-icon">
+                <i className="bi bi-credit-card-2-back"></i>
+              </div>
+              <div className="summary-labels">
+                <span className="summary-label">Total Liabilities</span>
+                <span className="summary-sub">Obligations</span>
+              </div>
+            </div>
+            <div className="summary-value negative">
               {formatCurrency(animatedLiabilities)}
-            </span>
-          </div>
-          <div className="summary-bar">
-            <div
-              className="bar-fill liabilities"
-              style={{
-                width: `${
-                  summary?.total_liabilities && summary?.net_worth
-                    ? Math.min(
-                        100,
-                        (summary.total_liabilities /
-                          (summary.total_assets + summary.total_liabilities)) *
-                          100
-                      )
-                    : 0
-                }%`,
-              }}
-            ></div>
+            </div>
+            <div className="progress">
+              <div
+                className="progress-bar liabilities"
+                style={{ width: `${liabilitiesShare}%` }}
+              />
+            </div>
+            <div className="progress-meta">
+              <span>{liabilitiesShare.toFixed(0)}% of holdings</span>
+              <span className="muted">lower is better</span>
+            </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="summary-card stats">
-          <div className="stat-item">
-            <span className="stat-label">Cash</span>
-            <span className="stat-value">
-              {formatCurrency(summary?.cash_total || 0, true)}
-            </span>
-          </div>
-          <div className="stat-divider"></div>
-          <div className="stat-item">
-            <span className="stat-label">Investments</span>
-            <span className="stat-value">
-              {formatCurrency(summary?.investment_total || 0, true)}
-            </span>
-          </div>
-          <div className="stat-divider"></div>
-          <div className="stat-item">
-            <span className="stat-label">Debt</span>
-            <span className="stat-value debt">
-              {formatCurrency(summary?.debt_total || 0, true)}
-            </span>
-          </div>
+        <div className="stat-grid">
+          {["Cash", "Investments", "Debt"].map((label) => {
+            const valueMap = {
+              Cash: summary?.cash_total || 0,
+              Investments: summary?.investment_total || 0,
+              Debt: summary?.debt_total || 0,
+            };
+            const tone = label === "Debt" ? "negative" : "positive";
+            return (
+              <div key={label} className={`stat-chip ${tone}`}>
+                <span className="chip-label">{label}</span>
+                <span className="chip-value">
+                  {formatCurrency(valueMap[label], true)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -251,4 +227,3 @@ export const HeroSection = ({ summary }) => {
 };
 
 export default HeroSection;
-

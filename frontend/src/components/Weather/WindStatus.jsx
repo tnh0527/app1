@@ -117,9 +117,12 @@ const WindStatus = ({ windstatusData = [] }) => {
 
   return (
     <div className="highlight">
-      <h4>
-        <i className="bi bi-wind title-icon"></i>Wind Status
-      </h4>
+      <div className="highlight-header">
+        <h4>Wind Status</h4>
+        <div className="highlight-icon wind-icon">
+          <i className="bi bi-wind"></i>
+        </div>
+      </div>
       <div className="card wind-status">
         <div className="wind-visual">
           <div className="wind-chart">

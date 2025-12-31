@@ -20,7 +20,7 @@ import {
 
 const REQUEST_TIMEOUT = 15000; // 15 seconds timeout
 
-const NetWorth = () => {
+const Financials = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -121,16 +121,25 @@ const NetWorth = () => {
     );
   }
 
-  const { summary, timeline, forecast, accounts, cash_flow, insights, milestones } =
-    dashboardData || {};
+  const {
+    summary,
+    timeline,
+    forecast,
+    accounts,
+    cash_flow,
+    insights,
+    milestones,
+  } = dashboardData || {};
 
   return (
     <div className="networth-page">
       {/* Header Actions */}
       <div className="networth-header">
         <div className="header-title">
-          <h1>Net Worth Dashboard</h1>
-          <span className="header-subtitle">Your complete financial picture</span>
+          <h1>Financials Dashboard</h1>
+          <span className="header-subtitle">
+            Your complete financial picture
+          </span>
         </div>
         <div className="header-actions">
           <button
@@ -198,7 +207,10 @@ const NetWorth = () => {
 
         {/* Milestones */}
         <div className="grid-item milestones-section">
-          <MilestonesPanel milestones={milestones} onRefresh={fetchDashboardData} />
+          <MilestonesPanel
+            milestones={milestones}
+            onRefresh={fetchDashboardData}
+          />
         </div>
       </div>
 
@@ -220,5 +232,4 @@ const NetWorth = () => {
   );
 };
 
-export default NetWorth;
-
+export default Financials;

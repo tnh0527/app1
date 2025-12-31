@@ -1,12 +1,8 @@
 // Auth Components
-export { ProtectedLayout, ProtectedRoute } from "./Auth";
+export { ProtectedLayout } from "./Auth";
 
 // Content Components
 export { ContentMain } from "./ContentMain";
-export { ContentTop } from "./ContentTop";
-
-// Insight Components
-export { MainCharts, SparklineGraph, Tickers } from "./Insight";
 
 // Modal Components
 export { ProfilePicModal } from "./Modals";

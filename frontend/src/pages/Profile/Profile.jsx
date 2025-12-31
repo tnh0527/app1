@@ -1,4 +1,4 @@
-import "./EditProfile.css";
+import "./Profile.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useState, useReducer, useEffect, useContext } from "react";
@@ -41,7 +41,7 @@ const formReducer = (state, action) => {
   }
 };
 
-const EditProfile = () => {
+const Profile = () => {
   const { profile, setProfile } = useContext(ProfileContext);
   const { profilePic, setProfilePic } = useContext(ProfileContext);
 
@@ -170,6 +170,7 @@ const EditProfile = () => {
     { id: "professional", label: "Professional", icon: "bi-briefcase" },
     { id: "location", label: "Location", icon: "bi-geo-alt" },
     { id: "social", label: "Social", icon: "bi-link-45deg" },
+    { id: "settings", label: "Settings", icon: "bi-gear" },
   ];
 
   const getFullName = () => {
@@ -182,105 +183,187 @@ const EditProfile = () => {
     return parts.length > 0 ? parts.join(", ") : "Location not set";
   };
 
+  const getInitials = () => {
+    const first = state.first_name?.charAt(0) || "";
+    const last = state.last_name?.charAt(0) || "";
+    return (
+      (first + last).toUpperCase() ||
+      state.username?.charAt(0)?.toUpperCase() ||
+      "U"
+    );
+  };
+
   if (loading) {
     return (
-      <div className="account-page">
-        <div className="account-loading">
-          <SyncLoader color="#00d4aa" size={12} />
-          <p>Loading profile...</p>
+      <div className="profile-page">
+        <div className="profile-loading">
+          <div className="loading-ring">
+            <div className="loading-ring-inner"></div>
+          </div>
+          <p>Initializing profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="account-page">
-      {/* Animated Background Elements */}
-      <div className="account-bg-effects">
-        <div className="bg-orb bg-orb-1"></div>
-        <div className="bg-orb bg-orb-2"></div>
-        <div className="bg-orb bg-orb-3"></div>
-        <div className="bg-grid"></div>
+    <div className="profile-page">
+      {/* Animated Background */}
+      <div className="profile-bg">
+        <div className="bg-gradient-orb bg-orb-1"></div>
+        <div className="bg-gradient-orb bg-orb-2"></div>
+        <div className="bg-gradient-orb bg-orb-3"></div>
+        <div className="bg-mesh"></div>
+        <div className="bg-noise"></div>
       </div>
 
-      <div className="account-container">
-        {/* Left Column - Profile Card */}
-        <aside className="profile-sidebar">
-          <div className="profile-card glass-card">
-            {/* Avatar Section */}
-            <div className="profile-avatar-wrapper">
-              <div className="avatar-glow"></div>
-              <div className="profile-avatar">
-                <img src={profilePic} alt="Profile" />
+      {/* Top Spacer */}
+      <div className="profile-top-spacer"></div>
+
+      {/* Main Content */}
+      <div className="profile-layout">
+        {/* Profile Card - Left */}
+        <aside className="profile-showcase">
+          <div className="showcase-card">
+            {/* Profile Visual */}
+            <div className="showcase-visual">
+              <div className="avatar-container">
+                <div className="avatar-ring">
+                  <svg viewBox="0 0 100 100">
+                    <circle className="ring-track" cx="50" cy="50" r="46" />
+                    <circle className="ring-progress" cx="50" cy="50" r="46" />
+                  </svg>
+                </div>
+                <div className="avatar-image">
+                  {profilePic ? (
+                    <img src={profilePic} alt="Profile" />
+                  ) : (
+                    <span className="avatar-initials">{getInitials()}</span>
+                  )}
+                </div>
                 <button
-                  className="avatar-edit-btn"
+                  className="avatar-edit"
                   onClick={() => setIsModalOpen(true)}
-                  aria-label="Change profile picture"
+                  title="Change photo"
                 >
-                  <i className="bi bi-camera-fill"></i>
+                  <i className="bi bi-camera"></i>
                 </button>
               </div>
+              <div className="avatar-status online"></div>
             </div>
 
-            {/* Profile Info */}
-            <div className="profile-info">
-              <h2 className="profile-name">{getFullName()}</h2>
+            {/* Profile Identity */}
+            <div className="showcase-identity">
+              <h2 className="identity-name">{getFullName()}</h2>
+              <p className="identity-handle">@{state.username || "username"}</p>
               {state.career_title && (
-                <p className="profile-title">
-                  {state.career_title}
-                  {state.company && <span className="at-company"> @ {state.company}</span>}
-                </p>
-              )}
-              {state.bio && <p className="profile-bio">{state.bio}</p>}
-            </div>
-
-            {/* Quick Stats */}
-            <div className="profile-stats">
-              <div className="stat-item">
-                <i className="bi bi-geo-alt-fill"></i>
-                <span>{getLocation()}</span>
-              </div>
-              <div className="stat-item">
-                <i className="bi bi-envelope-fill"></i>
-                <span>{state.email || "No email"}</span>
-              </div>
-              <div className="stat-item">
-                <i className="bi bi-at"></i>
-                <span>@{state.username}</span>
-              </div>
-              {state.phone_number && (
-                <div className="stat-item">
-                  <i className="bi bi-telephone-fill"></i>
-                  <span>{state.phone_number}</span>
+                <div className="identity-role">
+                  <i className="bi bi-briefcase"></i>
+                  <span>{state.career_title}</span>
+                  {state.company && (
+                    <>
+                      <span className="role-divider">•</span>
+                      <span className="role-company">{state.company}</span>
+                    </>
+                  )}
                 </div>
               )}
-              <div className="stat-item">
-                <i className="bi bi-calendar-check-fill"></i>
-                <span>Joined {state.member_since || "—"}</span>
+            </div>
+
+            {/* Bio Section */}
+            {state.bio && (
+              <div className="showcase-bio">
+                <p>{state.bio}</p>
+              </div>
+            )}
+
+            {/* Quick Info */}
+            <div className="showcase-info">
+              <div className="info-item">
+                <div className="info-icon">
+                  <i className="bi bi-geo-alt"></i>
+                </div>
+                <div className="info-content">
+                  <span className="info-label">Location</span>
+                  <span className="info-value">{getLocation()}</span>
+                </div>
+              </div>
+              <div className="info-item">
+                <div className="info-icon">
+                  <i className="bi bi-envelope"></i>
+                </div>
+                <div className="info-content">
+                  <span className="info-label">Email</span>
+                  <span className="info-value">{state.email || "Not set"}</span>
+                </div>
+              </div>
+              <div className="info-item">
+                <div className="info-icon">
+                  <i className="bi bi-calendar-event"></i>
+                </div>
+                <div className="info-content">
+                  <span className="info-label">Birthdate</span>
+                  <span className="info-value">
+                    {state.birthdate
+                      ? new Date(state.birthdate).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "—"}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Social Links */}
-            {(state.linkedin || state.github || state.instagram || state.website) && (
-              <div className="profile-social">
+            {(state.linkedin ||
+              state.github ||
+              state.instagram ||
+              state.website) && (
+              <div className="showcase-social">
                 {state.linkedin && (
-                  <a href={state.linkedin} target="_blank" rel="noopener noreferrer" className="social-link linkedin">
+                  <a
+                    href={state.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-btn linkedin"
+                    title="LinkedIn"
+                  >
                     <i className="bi bi-linkedin"></i>
                   </a>
                 )}
                 {state.github && (
-                  <a href={state.github} target="_blank" rel="noopener noreferrer" className="social-link github">
+                  <a
+                    href={state.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-btn github"
+                    title="GitHub"
+                  >
                     <i className="bi bi-github"></i>
                   </a>
                 )}
                 {state.instagram && (
-                  <a href={state.instagram} target="_blank" rel="noopener noreferrer" className="social-link instagram">
+                  <a
+                    href={state.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-btn instagram"
+                    title="Instagram"
+                  >
                     <i className="bi bi-instagram"></i>
                   </a>
                 )}
                 {state.website && (
-                  <a href={state.website} target="_blank" rel="noopener noreferrer" className="social-link website">
-                    <i className="bi bi-globe"></i>
+                  <a
+                    href={state.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-btn website"
+                    title="Website"
+                  >
+                    <i className="bi bi-globe2"></i>
                   </a>
                 )}
               </div>
@@ -288,108 +371,109 @@ const EditProfile = () => {
           </div>
         </aside>
 
-        {/* Right Column - Edit Forms */}
-        <main className="profile-main">
-          {/* Header */}
-          <div className="profile-header">
-            <div className="header-content">
-              <h1>Edit Profile</h1>
-              <p>Update your personal information and settings</p>
-            </div>
-            <button
-              className="save-btn"
-              onClick={saveProfile}
-              disabled={!hasChanges || saving}
-            >
-              {saving ? (
-                <SyncLoader loading={saving} size={6} color="#fff" />
-              ) : (
-                <>
-                  <i className="bi bi-check2"></i>
-                  Save Changes
-                </>
-              )}
-            </button>
-          </div>
-
+        {/* Edit Form - Right */}
+        <main className="profile-editor">
           {/* Tab Navigation */}
-          <div className="profile-tabs">
+          <nav className="editor-nav">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
+                className={`nav-tab ${activeTab === tab.id ? "active" : ""}`}
                 onClick={() => setActiveTab(tab.id)}
               >
                 <i className={`bi ${tab.icon}`}></i>
-                <span>{tab.label}</span>
+                <span className="tab-label">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <span className="tab-indicator"></span>
+                )}
               </button>
             ))}
-          </div>
+          </nav>
 
-          {/* Form Content */}
-          <div className="profile-form-container glass-card">
-            <form className="profile-form" onSubmit={saveProfile}>
+          {/* Form Panels */}
+          <div className="editor-content">
+            <form onSubmit={saveProfile}>
               {/* Personal Tab */}
               {activeTab === "personal" && (
-                <div className="form-section fade-in">
-                  <div className="section-header">
-                    <h3><i className="bi bi-person"></i> Personal Information</h3>
+                <div className="form-panel animate-in">
+                  <div className="panel-header">
+                    <div className="panel-icon">
+                      <i className="bi bi-person-badge"></i>
+                    </div>
+                    <div className="panel-title">
+                      <h3>Personal Information</h3>
+                      <p>Your basic identity details</p>
+                    </div>
                   </div>
 
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label>First Name</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-type"></i>
+                        First Name
+                      </label>
                       <input
                         name="first_name"
                         type="text"
                         value={state.first_name}
                         onChange={handleChange}
-                        placeholder="Enter first name"
-                        className={errors.first_name ? "is-invalid" : ""}
+                        placeholder="Enter your first name"
+                        className={errors.first_name ? "error" : ""}
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label>Last Name</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-type"></i>
+                        Last Name
+                      </label>
                       <input
                         name="last_name"
                         type="text"
                         value={state.last_name}
                         onChange={handleChange}
-                        placeholder="Enter last name"
-                        className={errors.last_name ? "is-invalid" : ""}
+                        placeholder="Enter your last name"
+                        className={errors.last_name ? "error" : ""}
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label>Username</label>
-                      <div className="input-with-prefix">
-                        <span className="prefix">@</span>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-at"></i>
+                        Username
+                      </label>
+                      <div className="input-prefix">
                         <input
                           name="username"
                           type="text"
                           value={state.username}
                           onChange={handleChange}
                           placeholder="username"
-                          className={errors.username ? "is-invalid" : ""}
+                          className={errors.username ? "error" : ""}
                         />
                       </div>
                     </div>
 
-                    <div className="form-group">
-                      <label>Email</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-envelope"></i>
+                        Email Address
+                      </label>
                       <input
                         name="email"
                         type="email"
                         value={state.email}
                         onChange={handleChange}
-                        placeholder="email@example.com"
-                        className={errors.email ? "is-invalid" : ""}
+                        placeholder="you@example.com"
+                        className={errors.email ? "error" : ""}
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label>Phone</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-phone"></i>
+                        Phone Number
+                      </label>
                       <input
                         name="phone_number"
                         type="tel"
@@ -399,44 +483,80 @@ const EditProfile = () => {
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label>Birthdate</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-cake2"></i>
+                        Birthdate
+                      </label>
                       <DatePicker
-                        selected={state.birthdate ? new Date(state.birthdate) : null}
+                        selected={
+                          state.birthdate ? new Date(state.birthdate) : null
+                        }
                         onChangeRaw={handleRawDateChange}
                         dateFormat="MM/dd/yyyy"
                         placeholderText="MM/DD/YYYY"
                         open={false}
-                        className={errors.birthdate ? "is-invalid" : ""}
+                        className={errors.birthdate ? "error" : ""}
                       />
                     </div>
-                  </div>
 
-                  <div className="form-group full-width">
-                    <label>Bio</label>
-                    <textarea
-                      name="bio"
-                      value={state.bio}
-                      onChange={handleChange}
-                      placeholder="Tell us about yourself..."
-                      rows={3}
-                      maxLength={500}
-                    />
-                    <span className="char-count">{state.bio?.length || 0}/500</span>
+                    <div className="form-field span-full">
+                      <label>
+                        <i className="bi bi-chat-quote"></i>
+                        Bio
+                      </label>
+                      <textarea
+                        name="bio"
+                        value={state.bio}
+                        onChange={handleChange}
+                        placeholder="Write a short bio about yourself..."
+                        rows={4}
+                        maxLength={500}
+                      />
+                      <span className="char-counter">
+                        {state.bio?.length || 0} / 500
+                      </span>
+                    </div>
+                  </div>
+                  <div className="form-panel-actions">
+                    <button
+                      type="button"
+                      className="panel-save-btn"
+                      onClick={saveProfile}
+                      disabled={!hasChanges || saving}
+                    >
+                      {saving ? (
+                        <SyncLoader loading={saving} size={6} color="#fff" />
+                      ) : (
+                        <>
+                          <i className="bi bi-cloud-arrow-up"></i>
+                          <span>Save Changes</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
 
               {/* Professional Tab */}
               {activeTab === "professional" && (
-                <div className="form-section fade-in">
-                  <div className="section-header">
-                    <h3><i className="bi bi-briefcase"></i> Professional Information</h3>
+                <div className="form-panel animate-in">
+                  <div className="panel-header">
+                    <div className="panel-icon career">
+                      <i className="bi bi-rocket-takeoff"></i>
+                    </div>
+                    <div className="panel-title">
+                      <h3>Career Information</h3>
+                      <p>Your professional details</p>
+                    </div>
                   </div>
 
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label>Job Title</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-briefcase"></i>
+                        Job Title
+                      </label>
                       <input
                         name="career_title"
                         type="text"
@@ -446,8 +566,11 @@ const EditProfile = () => {
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label>Company</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-building"></i>
+                        Company
+                      </label>
                       <input
                         name="company"
                         type="text"
@@ -457,8 +580,11 @@ const EditProfile = () => {
                       />
                     </div>
 
-                    <div className="form-group full-width">
-                      <label>Website</label>
+                    <div className="form-field span-full">
+                      <label>
+                        <i className="bi bi-link-45deg"></i>
+                        Website
+                      </label>
                       <input
                         name="website"
                         type="url"
@@ -473,14 +599,23 @@ const EditProfile = () => {
 
               {/* Location Tab */}
               {activeTab === "location" && (
-                <div className="form-section fade-in">
-                  <div className="section-header">
-                    <h3><i className="bi bi-geo-alt"></i> Location</h3>
+                <div className="form-panel animate-in">
+                  <div className="panel-header">
+                    <div className="panel-icon location">
+                      <i className="bi bi-globe-americas"></i>
+                    </div>
+                    <div className="panel-title">
+                      <h3>Location Details</h3>
+                      <p>Where are you based?</p>
+                    </div>
                   </div>
 
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label>Country</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-flag"></i>
+                        Country
+                      </label>
                       <select
                         name="country"
                         value={state.country}
@@ -497,8 +632,11 @@ const EditProfile = () => {
                       </select>
                     </div>
 
-                    <div className="form-group">
-                      <label>State / Province</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-map"></i>
+                        State / Province
+                      </label>
                       <select
                         name="state"
                         value={state.state}
@@ -513,8 +651,11 @@ const EditProfile = () => {
                       </select>
                     </div>
 
-                    <div className="form-group">
-                      <label>City</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-geo"></i>
+                        City
+                      </label>
                       <input
                         name="city"
                         type="text"
@@ -524,8 +665,11 @@ const EditProfile = () => {
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label>ZIP Code</label>
+                    <div className="form-field">
+                      <label>
+                        <i className="bi bi-mailbox"></i>
+                        ZIP Code
+                      </label>
                       <input
                         name="zip_code"
                         type="text"
@@ -535,8 +679,11 @@ const EditProfile = () => {
                       />
                     </div>
 
-                    <div className="form-group full-width">
-                      <label>Street Address</label>
+                    <div className="form-field span-full">
+                      <label>
+                        <i className="bi bi-signpost-2"></i>
+                        Street Address
+                      </label>
                       <input
                         name="street_address"
                         type="text"
@@ -551,17 +698,23 @@ const EditProfile = () => {
 
               {/* Social Tab */}
               {activeTab === "social" && (
-                <div className="form-section fade-in">
-                  <div className="section-header">
-                    <h3><i className="bi bi-link-45deg"></i> Social Links</h3>
+                <div className="form-panel animate-in">
+                  <div className="panel-header">
+                    <div className="panel-icon social">
+                      <i className="bi bi-share"></i>
+                    </div>
+                    <div className="panel-title">
+                      <h3>Social Profiles</h3>
+                      <p>Connect your social accounts</p>
+                    </div>
                   </div>
 
-                  <div className="social-grid">
-                    <div className="social-input-group">
-                      <div className="social-icon linkedin">
+                  <div className="social-links-grid">
+                    <div className="social-link-card">
+                      <div className="social-link-icon linkedin">
                         <i className="bi bi-linkedin"></i>
                       </div>
-                      <div className="social-input-content">
+                      <div className="social-link-input">
                         <label>LinkedIn</label>
                         <input
                           name="linkedin"
@@ -573,11 +726,11 @@ const EditProfile = () => {
                       </div>
                     </div>
 
-                    <div className="social-input-group">
-                      <div className="social-icon github">
+                    <div className="social-link-card">
+                      <div className="social-link-icon github">
                         <i className="bi bi-github"></i>
                       </div>
-                      <div className="social-input-content">
+                      <div className="social-link-input">
                         <label>GitHub</label>
                         <input
                           name="github"
@@ -589,11 +742,11 @@ const EditProfile = () => {
                       </div>
                     </div>
 
-                    <div className="social-input-group">
-                      <div className="social-icon instagram">
+                    <div className="social-link-card">
+                      <div className="social-link-icon instagram">
                         <i className="bi bi-instagram"></i>
                       </div>
-                      <div className="social-input-content">
+                      <div className="social-link-input">
                         <label>Instagram</label>
                         <input
                           name="instagram"
@@ -622,4 +775,4 @@ const EditProfile = () => {
   );
 };
 
-export default EditProfile;
+export default Profile;

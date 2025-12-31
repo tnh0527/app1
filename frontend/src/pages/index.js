@@ -1,11 +1,12 @@
 // Page Components
 export { default as AppShell } from "./AppShell";
-export { Dashboard } from "./Dashboard";
-export { EditProfile } from "./Account";
+export { Dashboard } from "./Home";
+export { Profile } from "./Profile";
 export { Login } from "./Login";
-export { default as Schedule } from "./Schedule/Schedule";
+export { default as Calendar } from "./Schedule/Schedule";
 export { Settings } from "./Settings";
 export { Subscriptions } from "./Subscriptions";
 export { Travel } from "./Travel";
 export { Weather } from "./Weather";
-export { NetWorth } from "./NetWorth";
+export { Financials } from "./NetWorth";
+export { default as AIFoundry } from "./AIFoundry/AIFoundry";
