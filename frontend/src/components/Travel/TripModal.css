@@ -18,8 +18,8 @@
 .trip-modal {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.98) 0%,
-    rgba(5, 14, 46, 0.95) 100%
+    rgba(15, 23, 35, 0.98) 0%,
+    rgba(20, 30, 45, 0.95) 100%
   );
   border-radius: 20px;
   width: 100%;
@@ -80,11 +80,21 @@
   cursor: pointer;
 }
 
-.status-select.planning { border-color: #ffc107; }
-.status-select.booked { border-color: #17a2b8; }
-.status-select.in_progress { border-color: #00d4aa; }
-.status-select.completed { border-color: #6c757d; }
-.status-select.cancelled { border-color: #dc3545; }
+.status-select.planning {
+  border-color: #ffc107;
+}
+.status-select.booked {
+  border-color: #17a2b8;
+}
+.status-select.in_progress {
+  border-color: #d4a853;
+}
+.status-select.completed {
+  border-color: #6c757d;
+}
+.status-select.cancelled {
+  border-color: #dc3545;
+}
 
 .close-btn {
   width: 36px;
@@ -128,8 +138,8 @@
 }
 
 .modal-tab.active {
-  color: #00d4aa;
-  border-bottom-color: #00d4aa;
+  color: #d4a853;
+  border-bottom-color: #d4a853;
 }
 
 /* Modal Content */
@@ -160,8 +170,8 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: rgba(0, 212, 170, 0.15);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.15);
+  color: #d4a853;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,9 +220,9 @@
   text-align: center;
   margin-bottom: 24px;
   padding: 24px;
-  background: rgba(0, 212, 170, 0.1);
+  background: rgba(212, 168, 83, 0.1);
   border-radius: 16px;
-  border: 1px solid rgba(0, 212, 170, 0.2);
+  border: 1px solid rgba(212, 168, 83, 0.2);
 }
 
 .budget-total {
@@ -250,7 +260,7 @@
 
 .budget-fill-large {
   height: 100%;
-  background: linear-gradient(90deg, #00d4aa, #00a388);
+  background: linear-gradient(90deg, #d4a853, #b8923f);
   border-radius: 5px;
   transition: width 0.5s ease;
 }
@@ -279,15 +289,15 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: rgba(0, 212, 170, 0.15);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.15);
+  color: #d4a853;
   border-radius: 8px;
   font-size: 13px;
   transition: all 0.3s ease;
 }
 
 .add-expense-btn:hover {
-  background: rgba(0, 212, 170, 0.3);
+  background: rgba(212, 168, 83, 0.3);
 }
 
 /* Add Expense Form */
@@ -318,7 +328,7 @@
 .add-expense-form input:focus,
 .add-expense-form select:focus {
   outline: none;
-  border-color: #00d4aa;
+  border-color: #d4a853;
 }
 
 .form-actions {
@@ -342,7 +352,7 @@
 
 .save-btn {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  background: linear-gradient(135deg, #d4a853 0%, #b8923f 100%);
   color: white;
   border-radius: 8px;
   font-size: 14px;
@@ -411,7 +421,7 @@
 .day-number {
   font-size: 14px;
   font-weight: 600;
-  color: #00d4aa;
+  color: #d4a853;
 }
 
 .day-date {
@@ -474,16 +484,16 @@
 .empty-packing i,
 .empty-documents i {
   font-size: 36px;
-  color: rgba(0, 212, 170, 0.3);
+  color: rgba(212, 168, 83, 0.3);
   margin-bottom: 12px;
 }
 
 /* Packing Progress */
 .packing-progress {
   padding: 24px;
-  background: rgba(0, 212, 170, 0.1);
+  background: rgba(212, 168, 83, 0.1);
   border-radius: 16px;
-  border: 1px solid rgba(0, 212, 170, 0.2);
+  border: 1px solid rgba(212, 168, 83, 0.2);
 }
 
 .progress-info {
@@ -504,7 +514,7 @@
 
 .packing-fill {
   height: 100%;
-  background: linear-gradient(90deg, #00d4aa, #00a388);
+  background: linear-gradient(90deg, #d4a853, #b8923f);
   border-radius: 4px;
   transition: width 0.5s ease;
 }
@@ -527,7 +537,7 @@
 
 .document-item i {
   font-size: 24px;
-  color: #00d4aa;
+  color: #d4a853;
 }
 
 .doc-info {
@@ -571,4 +581,3 @@
     font-size: 13px;
   }
 }
-

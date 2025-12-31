@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "profile_app.apps.ProfileAppConfig",
     "schedule_app",
     "weather_app",
-    "networth_app",
+    "financials_app",
     "subscriptions_app",
     "travel_app",
 ]

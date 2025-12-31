@@ -11,8 +11,8 @@
   position: relative;
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.9) 0%,
-    rgba(10, 22, 40, 0.8) 100%
+    rgba(15, 23, 35, 0.9) 0%,
+    rgba(20, 30, 45, 0.85) 100%
   );
   border-radius: 16px;
   padding: 24px;
@@ -22,7 +22,7 @@
 }
 
 .hero-card:hover {
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: rgba(212, 168, 83, 0.3);
   transform: translateY(-2px);
 }
 
@@ -30,11 +30,11 @@
 .monthly-card {
   background: linear-gradient(
     135deg,
-    rgba(139, 92, 246, 0.15) 0%,
-    rgba(3, 22, 34, 0.95) 50%,
-    rgba(10, 22, 40, 0.9) 100%
+    rgba(212, 168, 83, 0.15) 0%,
+    rgba(15, 23, 35, 0.95) 50%,
+    rgba(20, 30, 45, 0.9) 100%
   );
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: rgba(212, 168, 83, 0.3);
 }
 
 .hero-glow {
@@ -45,7 +45,7 @@
   height: 200px;
   background: radial-gradient(
     circle,
-    rgba(139, 92, 246, 0.4) 0%,
+    rgba(212, 168, 83, 0.4) 0%,
     transparent 70%
   );
   filter: blur(40px);
@@ -72,8 +72,8 @@
 }
 
 .monthly-card .hero-icon {
-  background: rgba(139, 92, 246, 0.2);
-  color: #a78bfa;
+  background: rgba(212, 168, 83, 0.2);
+  color: #e5c07b;
 }
 
 .annual-card .hero-icon {
@@ -197,4 +197,3 @@
     font-size: 28px;
   }
 }
-

@@ -13,7 +13,8 @@
 }
 
 @keyframes skeleton-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.5;
   }
   50% {
@@ -91,8 +92,8 @@
 .skeleton-card {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.9) 0%,
-    rgba(5, 14, 46, 0.8) 100%
+    rgba(15, 23, 35, 0.9) 0%,
+    rgba(20, 30, 45, 0.85) 100%
   );
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -116,8 +117,8 @@
 .skeleton-chart {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.9) 0%,
-    rgba(5, 14, 46, 0.8) 100%
+    rgba(15, 23, 35, 0.9) 0%,
+    rgba(20, 30, 45, 0.85) 100%
   );
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -153,8 +154,8 @@
 .skeleton-hero {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.95) 0%,
-    rgba(5, 14, 46, 0.9) 100%
+    rgba(15, 23, 35, 0.95) 0%,
+    rgba(20, 30, 45, 0.9) 100%
   );
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -214,8 +215,8 @@
 .skeleton-table {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.9) 0%,
-    rgba(5, 14, 46, 0.8) 100%
+    rgba(15, 23, 35, 0.9) 0%,
+    rgba(20, 30, 45, 0.85) 100%
   );
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -286,12 +287,12 @@
 }
 
 .spinner-ring:nth-child(1) {
-  border-top-color: #00d4aa;
+  border-top-color: #d4a853;
   animation-delay: -0.45s;
 }
 
 .spinner-ring:nth-child(2) {
-  border-top-color: rgba(0, 212, 170, 0.6);
+  border-top-color: rgba(212, 168, 83, 0.6);
   animation-delay: -0.3s;
   width: 80%;
   height: 80%;
@@ -300,7 +301,7 @@
 }
 
 .spinner-ring:nth-child(3) {
-  border-top-color: rgba(0, 212, 170, 0.3);
+  border-top-color: rgba(212, 168, 83, 0.3);
   animation-delay: -0.15s;
   width: 60%;
   height: 60%;
@@ -345,8 +346,8 @@
   justify-content: center;
   background: linear-gradient(
     135deg,
-    rgba(32, 133, 133, 0.15) 0%,
-    rgba(32, 133, 133, 0.05) 100%
+    rgba(212, 168, 83, 0.15) 0%,
+    rgba(212, 168, 83, 0.05) 100%
   );
   border-radius: 50%;
   margin-bottom: 20px;
@@ -354,7 +355,7 @@
 
 .empty-state-icon i {
   font-size: 32px;
-  background: linear-gradient(135deg, #00d4aa 0%, #208585 100%);
+  background: linear-gradient(135deg, #d4a853 0%, #b8923f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -380,7 +381,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  background: linear-gradient(135deg, #d4a853 0%, #b8923f 100%);
   color: white;
   border-radius: 10px;
   font-size: 14px;
@@ -390,7 +391,7 @@
 
 .empty-state-action:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+  box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
 }
 
 /* ==========================================
@@ -404,7 +405,26 @@
   justify-content: center;
   padding: 48px 24px;
   text-align: center;
-  min-height: 300px;
+  min-height: calc(100vh - 200px);
+  width: 100%;
+  position: relative;
+}
+
+/* Ensure error state is centered when inside page containers */
+.financials-page > .error-state,
+.subscriptions-page > .error-state,
+.travel-page > .error-state,
+.dashboard-page > .error-state,
+.schedule-page > .error-state,
+.calendar-page > .error-state,
+.weather-page > .error-state,
+.profile-page > .error-state,
+.settings-page > .error-state {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 .error-state-icon {
@@ -491,7 +511,8 @@
 }
 
 @keyframes timeout-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -572,4 +593,3 @@
     font-size: 28px;
   }
 }
-

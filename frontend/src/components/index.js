@@ -31,10 +31,10 @@ export {
   WindStatus,
 } from "./Weather";
 
-// Net Worth Components
+// Financials Components
 export {
   HeroSection,
-  NetWorthTimeline,
+  FinancialsTimeline,
   AssetLiabilityBreakdown,
   WhatChanged,
   CashFlowPanel,
@@ -42,4 +42,4 @@ export {
   AccountsPanel,
   AddAccountModal,
   UpdateValuesModal,
-} from "./NetWorth";
+} from "./Financials";

@@ -3,8 +3,8 @@
 .add-trip-modal {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.98) 0%,
-    rgba(5, 14, 46, 0.95) 100%
+    rgba(15, 23, 35, 0.98) 0%,
+    rgba(20, 30, 45, 0.95) 100%
   );
   border-radius: 20px;
   width: 100%;
@@ -68,12 +68,12 @@
 }
 
 .step-item.active .step-number {
-  background: rgba(0, 212, 170, 0.2);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.2);
+  color: #d4a853;
 }
 
 .step-item.current .step-number {
-  background: #00d4aa;
+  background: #d4a853;
   color: white;
 }
 
@@ -124,8 +124,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #00d4aa;
-  background: rgba(0, 212, 170, 0.05);
+  border-color: #d4a853;
+  background: rgba(212, 168, 83, 0.05);
 }
 
 .form-group input::placeholder,
@@ -177,13 +177,13 @@
 
 .type-btn:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(0, 212, 170, 0.3);
+  border-color: rgba(212, 168, 83, 0.3);
 }
 
 .type-btn.active {
-  background: rgba(0, 212, 170, 0.15);
-  border-color: #00d4aa;
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.15);
+  border-color: #d4a853;
+  color: #d4a853;
 }
 
 /* Color Grid */
@@ -206,7 +206,7 @@
 
 .color-btn.active {
   border-color: white;
-  box-shadow: 0 0 12px rgba(0, 212, 170, 0.5);
+  box-shadow: 0 0 12px rgba(212, 168, 83, 0.5);
 }
 
 /* Duration Display */
@@ -216,10 +216,10 @@
   justify-content: center;
   gap: 10px;
   padding: 16px;
-  background: rgba(0, 212, 170, 0.1);
+  background: rgba(212, 168, 83, 0.1);
   border-radius: 12px;
-  border: 1px solid rgba(0, 212, 170, 0.2);
-  color: #00d4aa;
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  color: #d4a853;
   font-size: 18px;
   font-weight: 600;
 }
@@ -245,7 +245,7 @@
 .checkbox-item input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #00d4aa;
+  accent-color: #d4a853;
   cursor: pointer;
 }
 
@@ -291,7 +291,7 @@
 .suggested-amount {
   font-size: 20px;
   font-weight: 700;
-  color: #00d4aa;
+  color: #d4a853;
 }
 
 .suggested-daily {
@@ -301,15 +301,15 @@
 
 .apply-btn {
   padding: 8px 16px;
-  background: rgba(0, 212, 170, 0.15);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.15);
+  color: #d4a853;
   border-radius: 6px;
   font-size: 13px;
   transition: all 0.3s ease;
 }
 
 .apply-btn:hover {
-  background: #00d4aa;
+  background: #d4a853;
   color: white;
 }
 
@@ -342,7 +342,7 @@
 
 .breakdown-item i {
   font-size: 16px;
-  color: #00d4aa;
+  color: #d4a853;
 }
 
 .breakdown-item span {
@@ -364,7 +364,7 @@
 
 .breakdown-item input:focus {
   outline: none;
-  border-color: #00d4aa;
+  border-color: #d4a853;
 }
 
 /* Modal Footer */
@@ -402,7 +402,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  background: linear-gradient(135deg, #d4a853 0%, #b8923f 100%);
   color: white;
   border-radius: 10px;
   font-size: 14px;
@@ -413,7 +413,7 @@
 .next-btn:hover:not(:disabled),
 .create-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+  box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
 }
 
 .next-btn:disabled,
@@ -440,4 +440,3 @@
     grid-template-columns: 1fr;
   }
 }
-

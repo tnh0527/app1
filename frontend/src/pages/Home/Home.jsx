@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
 // API imports
-import { dashboardApi as networthDashboardApi } from "../../api/networthApi";
+import { dashboardApi as financialsDashboardApi } from "../../api/financialsApi";
 import { dashboardApi as subscriptionsDashboardApi } from "../../api/subscriptionsApi";
 import {
   dashboardApi as travelDashboardApi,
@@ -12,9 +12,9 @@ import {
 import { ProfileContext } from "../../contexts/ProfileContext";
 
 // Widget imports
-import { ScheduleWidget } from "./widgets/ScheduleWidget";
+import { CalendarWidget } from "./widgets/CalendarWidget";
 import { WeatherWidget } from "./widgets/WeatherWidget";
-import { NetWorthWidget } from "./widgets/NetWorthWidget";
+import { FinancialsWidget } from "./widgets/FinancialsWidget";
 import { SubscriptionsWidget } from "./widgets/SubscriptionsWidget";
 import { TravelWidget } from "./widgets/TravelWidget";
 import DashboardSkeleton from "./HomeSkeleton";
@@ -29,9 +29,10 @@ const Dashboard = () => {
   const timeoutRef = useRef(null);
 
   // Data states for each module
-  const [networthData, setNetworthData] = useState(null);
+  const [financialsData, setFinancialsData] = useState(null);
   const [subscriptionsData, setSubscriptionsData] = useState(null);
   const [travelData, setTravelData] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
 
   // Current time for greeting
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -42,7 +43,7 @@ const Dashboard = () => {
       setCurrentTime(new Date());
     }, 60000);
     return () => clearInterval(timer);
-  }, []);
+  }, [profile?.location]);
 
   // Get greeting based on time of day
   const getGreeting = () => {
@@ -67,18 +68,28 @@ const Dashboard = () => {
 
     try {
       // Fetch all data in parallel
-      const [networth, subscriptions, travel, trips] = await Promise.all([
-        networthDashboardApi.getFullDashboard("1y").catch(() => null),
-        subscriptionsDashboardApi.getFullDashboard().catch(() => null),
-        travelDashboardApi.getDashboard().catch(() => null),
-        tripsApi.getUpcoming().catch(() => []),
-      ]);
+      const weatherLocation = profile?.location || "Richmond, Texas, USA";
+
+      const [financials, subscriptions, travel, trips, weather] =
+        await Promise.all([
+          financialsDashboardApi.getFullDashboard("1y").catch(() => null),
+          subscriptionsDashboardApi.getFullDashboard().catch(() => null),
+          travelDashboardApi.getDashboard().catch(() => null),
+          tripsApi.getUpcoming().catch(() => []),
+          fetch(`http://localhost:8000/api/weather/?location=${encodeURIComponent(
+            weatherLocation
+          )}
+        `)
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null),
+        ]);
 
       clearTimeout(timeoutRef.current);
 
-      setNetworthData(networth);
+      setFinancialsData(financials);
       setSubscriptionsData(subscriptions);
       setTravelData({ ...travel, upcomingTrips: trips });
+      setWeatherData(weather);
 
       setError(null);
     } catch (err) {
@@ -89,7 +100,7 @@ const Dashboard = () => {
       clearTimeout(timeoutRef.current);
       setLoading(false);
     }
-  }, []);
+  }, [profile?.location]);
 
   useEffect(() => {
     fetchAllData();
@@ -115,20 +126,12 @@ const Dashboard = () => {
     });
   };
 
-  if (loading && !networthData && !subscriptionsData && !travelData) {
+  if (loading && !financialsData && !subscriptionsData && !travelData) {
     return <DashboardSkeleton />;
   }
 
   return (
     <div className="home-page">
-      {/* Animated background elements */}
-      <div className="home-bg-effects">
-        <div className="bg-orb bg-orb-1"></div>
-        <div className="bg-orb bg-orb-2"></div>
-        <div className="bg-orb bg-orb-3"></div>
-        <div className="bg-grid"></div>
-      </div>
-
       {/* Header Section */}
       <header className="home-header">
         <div className="header-content">
@@ -158,14 +161,17 @@ const Dashboard = () => {
       {/* Main Dashboard Grid - New Layout */}
       <main className="home-dashboard-grid">
         {/* Top Row: Financials (left) | Weather (right) */}
-        <NetWorthWidget
-          data={networthData}
+        <FinancialsWidget
+          data={financialsData}
           onNavigate={() => handleNavigate("/financials")}
         />
-        <WeatherWidget onNavigate={() => handleNavigate("/weather")} />
+        <WeatherWidget
+          initialWeather={weatherData}
+          onNavigate={() => handleNavigate("/weather")}
+        />
 
         {/* Middle Row: Calendar (left) | Travel (right) */}
-        <ScheduleWidget onNavigate={() => handleNavigate("/calendar")} />
+        <CalendarWidget onNavigate={() => handleNavigate("/calendar")} />
         <TravelWidget
           data={travelData}
           onNavigate={() => handleNavigate("/travel")}

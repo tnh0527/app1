@@ -124,7 +124,7 @@
 }
 
 .toggle-button:focus-visible {
-  outline: 3px solid rgba(32, 133, 133, 0.18);
+  outline: 3px solid rgba(212, 168, 83, 0.18);
   outline-offset: 4px;
 }
 
@@ -240,7 +240,7 @@
 .nav-link.active::before {
   opacity: 1;
   height: 60%;
-  background: cyan;
+  background: #d4a853;
 }
 
 .nav-link-icon {
@@ -282,8 +282,8 @@
 
 /* Beta Label */
 .beta-label {
-  background: rgba(0, 200, 120, 0.12);
-  color: rgba(0, 220, 130, 0.9);
+  background: rgba(212, 168, 83, 0.12);
+  color: rgba(212, 168, 83, 0.9);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 9px;
@@ -292,7 +292,7 @@
   margin-left: 8px;
   display: inline-block;
   vertical-align: middle;
-  border: 1px solid rgba(0, 200, 120, 0.2);
+  border: 1px solid rgba(212, 168, 83, 0.2);
   letter-spacing: 0.5px;
 }
 
@@ -306,11 +306,11 @@
   margin-top: auto;
   background: linear-gradient(
     135deg,
-    rgba(5, 14, 30, 0.9) 0%,
-    rgba(8, 24, 44, 0.9) 100%
+    rgba(15, 23, 35, 0.95) 0%,
+    rgba(20, 30, 45, 0.95) 100%
   );
   border-radius: 14px;
-  border: 1px solid rgba(0, 254, 147, 0.12);
+  border: 1px solid rgba(212, 168, 83, 0.12);
   transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     flex-direction 0.5s cubic-bezier(0.4, 0, 0.2, 1),
     gap 0.5s cubic-bezier(0.4, 0, 0.2, 1),
@@ -321,10 +321,10 @@
 .sidebar-profile:hover {
   background: linear-gradient(
     135deg,
-    rgba(8, 24, 44, 0.95) 0%,
-    rgba(10, 32, 52, 0.95) 100%
+    rgba(20, 30, 45, 0.98) 0%,
+    rgba(25, 38, 55, 0.98) 100%
   );
-  border-color: rgba(0, 254, 147, 0.2);
+  border-color: rgba(212, 168, 83, 0.2);
 }
 
 .profile-section-left {
@@ -358,11 +358,11 @@
 }
 
 .profile-link.active {
-  background: rgba(0, 254, 147, 0.08);
+  background: rgba(212, 168, 83, 0.08);
 }
 
 .profile-link.active:hover {
-  background: rgba(0, 254, 147, 0.12);
+  background: rgba(212, 168, 83, 0.12);
 }
 
 .profile-section-right {
@@ -389,27 +389,27 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 2px solid rgba(0, 254, 147, 0.35);
+  border: 2px solid rgba(212, 168, 83, 0.35);
   transition: border-color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   z-index: 2;
   box-sizing: border-box;
-  box-shadow: 0 0 6px rgba(0, 254, 147, 0.15), 0 0 10px rgba(0, 254, 147, 0.1),
-    0 0 14px rgba(0, 254, 147, 0.06);
+  box-shadow: 0 0 6px rgba(212, 168, 83, 0.15), 0 0 10px rgba(212, 168, 83, 0.1),
+    0 0 14px rgba(212, 168, 83, 0.06);
 }
 
 .profile-link:hover .profile-img::before {
-  border-color: rgba(0, 254, 147, 0.7);
-  box-shadow: 0 0 8px rgba(0, 254, 147, 0.3), 0 0 14px rgba(0, 254, 147, 0.2),
-    0 0 20px rgba(0, 254, 147, 0.15), 0 0 26px rgba(0, 254, 147, 0.1),
-    0 0 32px rgba(0, 254, 147, 0.05);
+  border-color: rgba(212, 168, 83, 0.7);
+  box-shadow: 0 0 8px rgba(212, 168, 83, 0.3), 0 0 14px rgba(212, 168, 83, 0.2),
+    0 0 20px rgba(212, 168, 83, 0.15), 0 0 26px rgba(212, 168, 83, 0.1),
+    0 0 32px rgba(212, 168, 83, 0.05);
 }
 
 .profile-link:hover .profile-img::after {
   opacity: 1;
-  box-shadow: 0 0 8px rgba(0, 254, 147, 0.3), 0 0 14px rgba(0, 254, 147, 0.2),
-    0 0 20px rgba(0, 254, 147, 0.15), 0 0 26px rgba(0, 254, 147, 0.1),
-    0 0 32px rgba(0, 254, 147, 0.05);
+  box-shadow: 0 0 8px rgba(212, 168, 83, 0.3), 0 0 14px rgba(212, 168, 83, 0.2),
+    0 0 20px rgba(212, 168, 83, 0.15), 0 0 26px rgba(212, 168, 83, 0.1),
+    0 0 32px rgba(212, 168, 83, 0.05);
 }
 
 .sidebar-profile .profile-img img {

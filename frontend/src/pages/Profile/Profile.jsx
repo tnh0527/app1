@@ -208,15 +208,6 @@ const Profile = () => {
 
   return (
     <div className="profile-page">
-      {/* Animated Background */}
-      <div className="profile-bg">
-        <div className="bg-gradient-orb bg-orb-1"></div>
-        <div className="bg-gradient-orb bg-orb-2"></div>
-        <div className="bg-gradient-orb bg-orb-3"></div>
-        <div className="bg-mesh"></div>
-        <div className="bg-noise"></div>
-      </div>
-
       {/* Top Spacer */}
       <div className="profile-top-spacer"></div>
 
@@ -442,16 +433,14 @@ const Profile = () => {
                         <i className="bi bi-at"></i>
                         Username
                       </label>
-                      <div className="input-prefix">
-                        <input
-                          name="username"
-                          type="text"
-                          value={state.username}
-                          onChange={handleChange}
-                          placeholder="username"
-                          className={errors.username ? "error" : ""}
-                        />
-                      </div>
+                      <input
+                        name="username"
+                        type="text"
+                        value={state.username}
+                        onChange={handleChange}
+                        placeholder="username"
+                        className={errors.username ? "error" : ""}
+                      />
                     </div>
 
                     <div className="form-field">

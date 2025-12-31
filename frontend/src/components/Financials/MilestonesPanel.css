@@ -1,0 +1,190 @@
+/* Milestones Panel Styles */
+
+.milestones-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.milestone-stats {
+  font-size: 12px;
+  color: var(--clr-pumpkin);
+  background: rgba(212, 168, 83, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.milestones-content {
+  padding: 16px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+/* Milestone Section */
+.milestone-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-label {
+  font-size: 12px;
+  color: var(--clr-silver);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-label i {
+  color: var(--clr-green);
+}
+
+/* Milestone Item */
+.milestone-item {
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.milestone-item:hover {
+  border-color: rgba(212, 168, 83, 0.2);
+}
+
+.milestone-item.achieved {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 254, 147, 0.05) 0%,
+    transparent 100%
+  );
+  border-color: rgba(0, 254, 147, 0.1);
+}
+
+.ms-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ms-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--clr-white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ms-name i {
+  color: var(--clr-green);
+  font-size: 12px;
+}
+
+.ms-target {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clr-pumpkin);
+}
+
+.ms-target.achieved {
+  color: var(--clr-green);
+}
+
+/* Progress Bar */
+.ms-progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.ms-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+.ms-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.ms-current {
+  color: var(--clr-white);
+}
+
+.ms-percent {
+  color: var(--clr-silver);
+}
+
+/* Achieved Info */
+.ms-achieved-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ms-date {
+  font-size: 11px;
+  color: var(--clr-green);
+}
+
+.celebrate-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--clr-yellow);
+  background: rgba(254, 200, 10, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.celebrate-btn:hover {
+  background: rgba(254, 200, 10, 0.2);
+}
+
+.celebrate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* No Milestones */
+.no-milestones {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.no-milestones i {
+  font-size: 36px;
+  color: var(--clr-pumpkin);
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+.no-milestones p {
+  font-size: 14px;
+  color: var(--clr-white);
+  margin: 0 0 4px 0;
+}
+
+.no-milestones span {
+  font-size: 12px;
+  color: var(--clr-silver);
+}
+

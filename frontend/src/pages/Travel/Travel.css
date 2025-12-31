@@ -5,8 +5,10 @@
   min-width: 0;
   padding: var(--page-vertical-padding) var(--page-horizontal-padding);
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--clr-secondary) 0%, #0a1628 50%, #050e2e 100%);
+  background: transparent;
   overflow-x: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 /* Loading & Error States */
@@ -24,8 +26,8 @@
 .travel-loading .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid rgba(32, 133, 133, 0.2);
-  border-top-color: #00d4aa;
+  border: 3px solid rgba(212, 168, 83, 0.2);
+  border-top-color: #d4a853;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -43,7 +45,7 @@
 
 .retry-btn {
   padding: 10px 24px;
-  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  background: linear-gradient(135deg, #d4a853 0%, #b8923f 100%);
   color: white;
   border-radius: 8px;
   font-weight: 500;
@@ -52,7 +54,7 @@
 
 .retry-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+  box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
 }
 
 /* Header */
@@ -111,8 +113,8 @@
 }
 
 .toggle-btn.active {
-  background: rgba(0, 212, 170, 0.2);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.2);
+  color: #d4a853;
 }
 
 .action-btn {
@@ -127,13 +129,13 @@
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #00d4aa 0%, #00a388 100%);
+  background: linear-gradient(135deg, #d4a853 0%, #b8923f 100%);
   color: white;
 }
 
 .action-btn.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+  box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
 }
 
 .action-btn.secondary {
@@ -145,7 +147,7 @@
 .action-btn.secondary:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--clr-white);
-  border-color: #00d4aa;
+  border-color: #d4a853;
 }
 
 /* Main Grid */
@@ -160,8 +162,8 @@
 .grid-item {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.9) 0%,
-    rgba(5, 14, 46, 0.8) 100%
+    rgba(15, 23, 35, 0.9) 0%,
+    rgba(20, 30, 45, 0.85) 100%
   );
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -174,7 +176,7 @@
 }
 
 .grid-item:hover {
-  border-color: rgba(0, 212, 170, 0.3);
+  border-color: rgba(212, 168, 83, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -225,7 +227,7 @@
 }
 
 .panel-title i {
-  color: #00d4aa;
+  color: #d4a853;
 }
 
 .panel-content {
@@ -252,7 +254,7 @@
 }
 
 .status-in_progress {
-  color: #00d4aa;
+  color: #d4a853;
 }
 
 .status-completed {
@@ -287,8 +289,8 @@
 }
 
 .status-badge.in_progress {
-  background: rgba(0, 212, 170, 0.15);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.15);
+  color: #d4a853;
 }
 
 .status-badge.completed {
@@ -313,8 +315,8 @@
 }
 
 .trip-type-icon.vacation {
-  background: rgba(0, 212, 170, 0.15);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.15);
+  color: #d4a853;
 }
 
 .trip-type-icon.business {
@@ -463,12 +465,12 @@
 }
 
 .panel-content::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 170, 0.3);
+  background: rgba(212, 168, 83, 0.3);
   border-radius: 3px;
 }
 
 .panel-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 212, 170, 0.5);
+  background: rgba(212, 168, 83, 0.5);
 }
 
 /* ==========================================
@@ -496,8 +498,8 @@
 .travel-hero-skeleton {
   background: linear-gradient(
     135deg,
-    rgba(3, 22, 34, 0.95) 0%,
-    rgba(5, 14, 46, 0.9) 100%
+    rgba(15, 23, 35, 0.95) 0%,
+    rgba(20, 30, 45, 0.9) 100%
   );
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -696,4 +698,3 @@
     grid-template-columns: 1fr;
   }
 }
-

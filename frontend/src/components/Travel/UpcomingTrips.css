@@ -64,8 +64,8 @@
 }
 
 .days-badge {
-  background: rgba(0, 212, 170, 0.15);
-  color: #00d4aa;
+  background: rgba(212, 168, 83, 0.15);
+  color: #d4a853;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 11px;
@@ -98,7 +98,7 @@
 
 .empty-upcoming i {
   font-size: 36px;
-  color: rgba(0, 212, 170, 0.3);
+  color: rgba(212, 168, 83, 0.3);
   margin-bottom: 12px;
 }
 
@@ -106,4 +106,3 @@
   font-size: 14px;
   margin: 0;
 }
-

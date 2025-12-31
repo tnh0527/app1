@@ -260,18 +260,32 @@ class WeatherView(APIView):
 
     def get(self, request):
         location = request.query_params.get("location")
+        lat_param = request.query_params.get("lat")
+        lon_param = request.query_params.get("lon")
 
-        if not location:
+        # Support direct lat/lon parameters for geolocation-based requests
+        if lat_param and lon_param:
+            try:
+                lat = float(lat_param)
+                lng = float(lon_param)
+                coordinates = {"lat": lat, "lng": lng}
+            except ValueError:
+                return Response(
+                    {"error": "Invalid latitude or longitude values"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        elif location:
+            coordinates = self.get_coordinates(location)
+            if not coordinates:
+                return Response(
+                    {"error": "Could not retrieve coordinates for location"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+            lat, lng = coordinates["lat"], coordinates["lng"]
+        else:
             return Response(
-                {"error": "Location parameter is required"},
+                {"error": "Location or lat/lon parameters are required"},
                 status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        coordinates = self.get_coordinates(location)
-        if not coordinates:
-            return Response(
-                {"error": "Could not retrieve coordinates for location"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         lat, lng = coordinates["lat"], coordinates["lng"]

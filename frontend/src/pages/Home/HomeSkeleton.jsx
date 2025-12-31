@@ -64,16 +64,17 @@ const DashboardSkeleton = () => {
 
       {/* Dashboard Grid Skeleton */}
       <main className="home-dashboard-grid">
-        {/* Top Row: Financials (left), Calendar (right) */}
-        <WidgetSkeleton minHeight="280px" />
-        <WidgetSkeleton minHeight="280px" />
+        {/* Top Row: Financials (left, spans 2 rows) | Weather (right, spans 2 rows) */}
+        <WidgetSkeleton minHeight="260px" />
+        <WidgetSkeleton minHeight="260px" />
 
-        {/* Middle Row: Weather (left), Travel (right) */}
-        <WidgetSkeleton minHeight="240px" />
-        <WidgetSkeleton minHeight="240px" />
+        {/* Middle Row: Calendar (left) | Travel (right) */}
+        <WidgetSkeleton minHeight="230px" />
+        <WidgetSkeleton minHeight="220px" />
 
-        {/* Bottom: Subscriptions (full width) */}
-        <WidgetSkeleton minHeight="200px" />
+        {/* Bottom Row: Empty widget (left) | Subscriptions (right) */}
+        <WidgetSkeleton minHeight="220px" />
+        <WidgetSkeleton minHeight="220px" />
       </main>
     </div>
   );

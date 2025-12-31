@@ -5,13 +5,15 @@
   gap: 25px;
   padding-left: var(--page-horizontal-padding);
   padding-right: var(--page-horizontal-padding);
-  background-color: var(--clr-secondary);
+  background: transparent;
   color: #ffffff;
   min-height: 100vh;
   flex: 1;
   width: 0;
   min-width: 0;
   overflow-x: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .weather-dashboard h3 {
@@ -96,10 +98,10 @@
 .highlight-icon.wind-icon {
   background: linear-gradient(
     135deg,
-    rgba(0, 255, 255, 0.2) 0%,
-    rgba(0, 200, 200, 0.1) 100%
+    rgba(212, 168, 83, 0.2) 0%,
+    rgba(184, 146, 63, 0.1) 100%
   );
-  color: cyan;
+  color: #d4a853;
 }
 
 .highlight-icon.uv-icon {

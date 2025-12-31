@@ -36,7 +36,7 @@
 
 .subscription-card:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: var(--card-color, rgba(139, 92, 246, 0.3));
+  border-color: var(--card-color, rgba(212, 168, 83, 0.3));
   transform: translateY(-2px);
 }
 
@@ -179,7 +179,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--card-color, #8b5cf6);
+  background: var(--card-color, #d4a853);
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
@@ -203,4 +203,3 @@
     font-size: 18px;
   }
 }
-

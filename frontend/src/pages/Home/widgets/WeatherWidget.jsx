@@ -1,31 +1,41 @@
-import { useState, useEffect, useContext } from "react";
-import { ProfileContext } from "../../../contexts/ProfileContext";
-import { iconMap } from "../../../utils/weatherMapping";
+import { useState, useEffect, useRef } from "react";
+import { iconMap, videoMap } from "../../../utils/weatherMapping";
 import "./WeatherWidget.css";
 
-export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
-  const { profile } = useContext(ProfileContext);
-  const [weatherData, setWeatherData] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const WeatherWidget = ({
+  initialWeather = null,
+  onNavigate,
+  onDataUpdate,
+}) => {
+  const [weatherData, setWeatherData] = useState(initialWeather || null);
+  const [loading, setLoading] = useState(initialWeather ? false : true);
   const [location, setLocation] = useState("");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [tempUnit, setTempUnit] = useState("F"); // "F" or "C"
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const videoRef = useRef(null);
 
+  // Fetch weather based on browser geolocation
   useEffect(() => {
-    const fetchWeather = async () => {
-      setLoading(true);
+    const fetchWeatherByCoords = async (latitude, longitude) => {
       try {
-        const weatherLocation = profile?.location || "Richmond, Texas, USA";
-        setLocation(weatherLocation);
+        // Reverse geocode to get location name
+        const geoResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+        );
+        const geoData = await geoResponse.json();
+        const city = geoData.address?.city || geoData.address?.town || geoData.address?.village || "";
+        const state = geoData.address?.state || "";
+        const locationName = city && state ? `${city}, ${state}` : city || state || "Current Location";
+        setLocation(locationName);
 
+        // Fetch weather using coordinates
         const response = await fetch(
-          `http://localhost:8000/api/weather/?location=${encodeURIComponent(
-            weatherLocation
-          )}`
+          `http://localhost:8000/api/weather/?lat=${latitude}&lon=${longitude}`
         );
 
         if (!response.ok) {
-          throw new Error(
-            `Weather request failed with status ${response.status}`
-          );
+          throw new Error(`Weather request failed with status ${response.status}`);
         }
 
         const data = await response.json();
@@ -39,8 +49,87 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
       }
     };
 
-    fetchWeather();
-  }, [profile?.location, onDataUpdate]);
+    const fetchWeatherByIP = async () => {
+      try {
+        // Get location from IP address as fallback
+        const ipResponse = await fetch("https://ipapi.co/json/");
+        const ipData = await ipResponse.json();
+        
+        if (ipData.latitude && ipData.longitude) {
+          const locationName = ipData.city && ipData.region 
+            ? `${ipData.city}, ${ipData.region}` 
+            : ipData.city || "Current Location";
+          setLocation(locationName);
+          
+          const response = await fetch(
+            `http://localhost:8000/api/weather/?lat=${ipData.latitude}&lon=${ipData.longitude}`
+          );
+
+          if (!response.ok) {
+            throw new Error(`Weather request failed with status ${response.status}`);
+          }
+
+          const data = await response.json();
+          setWeatherData(data);
+          if (onDataUpdate) onDataUpdate(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch weather by IP:", error);
+        setWeatherData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const getLocationAndFetchWeather = () => {
+      if (initialWeather) {
+        setWeatherData(initialWeather);
+        setLoading(false);
+        if (onDataUpdate) onDataUpdate(initialWeather);
+        return;
+      }
+
+      setLoading(true);
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
+          },
+          (error) => {
+            console.warn("Geolocation denied or unavailable, falling back to IP:", error.message);
+            fetchWeatherByIP();
+          },
+          { timeout: 10000, maximumAge: 300000 } // 10s timeout, cache for 5 minutes
+        );
+      } else {
+        fetchWeatherByIP();
+      }
+    };
+
+    getLocationAndFetchWeather();
+  }, [onDataUpdate, initialWeather]);
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Toggle video play/pause
+  const toggleVideo = () => {
+    if (videoRef.current) {
+      if (isVideoPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsVideoPlaying(!isVideoPlaying);
+    }
+  };
 
   // Get icon from description string (backend already converts code to description)
   const getWeatherIcon = (description, isDay = 1) => {
@@ -57,57 +146,17 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
     return iconInfo.replace("bi ", "");
   };
 
-  // Get weather effect type for background
-  const getWeatherEffectType = (condition, temp, isDay) => {
-    if (!condition) return "clear";
-    const c = String(condition).toLowerCase();
-    const temperature = temp || 70;
+  // Get video URL from description string
+  const getWeatherVideo = (description, isDay = 1) => {
+    if (!description) return videoMap.default?.clear || "";
 
-    // Temperature-based effects (highest priority)
-    if (temperature >= 100) return "extreme-heat";
-    if (temperature >= 95) return "very-hot";
-    if (temperature <= 5) return "extreme-cold";
-    if (temperature <= 20) return "very-cold";
+    const videoInfo = videoMap[description];
+    if (!videoInfo) return videoMap.default?.clear || "";
 
-    // Weather condition-based effects
-    if (c.includes("thunder") || c.includes("storm")) return "thunderstorm";
-    if (c.includes("rain") || c.includes("drizzle") || c.includes("shower")) {
-      return c.includes("heavy") ||
-        c.includes("violent") ||
-        c.includes("moderate")
-        ? "rain-heavy"
-        : "rain";
+    if (typeof videoInfo === "object") {
+      return isDay ? videoInfo.day : videoInfo.night;
     }
-    if (
-      c.includes("snow") ||
-      c.includes("sleet") ||
-      c.includes("ice") ||
-      c.includes("hail")
-    ) {
-      return c.includes("heavy") || c.includes("blizzard")
-        ? "snow-heavy"
-        : "snow";
-    }
-    if (
-      c.includes("fog") ||
-      c.includes("mist") ||
-      c.includes("haze") ||
-      c.includes("smoke")
-    ) {
-      return "fog";
-    }
-    if (c.includes("clear") || c.includes("sunny") || c.includes("fair")) {
-      return isDay ? "clear" : "clear-night";
-    }
-    if (
-      c.includes("overcast") ||
-      c.includes("cloud") ||
-      c.includes("partly") ||
-      c.includes("mostly")
-    ) {
-      return "cloudy";
-    }
-    return "clear";
+    return videoInfo;
   };
 
   // Extract data from backend response
@@ -147,14 +196,10 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
   const currentIndex =
     current && hourly ? hourly.findIndex((h) => h.time === current.time) : -1;
 
-  // Get weather effect type for background (after current is defined)
-  const weatherEffectType = current
-    ? getWeatherEffectType(
-        current.weather_code,
-        current.temperature,
-        current.is_day
-      )
-    : "clear";
+  // Get feels like from minutely data (more accurate)
+  const currentMinutely = findClosestByTime(minutely) || minutely[0] || null;
+  const feelsLikeTemp =
+    currentMinutely?.apparent_temperature || current?.apparent_temperature;
 
   // Find today's date in the daily array
   const today = new Date();
@@ -171,16 +216,39 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
   const forecastStartIndex = todayIndex >= 0 ? todayIndex : 0;
   const forecast = daily.slice(forecastStartIndex, forecastStartIndex + 3);
 
-  // Helper function to round temperature
-  const roundTemp = (temp) => {
-    return Math.round(temp);
+  // Temperature conversion functions
+  const fahrenheitToCelsius = (f) => {
+    return ((f - 32) * 5) / 9;
   };
 
-  // Calculate global min/max for forecast heat bars
+  const celsiusToFahrenheit = (c) => {
+    return (c * 9) / 5 + 32;
+  };
+
+  // Convert temperature based on current unit
+  const convertTemp = (temp) => {
+    if (tempUnit === "C") {
+      return fahrenheitToCelsius(temp);
+    }
+    return temp;
+  };
+
+  // Helper function to round temperature to one decimal place
+  const roundTemp = (temp) => {
+    const converted = convertTemp(temp);
+    return Number(converted).toFixed(1);
+  };
+
+  // Toggle temperature unit
+  const toggleTempUnit = () => {
+    setTempUnit((prev) => (prev === "F" ? "C" : "F"));
+  };
+
+  // Calculate global min/max for forecast heat bars (using converted temperatures)
   const forecastTemps = forecast
     .map((d) => ({
-      min: Number(d.min_temperature),
-      max: Number(d.max_temperature),
+      min: convertTemp(Number(d.min_temperature)),
+      max: convertTemp(Number(d.max_temperature)),
     }))
     .filter((t) => Number.isFinite(t.min) && Number.isFinite(t.max));
   const globalMin =
@@ -254,9 +322,7 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
   };
 
   return (
-    <div
-      className={`home-widget weather-widget weather-effect-${weatherEffectType}`}
-    >
+    <div className={`home-widget weather-widget`}>
       <div className="weather-widget-bg"></div>
       <div className="widget-header">
         <div className="widget-title-section">
@@ -265,13 +331,33 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
           </div>
           <div>
             <h3 className="widget-title">Weather</h3>
-            <p className="widget-subtitle">
-              {location.split(",")[0] || "Current Location"}
-            </p>
+            <p className="widget-subtitle">{location || "Current Location"}</p>
           </div>
         </div>
-        <div className="widget-arrow" onClick={onNavigate}>
-          <i className="bi bi-chevron-right"></i>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="temp-unit-toggle" onClick={toggleTempUnit}>
+            <button
+              className={`unit-btn ${tempUnit === "F" ? "active" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setTempUnit("F");
+              }}
+            >
+              F
+            </button>
+            <button
+              className={`unit-btn ${tempUnit === "C" ? "active" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setTempUnit("C");
+              }}
+            >
+              C
+            </button>
+          </div>
+          <div className="widget-arrow" onClick={onNavigate}>
+            <i className="bi bi-chevron-right"></i>
+          </div>
         </div>
       </div>
 
@@ -287,33 +373,145 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
           <div className="weather-grid-layout">
             {/* Left: Current Weather Card */}
             <div className="weather-current-card">
-              <div className="current-main">
-                <i
-                  className={`bi ${getWeatherIcon(
-                    current.weather_code,
-                    current.is_day
-                  )} weather-icon-large`}
-                ></i>
-                <div className="temp-display">
-                  <span className="current-temp">
-                    {Math.round(current.temperature)}
-                  </span>
-                  <span className="temp-unit">°F</span>
+              <video
+                key={getWeatherVideo(current.weather_code, current.is_day)}
+                ref={videoRef}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="weather-video"
+              >
+                <source
+                  src={getWeatherVideo(current.weather_code, current.is_day)}
+                  type="video/mp4"
+                />
+                Your browser does not support the video tag.
+              </video>
+              <div className="weather-card-top-bar">
+                <button
+                  className="video-toggle-btn"
+                  onClick={toggleVideo}
+                  title={isVideoPlaying ? "Pause background" : "Play background"}
+                >
+                  <i className={`bi ${isVideoPlaying ? "bi-pause-fill" : "bi-play-fill"}`}></i>
+                </button>
+                <div className="weather-current-time">
+                  {currentTime.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                  })}
                 </div>
               </div>
-              <div className="current-condition">
-                {current.weather_code || "Unknown"}
+              <div className="current-main">
+                <div className="current-main-left">
+                  <i
+                    className={`bi ${getWeatherIcon(
+                      current.weather_code,
+                      current.is_day
+                    )} weather-icon-large`}
+                  ></i>
+                  <div className="temp-display">
+                    <span className="current-temp">
+                      {roundTemp(current.temperature)}
+                    </span>
+                    <span className="temp-unit">°{tempUnit}</span>
+                  </div>
+                </div>
+                <div className="current-condition">
+                  {current.weather_code || "Unknown"}
+                </div>
               </div>
-              {todayDaily && (
-                <div className="temp-range">
-                  <span className="high">
-                    <i className="bi bi-arrow-up"></i>
-                    {Math.round(todayDaily.max_temperature)}°
+              {todayDaily &&
+                (() => {
+                  const min = Number(todayDaily.min_temperature);
+                  const max = Number(todayDaily.max_temperature);
+                  const hasValidTemps =
+                    Number.isFinite(min) && Number.isFinite(max);
+
+                  if (!hasValidTemps) return null;
+
+                  // Convert temperatures for display
+                  const convertedMin = convertTemp(min);
+                  const convertedMax = convertTemp(max);
+
+                  // Calculate range for heat bar (use a reasonable range around the temps)
+                  const rangePadding = tempUnit === "C" ? 5.5 : 10; // ~10F = ~5.5C
+                  const globalMin = Math.max(
+                    tempUnit === "C" ? -20 : 0,
+                    convertedMin - rangePadding
+                  );
+                  const globalMax = convertedMax + rangePadding;
+                  const globalRange = Math.max(1, globalMax - globalMin);
+
+                  // Calculate positions for the heat bar
+                  // Limit the bar to 50% of container width
+                  const minPos =
+                    ((convertedMin - globalMin) / globalRange) * 100;
+                  const maxPos =
+                    ((convertedMax - globalMin) / globalRange) * 100;
+                  const rawBarWidth = maxPos - minPos;
+                  const maxBarWidth = 50; // Maximum 50% of container
+                  const actualBarWidth = Math.min(
+                    maxBarWidth,
+                    Math.max(4, rawBarWidth)
+                  );
+
+                  // Center the bar or position it from the left
+                  const barLeft = Math.max(
+                    0,
+                    Math.min(100 - actualBarWidth, minPos)
+                  );
+
+                  // Get colors for min and max temperatures (using original F temps for color calculation)
+                  const minColor = getTempColor(
+                    min,
+                    min - rangePadding,
+                    max + rangePadding
+                  );
+                  const maxColor = getTempColor(
+                    max,
+                    min - rangePadding,
+                    max + rangePadding
+                  );
+
+                  return (
+                    <div className="widget-heat-bar-container">
+                      <div className="widget-heat-bar-track">
+                        <div
+                          className="widget-heat-bar"
+                          style={{
+                            left: `${barLeft}%`,
+                            width: `${actualBarWidth}%`,
+                            background: `linear-gradient(to right, ${minColor}, ${maxColor})`,
+                          }}
+                        />
+                        <span className="widget-temp-label widget-temp-low">
+                          L: {roundTemp(min)}°
+                        </span>
+                        <span className="widget-temp-label widget-temp-high">
+                          H: {roundTemp(max)}°
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              {current?.visibility != null && (
+                <div className="weather-visibility">
+                  <i className="bi bi-eye"></i>
+                  <span>
+                    {current.visibility >= 10
+                      ? "10+"
+                      : current.visibility.toFixed(1)}{" "}
+                    mi
                   </span>
-                  <span className="low">
-                    <i className="bi bi-arrow-down"></i>
-                    {Math.round(todayDaily.min_temperature)}°
-                  </span>
+                </div>
+              )}
+              {feelsLikeTemp != null && (
+                <div className="weather-feels-like">
+                  Feels like {roundTemp(feelsLikeTemp)}°
                 </div>
               )}
             </div>
@@ -323,6 +521,7 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
               {/* Weather Stats Grid */}
               <div className="weather-stats-grid">
                 <div className="weather-stat-item">
+                  <i className="bi bi-droplet-fill"></i>
                   <div className="stat-info">
                     <span className="stat-value">
                       {Math.round(
@@ -332,34 +531,33 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
                     </span>
                     <span className="stat-label">Humidity</span>
                   </div>
-                  <i className="bi bi-droplet-fill"></i>
                 </div>
                 <div className="weather-stat-item">
+                  <i className="bi bi-wind"></i>
                   <div className="stat-info">
                     <span className="stat-value">
-                      {Math.round(current?.wind_speed || current?.wind || 0)}
+                      {(current?.wind_speed || current?.wind || 0).toFixed(1)}
                     </span>
                     <span className="stat-label">mph Wind</span>
                   </div>
-                  <i className="bi bi-wind"></i>
                 </div>
                 <div className="weather-stat-item">
+                  <i className="bi bi-sun-fill"></i>
                   <div className="stat-info">
                     <span className="stat-value">
-                      {Math.round(getCurrentUV())}
+                      {Number(getCurrentUV()).toFixed(1)}
                     </span>
                     <span className="stat-label">UV Index</span>
                   </div>
-                  <i className="bi bi-sun-fill"></i>
                 </div>
                 <div className="weather-stat-item">
+                  <i className="bi bi-lungs-fill"></i>
                   <div className="stat-info">
                     <span className="stat-value">
                       {Math.round(getCurrentAQI())}
                     </span>
                     <span className="stat-label">Air Quality</span>
                   </div>
-                  <i className="bi bi-lungs-fill"></i>
                 </div>
               </div>
 
@@ -382,17 +580,21 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
                     // Calculate heat bar for this day
                     const min = Number(day.min_temperature);
                     const max = Number(day.max_temperature);
+                    const convertedMin = convertTemp(min);
+                    const convertedMax = convertTemp(max);
                     const hasValidTemps =
                       globalMin != null &&
                       globalMax != null &&
-                      Number.isFinite(min) &&
-                      Number.isFinite(max);
+                      Number.isFinite(convertedMin) &&
+                      Number.isFinite(convertedMax);
 
                     let heatBarContent = null;
                     if (hasValidTemps) {
-                      // Calculate positions for the heat bar
-                      const minPos = ((min - globalMin) / globalRange) * 100;
-                      const maxPos = ((max - globalMin) / globalRange) * 100;
+                      // Calculate positions for the heat bar (using converted temps)
+                      const minPos =
+                        ((convertedMin - globalMin) / globalRange) * 100;
+                      const maxPos =
+                        ((convertedMax - globalMin) / globalRange) * 100;
                       const clampedMinPos = Math.max(0, Math.min(100, minPos));
                       const clampedMaxPos = Math.max(0, Math.min(100, maxPos));
                       const barWidth = Math.max(
@@ -400,9 +602,28 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
                         clampedMaxPos - clampedMinPos
                       );
 
-                      // Get colors for min and max temperatures
-                      const minColor = getTempColor(min, globalMin, globalMax);
-                      const maxColor = getTempColor(max, globalMin, globalMax);
+                      // Get colors for min and max temperatures (using original F temps for color)
+                      // Calculate original F range for color gradient
+                      const originalMin = Math.min(
+                        ...forecast.map((d) => Number(d.min_temperature))
+                      );
+                      const originalMax = Math.max(
+                        ...forecast.map((d) => Number(d.max_temperature))
+                      );
+                      const originalRange = Math.max(
+                        1,
+                        originalMax - originalMin
+                      );
+                      const minColor = getTempColor(
+                        min,
+                        originalMin - originalRange * 0.1,
+                        originalMax + originalRange * 0.1
+                      );
+                      const maxColor = getTempColor(
+                        max,
+                        originalMin - originalRange * 0.1,
+                        originalMax + originalRange * 0.1
+                      );
 
                       heatBarContent = (
                         <div className="mini-forecast-heat-bar-container">
@@ -429,7 +650,12 @@ export const WeatherWidget = ({ onNavigate, onDataUpdate }) => {
                     }
 
                     return (
-                      <div key={index} className="forecast-day">
+                      <div
+                        key={index}
+                        className={`forecast-day ${
+                          isToday ? "forecast-day--today" : ""
+                        }`}
+                      >
                         <span className="forecast-day-name">{dayName}</span>
                         <i
                           className={`bi ${getWeatherIcon(
