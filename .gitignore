@@ -44,7 +44,7 @@ test-results/
 !.env.example
 *.local
 
-# Sensitive local config
 mcp.json
 .roo
 .vscode/
+frontend/public/
