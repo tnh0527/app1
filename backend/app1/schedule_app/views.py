@@ -15,9 +15,17 @@ from .services import (
 )
 
 
-@api_view(["GET", "POST", "DELETE"])
+@api_view(["GET", "POST", "PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
-def schedule(request):
+def schedule(request, pk=None):
+    """
+    Handle calendar events CRUD operations.
+
+    GET: List occurrences within date range
+    POST: Create new event
+    PUT: Update existing event (requires pk or event_id in body)
+    DELETE: Delete event or occurrence
+    """
     user = request.user
     calendar = get_or_create_default_calendar(user)
 
@@ -49,10 +57,14 @@ def schedule(request):
         event = Event.objects.create(
             calendar=calendar,
             title=data["title"],
+            description=data.get("description", ""),
+            location=data.get("location", ""),
             start_at=data["start_at"],
             end_at=data["end_at"],
             all_day=data.get("all_day", False),
             timezone=tz,
+            color=data.get("color", "teal"),
+            priority=data.get("priority", ""),
         )
 
         freq = data.get("recurrence_freq")
@@ -92,6 +104,85 @@ def schedule(request):
         )
         return Response(
             OccurrenceSerializer(occs, many=True).data, status=status.HTTP_201_CREATED
+        )
+
+    if request.method == "PUT":
+        # Get event ID from URL parameter or request body
+        event_id = pk or request.data.get("event_id")
+        if not event_id:
+            return Response(
+                {"error": "Event ID is required for update."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            event = Event.objects.get(id=event_id, calendar=calendar)
+        except Event.DoesNotExist:
+            return Response(
+                {"error": f"No event found with id {event_id}."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = EventCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+
+        # Update event fields
+        event.title = data["title"]
+        event.description = data.get("description", "")
+        event.location = data.get("location", "")
+        event.start_at = data["start_at"]
+        event.end_at = data["end_at"]
+        event.all_day = data.get("all_day", False)
+        event.timezone = data.get("timezone") or "UTC"
+        event.color = data.get("color", "teal")
+        event.priority = data.get("priority", "")
+
+        # Update recurrence if changed
+        freq = data.get("recurrence_freq")
+        interval = data.get("recurrence_interval") or 1
+        until = data.get("recurrence_until")
+
+        if freq:
+            event.rrule = f"FREQ={freq};INTERVAL={interval}"
+            event.recurrence_until = until
+        else:
+            event.rrule = ""
+            event.recurrence_until = None
+
+        event.save()
+
+        # Regenerate occurrences with updated event data
+        reminder_minutes = data.get("reminder_minutes_before")
+        window_start, window_end = default_generation_window(event)
+        regenerate_occurrences(
+            event,
+            window_start=window_start,
+            window_end=window_end,
+            reminder_minutes_before=reminder_minutes,
+        )
+
+        # Return updated occurrences
+        month_start = event.start_at.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        month_end = (month_start + timedelta(days=40)).replace(day=1) - timedelta(
+            seconds=1
+        )
+        occs = (
+            EventOccurrence.objects.filter(
+                event__calendar=calendar,
+                is_cancelled=False,
+                start_at__gte=month_start,
+                start_at__lte=month_end,
+            )
+            .select_related("event")
+            .order_by("start_at")
+        )
+        return Response(
+            OccurrenceSerializer(occs, many=True).data, status=status.HTTP_200_OK
         )
 
     if request.method == "DELETE":

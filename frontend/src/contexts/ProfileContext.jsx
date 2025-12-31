@@ -1,5 +1,4 @@
 import { createContext, useState, useEffect } from "react";
-import profileImage from "../assets/images/default-profile.jpg";
 import { csrfToken } from "../data/data";
 import { useAuth } from "./AuthContext";
 
@@ -66,7 +65,7 @@ export const ProfileProvider = ({ children }) => {
         const profilePicUrl = URL.createObjectURL(await response.blob());
         setProfilePic(profilePicUrl);
       } else {
-        setProfilePic(profileImage);
+        setProfilePic(null);
         console.log("Profile picture not found.");
       }
     } catch (error) {

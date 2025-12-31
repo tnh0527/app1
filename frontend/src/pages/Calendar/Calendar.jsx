@@ -4,6 +4,7 @@ import CalendarTopBar from "./components/CalendarTopBar";
 import MainCalendar from "./components/MainCalendar";
 import CalendarSidebar from "./components/CalendarSidebar";
 import EventModal from "./components/EventModal";
+import ErrorBoundary from "../../components/shared/ErrorBoundary";
 import "./Calendar.css";
 
 /**
@@ -11,16 +12,7 @@ import "./Calendar.css";
  * Uses context for modal state management
  */
 const CalendarContent = () => {
-  const {
-    isEventModalOpen,
-    editingEvent,
-    modalInitialDate,
-    openEventModal,
-    closeEventModal,
-    createEvent,
-    updateEvent,
-    deleteEvent,
-  } = useCalendar();
+  const { openEventModal } = useCalendar();
 
   // Open modal for new event
   const handleNewEvent = useCallback(
@@ -52,44 +44,6 @@ const CalendarContent = () => {
     [openEventModal]
   );
 
-  // Save event (create or update)
-  const handleSaveEvent = useCallback(
-    async (eventData) => {
-      try {
-        if (editingEvent?.id) {
-          // Update existing event
-          await updateEvent(editingEvent.id, eventData);
-        } else {
-          // Create new event
-          await createEvent(eventData);
-        }
-        closeEventModal();
-      } catch (error) {
-        console.error("Failed to save event:", error);
-        throw error;
-      }
-    },
-    [editingEvent, createEvent, updateEvent, closeEventModal]
-  );
-
-  // Delete event
-  const handleDeleteEvent = useCallback(
-    async (eventId) => {
-      try {
-        await deleteEvent(eventId);
-        closeEventModal();
-      } catch (error) {
-        console.error("Failed to delete event:", error);
-        throw error;
-      }
-    },
-    [deleteEvent, closeEventModal]
-  );
-
-  // Build event data for modal
-  const modalEvent =
-    editingEvent || (modalInitialDate ? { startDate: modalInitialDate } : null);
-
   return (
     <div className="calendar-page">
       {/* Top Navigation Bar */}
@@ -110,14 +64,8 @@ const CalendarContent = () => {
         />
       </div>
 
-      {/* Event Modal */}
-      <EventModal
-        isOpen={isEventModalOpen}
-        onClose={closeEventModal}
-        event={modalEvent}
-        onSave={handleSaveEvent}
-        onDelete={handleDeleteEvent}
-      />
+      {/* Event Modal - uses context internally for actions */}
+      <EventModal />
     </div>
   );
 };
@@ -125,14 +73,16 @@ const CalendarContent = () => {
 /**
  * Calendar - Main page component
  * Wraps content with CalendarProvider for state management
+ * Includes ErrorBoundary for graceful error handling
  */
 const Calendar = () => {
   return (
-    <CalendarProvider>
-      <CalendarContent />
-    </CalendarProvider>
+    <ErrorBoundary pageName="Calendar">
+      <CalendarProvider>
+        <CalendarContent />
+      </CalendarProvider>
+    </ErrorBoundary>
   );
 };
 
 export default Calendar;
-

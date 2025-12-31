@@ -438,7 +438,7 @@ export const WeatherWidget = ({
                     )} weather-icon-large`}
                   ></i>
                   <div className="temp-display">
-                    <span className="current-temp">
+                    <span style={{ fontSize: "42px" }} className="current-temp">
                       {roundTemp(current.temperature)}
                     </span>
                     <span className="temp-unit">°{tempUnit}</span>

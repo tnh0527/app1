@@ -1,5 +1,5 @@
 // Utility Functions and Helpers
-export { iconsImgs, personsImgs } from "./images";
+export { iconsImgs, defaultUserIcon } from "./images";
 export { iconMap, videoMap } from "./weatherMapping";
 export {
   transformLocationInput,

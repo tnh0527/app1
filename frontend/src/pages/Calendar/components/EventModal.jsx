@@ -7,6 +7,7 @@ import {
 } from "../context/CalendarContext";
 import CustomDatePicker from "./CustomDatePicker";
 import CustomTimePicker from "./CustomTimePicker";
+import CustomDropdown from "./CustomDropdown";
 import "./EventModal.css";
 
 const RECURRENCE_OPTIONS = [
@@ -145,10 +146,22 @@ const EventModal = () => {
   const validate = useCallback(() => {
     const newErrors = {};
 
-    if (!title.trim()) {
+    // Title validation
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
       newErrors.title = "Title is required";
+    } else if (trimmedTitle.length < 2) {
+      newErrors.title = "Title must be at least 2 characters";
+    } else if (trimmedTitle.length > 200) {
+      newErrors.title = "Title must be 200 characters or less";
     }
 
+    // Description validation (optional but has max length)
+    if (description.length > 2000) {
+      newErrors.description = "Description must be 2000 characters or less";
+    }
+
+    // Date validations
     if (!startDate) {
       newErrors.startDate = "Start date is required";
     }
@@ -165,14 +178,70 @@ const EventModal = () => {
         ? new Date(`${endDate}T23:59:59`)
         : new Date(`${endDate}T${endTime}`);
 
+      // Check for valid date objects
+      if (isNaN(start.getTime())) {
+        newErrors.startDate = "Invalid start date";
+      }
+      if (isNaN(end.getTime())) {
+        newErrors.endDate = "Invalid end date";
+      }
+
+      // End must be after start for non all-day events
       if (end <= start && !allDay) {
         newErrors.endTime = "End time must be after start time";
+      }
+
+      // End date must be on or after start date for all-day events
+      if (allDay && endDate < startDate) {
+        newErrors.endDate = "End date must be on or after start date";
+      }
+
+      // Prevent events too far in the future (5 years)
+      const maxFutureDate = new Date();
+      maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 5);
+      if (start > maxFutureDate) {
+        newErrors.startDate = "Event cannot be more than 5 years in the future";
+      }
+
+      // Prevent events too far in the past (1 year)
+      const maxPastDate = new Date();
+      maxPastDate.setFullYear(maxPastDate.getFullYear() - 1);
+      if (start < maxPastDate) {
+        newErrors.startDate = "Event cannot be more than 1 year in the past";
+      }
+    }
+
+    // Recurrence validation
+    if (recurrenceFreq && recurrenceFreq !== "") {
+      if (recurrenceInterval < 1) {
+        newErrors.recurrence = "Recurrence interval must be at least 1";
+      } else if (recurrenceInterval > 365) {
+        newErrors.recurrence = "Recurrence interval cannot exceed 365";
+      }
+
+      if (recurrenceUntil) {
+        const untilDate = new Date(`${recurrenceUntil}T23:59:59`);
+        const startDateObj = new Date(`${startDate}T00:00:00`);
+        if (untilDate <= startDateObj) {
+          newErrors.recurrenceUntil = "Recurrence end must be after start date";
+        }
       }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [title, startDate, endDate, startTime, endTime, allDay]);
+  }, [
+    title,
+    description,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    allDay,
+    recurrenceFreq,
+    recurrenceInterval,
+    recurrenceUntil,
+  ]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -509,20 +578,15 @@ const EventModal = () => {
 
             {/* Recurrence Tab */}
             {activeTab === "recurrence" && (
-              <div className="tab-content">
+              <div className="tab-content tab-content--recurrence">
                 <div className="form-group">
                   <label className="form-label">Repeat</label>
-                  <select
-                    className="form-input"
+                  <CustomDropdown
+                    options={RECURRENCE_OPTIONS}
                     value={showCustomRecurrence ? "CUSTOM" : recurrenceFreq}
-                    onChange={(e) => handleRecurrenceChange(e.target.value)}
-                  >
-                    {RECURRENCE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={handleRecurrenceChange}
+                    placeholder="Does not repeat"
+                  />
                 </div>
 
                 {(recurrenceFreq || showCustomRecurrence) && (
@@ -590,27 +654,29 @@ const EventModal = () => {
                       </span>
                     </div>
 
-                    {/* Recurrence Preview */}
-                    <div className="recurrence-preview">
-                      <i className="bi bi-info-circle"></i>
-                      <span>
-                        Repeats {recurrenceFreq.toLowerCase()}
-                        {recurrenceInterval > 1
-                          ? ` every ${recurrenceInterval} ${
-                              recurrenceFreq === "DAILY"
-                                ? "days"
-                                : recurrenceFreq === "WEEKLY"
-                                ? "weeks"
-                                : "months"
-                            }`
-                          : ""}
-                        {recurrenceUntil
-                          ? ` until ${new Date(
-                              recurrenceUntil
-                            ).toLocaleDateString()}`
-                          : " forever"}
-                      </span>
-                    </div>
+                    {/* Recurrence Preview - Hidden when Custom is selected */}
+                    {!showCustomRecurrence && (
+                      <div className="recurrence-preview">
+                        <i className="bi bi-info-circle"></i>
+                        <span>
+                          Repeats {recurrenceFreq.toLowerCase()}
+                          {recurrenceInterval > 1
+                            ? ` every ${recurrenceInterval} ${
+                                recurrenceFreq === "DAILY"
+                                  ? "days"
+                                  : recurrenceFreq === "WEEKLY"
+                                  ? "weeks"
+                                  : "months"
+                              }`
+                            : ""}
+                          {recurrenceUntil
+                            ? ` until ${new Date(
+                                recurrenceUntil
+                              ).toLocaleDateString()}`
+                            : " forever"}
+                        </span>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -622,20 +688,17 @@ const EventModal = () => {
                 <div className="form-group">
                   <label className="form-label">Add Reminder</label>
                   <div className="reminder-add">
-                    <select
-                      className="form-input"
+                    <CustomDropdown
+                      options={[
+                        { value: "", label: "No reminder" },
+                        ...REMINDER_OPTIONS.filter(
+                          (opt) => !reminders.includes(opt.value)
+                        ),
+                      ]}
                       value={selectedReminder}
-                      onChange={(e) => setSelectedReminder(e.target.value)}
-                    >
-                      <option value="">Select when to remind...</option>
-                      {REMINDER_OPTIONS.filter(
-                        (opt) => !reminders.includes(opt.value)
-                      ).map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setSelectedReminder}
+                      placeholder="Select when to remind..."
+                    />
                     <button
                       type="button"
                       className="reminder-add-btn"

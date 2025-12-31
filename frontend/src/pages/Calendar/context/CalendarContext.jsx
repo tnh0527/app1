@@ -67,7 +67,6 @@ export const CalendarProvider = ({ children }) => {
     priorities: [],
     showRecurring: true,
   });
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Date range helpers
   const getDateRange = useCallback((date, view) => {
@@ -260,14 +259,6 @@ export const CalendarProvider = ({ children }) => {
   const filteredEvents = useMemo(() => {
     let result = events;
 
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((event) =>
-        event.title.toLowerCase().includes(query)
-      );
-    }
-
     // Apply tag filters
     if (activeFilters.tags.length > 0) {
       result = result.filter((event) =>
@@ -283,7 +274,7 @@ export const CalendarProvider = ({ children }) => {
     }
 
     return result;
-  }, [events, searchQuery, activeFilters]);
+  }, [events, activeFilters]);
 
   // Get holidays for the current view range
   const holidays = useMemo(() => {
@@ -368,7 +359,6 @@ export const CalendarProvider = ({ children }) => {
     editingEvent,
     modalInitialDate,
     activeFilters,
-    searchQuery,
 
     // Setters
     setCurrentDate,
@@ -376,7 +366,6 @@ export const CalendarProvider = ({ children }) => {
     setCurrentView,
     setShowHolidays,
     setActiveFilters,
-    setSearchQuery,
 
     // Actions
     fetchEvents,

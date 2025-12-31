@@ -12,8 +12,6 @@ const CalendarTopBar = () => {
     navigateDate,
     goToToday,
     openEventModal,
-    searchQuery,
-    setSearchQuery,
     showHolidays,
     setShowHolidays,
     dueReminders,
@@ -125,27 +123,6 @@ const CalendarTopBar = () => {
       </div>
 
       <div className="calendar-top-bar-right">
-        <div className="calendar-search">
-          <i className="bi bi-search search-icon"></i>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search events..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className="search-clear"
-              onClick={() => setSearchQuery("")}
-              aria-label="Clear search"
-            >
-              <i className="bi bi-x"></i>
-            </button>
-          )}
-        </div>
-
         <button
           type="button"
           className={`holiday-toggle-btn ${

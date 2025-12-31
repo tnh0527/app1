@@ -148,21 +148,30 @@
 }
 
 .view-btn--active {
+  /* faded gold pill background for active state; no outer shadow */
   background: linear-gradient(
-    135deg,
-    var(--clr-pumpkin) 0%,
-    rgba(212, 168, 83, 0.8) 100%
+    180deg,
+    rgba(212, 168, 83, 0.1) 0%,
+    rgba(212, 168, 83, 0.5) 100%
   );
   color: var(--clr-white);
-  box-shadow: 0 4px 12px rgba(212, 168, 83, 0.3);
+  border: 1px solid rgba(212, 168, 83, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transform: none;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .view-btn--active:hover {
+  /* no visual change when hovering an already-active tab */
   background: linear-gradient(
-    135deg,
-    var(--clr-pumpkin) 0%,
-    rgba(212, 168, 83, 0.8) 100%
+    180deg,
+    rgba(212, 168, 83, 0.1) 0%,
+    rgba(212, 168, 83, 0.5) 100%
   );
+  color: var(--clr-white);
+  border: 1px solid rgba(212, 168, 83, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transform: none;
 }
 
 .calendar-top-bar-right {
@@ -174,66 +183,6 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   row-gap: 10px;
-}
-
-.calendar-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex: 1 1 220px;
-  min-width: 180px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--clr-silver);
-  font-size: 14px;
-  pointer-events: none;
-}
-
-.search-input {
-  width: clamp(180px, 22vw, 240px);
-  max-width: 100%;
-  height: 38px;
-  padding: 0 36px;
-  border-radius: 10px;
-  background: rgba(47, 55, 65, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--clr-white);
-  font-size: 13px;
-  transition: all 0.2s ease;
-}
-
-.search-input::placeholder {
-  color: var(--clr-silver);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--clr-pumpkin);
-  background: rgba(47, 55, 65, 0.8);
-  width: clamp(200px, 28vw, 280px);
-}
-
-.search-clear {
-  position: absolute;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--clr-silver);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.search-clear:hover {
-  background: rgba(254, 30, 0, 0.3);
-  color: var(--clr-scarlet);
 }
 
 /* Holiday Toggle Button */
@@ -275,22 +224,18 @@
   height: 38px;
   padding: 0 16px;
   border-radius: 10px;
-  background: linear-gradient(
-    135deg,
-    var(--clr-pumpkin) 0%,
-    rgba(212, 168, 83, 0.8) 100%
-  );
+  background: linear-gradient(135deg, #e5c07b 0%, #d4a853 50%, #b8923f 100%);
   color: var(--clr-white);
   font-weight: 600;
   font-size: 13px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(212, 168, 83, 0.3);
+  border: 1px solid rgba(212, 168, 83, 0.4);
   flex: 0 0 auto;
 }
 
 .add-event-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 168, 83, 0.4);
+  background: linear-gradient(135deg, #d4a853 0%, #e5c07b 50%, #d4a853 100%);
+  border-color: rgba(212, 168, 83, 0.6);
 }
 
 .add-event-btn i {
@@ -357,14 +302,6 @@
 
   .view-btn-label {
     display: none;
-  }
-
-  .search-input {
-    width: 160px;
-  }
-
-  .search-input:focus {
-    width: 180px;
   }
 }
 

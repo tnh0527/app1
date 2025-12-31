@@ -32,7 +32,7 @@
   );
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 0 0 20px 20px;
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   display: flex;
@@ -64,6 +64,7 @@
     transparent 100%
   );
   border-bottom: none;
+  border-radius: 20px 20px 0 0;
 }
 
 .modal-title {
@@ -257,6 +258,11 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--clr-white);
+}
+
+/* Recurrence tab form labels - add padding-top (except first) */
+.tab-content--recurrence .form-group:not(:first-child) .form-label {
+  padding-top: 16px;
 }
 
 .required {
@@ -563,7 +569,8 @@
   gap: 8px;
 }
 
-.reminder-add .form-input {
+.reminder-add .form-input,
+.reminder-add .custom-dropdown {
   flex: 1;
 }
 

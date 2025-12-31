@@ -4,6 +4,7 @@ import {
   deleteSavedLocation,
 } from "../../api/weatherLocationsApi";
 import { iconMap, videoMap } from "../../utils/weatherMapping";
+import api from "../../api/axios";
 import "./SavedLocations.css";
 
 const MAX_SAVED_LOCATIONS = 5;
@@ -66,44 +67,40 @@ const SavedLocations = ({
       const previews = {};
       for (const location of savedLocations) {
         try {
-          const response = await fetch(
-            `http://localhost:8000/api/weather/?location=${encodeURIComponent(
-              location.name
-            )}`
+          const response = await api.get("/api/weather/", {
+            params: { location: location.name },
+          });
+          const data = response.data;
+          const currentTime = new Date();
+          const currentMinuteIndex = Math.floor(
+            (currentTime.getHours() * 60 + currentTime.getMinutes()) / 15
           );
-          if (response.ok) {
-            const data = await response.json();
-            const currentTime = new Date();
-            const currentMinuteIndex = Math.floor(
-              (currentTime.getHours() * 60 + currentTime.getMinutes()) / 15
+          const minutelyData = data.weather_data?.minutely_15 || [];
+          const currentData =
+            minutelyData[currentMinuteIndex] || minutelyData[0] || {};
+          const dailyData = data.weather_data?.daily || [];
+
+          const previewData = {
+            temperature: currentData.temperature,
+            condition: currentData.weather_code,
+            tempMax: dailyData[0]?.max_temperature,
+            tempMin: dailyData[0]?.min_temperature,
+            is_day: currentData.is_day,
+            sunrise: dailyData[0]?.sunrise,
+            sunset: dailyData[0]?.sunset,
+            time_zone: data.time_zone_data || null,
+          };
+
+          previews[location.id] = previewData;
+
+          // Update cache with fresh data
+          try {
+            const cacheKey = `weather_preview_${location.name}`;
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({ data: previewData, timestamp: Date.now() })
             );
-            const minutelyData = data.weather_data?.minutely_15 || [];
-            const currentData =
-              minutelyData[currentMinuteIndex] || minutelyData[0] || {};
-            const dailyData = data.weather_data?.daily || [];
-
-            const previewData = {
-              temperature: currentData.temperature,
-              condition: currentData.weather_code,
-              tempMax: dailyData[0]?.max_temperature,
-              tempMin: dailyData[0]?.min_temperature,
-              is_day: currentData.is_day,
-              sunrise: dailyData[0]?.sunrise,
-              sunset: dailyData[0]?.sunset,
-              time_zone: data.time_zone_data || null,
-            };
-
-            previews[location.id] = previewData;
-
-            // Update cache with fresh data
-            try {
-              const cacheKey = `weather_preview_${location.name}`;
-              localStorage.setItem(
-                cacheKey,
-                JSON.stringify({ data: previewData, timestamp: Date.now() })
-              );
-            } catch (err) {}
-          }
+          } catch (err) {}
         } catch (error) {
           console.error(`Failed to fetch preview for ${location.name}:`, error);
         }
@@ -234,10 +231,16 @@ const SavedLocations = ({
       const previewVideo = findPreviewVideo(preview.condition, isDayLocal);
       const weatherIcon = getWeatherIcon(preview.condition, isDayLocal);
       const itemParts = (item.name || "").split(",").map((s) => s.trim());
-      const itemCountry = itemParts.length > 2 ? itemParts.slice(2).join(", ") : itemParts[1] || "";
+      const itemCountry =
+        itemParts.length > 2
+          ? itemParts.slice(2).join(", ")
+          : itemParts[1] || "";
 
       slots.push(
-        <div key={`cached-${i}`} className={`saved-location-card skeleton`}> 
+        <div
+          key={`cached-${i}`}
+          className={`saved-location-card skeleton glass-hover`}
+        >
           {previewVideo && (
             <video
               className="location-card-video"
@@ -254,10 +257,10 @@ const SavedLocations = ({
           <div className="location-card-content">
             <div className="location-country">{itemCountry}</div>
             <div className="location-header">
-                <div className="location-title">
-                  <h4 className="location-city">{item.name.split(",")[0]}</h4>
-                </div>
-                <div className="location-country">{itemCountry}</div>
+              <div className="location-title">
+                <h4 className="location-city">{item.name.split(",")[0]}</h4>
+              </div>
+              <div className="location-country">{itemCountry}</div>
             </div>
             <div className="location-weather">
               <span className="location-condition">
@@ -406,7 +409,9 @@ const SavedLocations = ({
           return (
             <div
               key={location.id}
-              className={`saved-location-card ${isActive ? "active" : ""}`}
+              className={`saved-location-card ${
+                isActive ? "active" : ""
+              } glass-hover`}
               onClick={() => handleLocationClick(location)}
               onMouseEnter={(e) => {
                 const v = e.currentTarget.querySelector("video");
@@ -446,20 +451,26 @@ const SavedLocations = ({
               </button>
 
               <div className="location-card-content">
-                    <div className="location-header">
-                      <div className="location-title">
-                        <h4 className="location-city">{location.name.split(",")[0]}</h4>
-                        <span className="location-region">
-                          {location.name.split(",").slice(1, 2).join("").trim()}
-                        </span>
-                      </div>
-                      <div className="location-country">
-                        {(() => {
-                          const parts = (location.name || "").split(",").map((s) => s.trim());
-                          return parts.length > 2 ? parts.slice(2).join(", ") : parts[1] || "";
-                        })()}
-                      </div>
-                    </div>
+                <div className="location-header">
+                  <div className="location-title">
+                    <h4 className="location-city">
+                      {location.name.split(",")[0]}
+                    </h4>
+                    <span className="location-region">
+                      {location.name.split(",").slice(1, 2).join("").trim()}
+                    </span>
+                  </div>
+                  <div className="location-country">
+                    {(() => {
+                      const parts = (location.name || "")
+                        .split(",")
+                        .map((s) => s.trim());
+                      return parts.length > 2
+                        ? parts.slice(2).join(", ")
+                        : parts[1] || "";
+                    })()}
+                  </div>
+                </div>
 
                 <div className="location-weather">
                   <span className="location-condition">

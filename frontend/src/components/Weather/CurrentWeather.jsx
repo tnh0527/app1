@@ -54,6 +54,7 @@ const CurrentWeather = ({
 
   const videoRef = useRef(null);
   const scrollRef = useRef(null);
+  const containerRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -96,6 +97,33 @@ const CurrentWeather = ({
       return () => clearInterval(interval);
     }
   }, []);
+
+  // Show/hide left/right scroll hints based on current scroll position
+  useEffect(() => {
+    const updateHints = () => {
+      const el = scrollRef.current;
+      const container = containerRef.current;
+      if (!el || !container) return;
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      const atLeft = scrollLeft <= 5;
+      const atRight = scrollLeft + clientWidth >= scrollWidth - 5;
+
+      container.classList.toggle("no-left", atLeft);
+      container.classList.toggle("no-right", atRight);
+    };
+
+    updateHints();
+    const el = scrollRef.current;
+    if (!el) return;
+
+    el.addEventListener("scroll", updateHints, { passive: true });
+    window.addEventListener("resize", updateHints);
+
+    return () => {
+      el.removeEventListener("scroll", updateHints);
+      window.removeEventListener("resize", updateHints);
+    };
+  }, [hourlyForecast]);
 
   // Set an interval to update the weather data every 15 minutes
   useEffect(() => {
@@ -285,7 +313,24 @@ const CurrentWeather = ({
         </div>
 
         {/* Hourly Forecast Scrollable Section */}
-        <div className="hourly-forecast-container">
+        <div className="hourly-forecast-container" ref={containerRef}>
+          <button
+            type="button"
+            aria-label="Scroll left"
+            className="hourly-scroll-btn left"
+            onClick={() => {
+              if (!scrollRef.current) return;
+              const el = scrollRef.current;
+              const first = el.firstElementChild;
+              const gap = parseInt(getComputedStyle(el).gap || 18, 10) || 18;
+              const itemW = first ? first.getBoundingClientRect().width : 60;
+              const itemsToScroll = 3;
+              const amount = (itemW + gap) * itemsToScroll;
+              el.scrollBy({ left: -amount, behavior: "smooth" });
+            }}
+          >
+            <i className="bi bi-chevron-left"></i>
+          </button>
           <div
             className={`hourly-forecast-scroll ${isDragging ? "dragging" : ""}`}
             ref={scrollRef}
@@ -498,6 +543,23 @@ const CurrentWeather = ({
               </div>
             )}
           </div>
+          <button
+            type="button"
+            aria-label="Scroll right"
+            className="hourly-scroll-btn right"
+            onClick={() => {
+              if (!scrollRef.current) return;
+              const el = scrollRef.current;
+              const first = el.firstElementChild;
+              const gap = parseInt(getComputedStyle(el).gap || 18, 10) || 18;
+              const itemW = first ? first.getBoundingClientRect().width : 60;
+              const itemsToScroll = 3;
+              const amount = (itemW + gap) * itemsToScroll;
+              el.scrollBy({ left: amount, behavior: "smooth" });
+            }}
+          >
+            <i className="bi bi-chevron-right"></i>
+          </button>
         </div>
 
         <div className="weather-map">

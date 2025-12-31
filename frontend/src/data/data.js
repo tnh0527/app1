@@ -4,35 +4,35 @@ export const profileNavLink = [
   {
     id: 1,
     title: "Edit Profile",
-    image: iconsImgs.edit,
+    icon: iconsImgs.edit,
     path: "/profile",
   },
 ];
 export const navigationLinks = [
-  { id: 1, title: "Dashboard", image: iconsImgs.home, path: "/dashboard" },
+  { id: 1, title: "Dashboard", icon: iconsImgs.home, path: "/dashboard" },
 
-  { id: 2, title: "Calendar", image: iconsImgs.calendar, path: "/calendar" },
+  { id: 2, title: "Calendar", icon: iconsImgs.calendar, path: "/calendar" },
 
-  { id: 3, title: "Weather", image: iconsImgs.weather, path: "/weather" },
+  { id: 3, title: "Weather", icon: iconsImgs.weather, path: "/weather" },
 
-  { id: 4, title: "Financials", image: iconsImgs.wealth, path: "/financials" },
+  { id: 4, title: "Financials", icon: iconsImgs.wealth, path: "/financials" },
 
   {
     id: 5,
     title: "Subscriptions",
-    image: iconsImgs.bills,
+    icon: iconsImgs.bills,
     path: "/subscriptions",
   },
 
-  { id: 6, title: "Travel", image: iconsImgs.plane, path: "/travel" },
+  { id: 6, title: "Travel", icon: iconsImgs.plane, path: "/travel" },
 
   {
     id: 12,
     title: "AI Foundry",
-    image: iconsImgs.report,
+    icon: iconsImgs.report,
     path: "/ai-foundry",
   },
-  { id: 10, title: "Log Out", image: iconsImgs.exit },
+  { id: 10, title: "Log Out", icon: iconsImgs.exit },
 ];
 
 export const usStates = [

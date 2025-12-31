@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
+    "@iconify/react": "^6.0.2",
     "@modelcontextprotocol/server-puppeteer": "^2025.5.12",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.3",

@@ -315,6 +315,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   z-index: 2;
   overflow: hidden;
+  position: relative; /* enable pseudo overlays for scroll hint */
 }
 
 .hourly-forecast-scroll {
@@ -339,6 +340,118 @@
 
 .hourly-forecast-scroll::-webkit-scrollbar {
   display: none;
+}
+
+/* Visual scroll hints: subtle gradient overlays with chevrons */
+.hourly-forecast-container::before,
+.hourly-forecast-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 56px;
+  pointer-events: none;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 20px;
+  transition: opacity 180ms ease;
+}
+
+.hourly-forecast-container::before {
+  left: 0;
+  padding-left: 10px;
+  /* kept as fade overlay; remove text because we'll use real buttons */
+  content: "";
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.75),
+    rgba(0, 0, 0, 0.25) 50%,
+    transparent
+  );
+  opacity: 0.95;
+}
+
+.hourly-forecast-container::after {
+  right: 0;
+  padding-right: 10px;
+  /* kept as fade overlay; remove text because we'll use real buttons */
+  content: "";
+  background: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0.75),
+    rgba(0, 0, 0, 0.25) 50%,
+    transparent
+  );
+  opacity: 0.95;
+}
+
+/* Reduce hint size on very small screens */
+@media (max-width: 480px) {
+  .hourly-forecast-container::before,
+  .hourly-forecast-container::after {
+    width: 42px;
+    font-size: 16px;
+    opacity: 0.85;
+  }
+}
+
+/* Hide hints when at scroll edges (toggled via JS) */
+.hourly-forecast-container.no-left::before {
+  opacity: 0 !important;
+  visibility: hidden;
+}
+.hourly-forecast-container.no-right::after {
+  opacity: 0 !important;
+  visibility: hidden;
+}
+
+/* Actual clickable scroll buttons */
+.hourly-scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease, opacity 150ms ease;
+}
+.hourly-scroll-btn:hover {
+  transform: translateY(-50%) scale(1.05);
+  background: rgba(0, 229, 255, 0.12);
+  color: #00e5ff;
+}
+.hourly-scroll-btn.left {
+  left: 8px;
+}
+.hourly-scroll-btn.right {
+  right: 8px;
+}
+
+/* Hide buttons at edges via container classes */
+.hourly-forecast-container.no-left .hourly-scroll-btn.left,
+.hourly-forecast-container.no-right .hourly-scroll-btn.right {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.9);
+}
+
+@media (max-width: 480px) {
+  .hourly-scroll-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
 }
 
 .hourly-item {

@@ -81,12 +81,52 @@ class SavedLocationSetPrimaryView(APIView):
 
 
 class PlaceSuggestionsView(APIView):
+    """Get location suggestions from Google Places API with input validation."""
+
     def get(self, request):
-        user_input = request.query_params.get("input")
-        url = f"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={user_input}&types=geocode&key={settings.GOOGLE_API_KEY}"
+        user_input = request.query_params.get("input", "").strip()
+
+        # Input validation
+        if not user_input:
+            return Response(
+                {"error": "Search input is required.", "suggestions": []},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Length validation
+        if len(user_input) < 2:
+            return Response(
+                {
+                    "error": "Search input must be at least 2 characters.",
+                    "suggestions": [],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(user_input) > 100:
+            return Response(
+                {"error": "Search input is too long.", "suggestions": []},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Basic XSS/injection prevention
+        import re
+
+        suspicious_patterns = re.compile(r"<script|javascript:|data:|on\w+=", re.I)
+        if suspicious_patterns.search(user_input):
+            return Response(
+                {"error": "Invalid search input.", "suggestions": []},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # URL-encode the input for safe API call
+        from urllib.parse import quote
+
+        encoded_input = quote(user_input)
+        url = f"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={encoded_input}&types=geocode&key={settings.GOOGLE_API_KEY}"
 
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
             predictions = data.get("predictions", [])
@@ -95,11 +135,15 @@ class PlaceSuggestionsView(APIView):
                     "description": prediction["description"],
                     "place_id": prediction["place_id"],
                 }
-                for prediction in predictions
+                for prediction in predictions[:10]  # Limit to 10 suggestions
             ]
-            # print("Suggestions", suggestions)
             return Response({"suggestions": suggestions}, status=status.HTTP_200_OK)
 
+        except requests.exceptions.Timeout:
+            return Response(
+                {"error": "Request timed out. Please try again."},
+                status=status.HTTP_504_GATEWAY_TIMEOUT,
+            )
         except requests.exceptions.RequestException as e:
             print(f"Error in get_place_suggestions: {e}")
             return Response(
@@ -332,7 +376,7 @@ class WeatherView(APIView):
         return None
 
     def get(self, request):
-        location = request.query_params.get("location")
+        location = request.query_params.get("location", "").strip()
         lat_param = request.query_params.get("lat")
         lon_param = request.query_params.get("lon")
 
@@ -341,6 +385,19 @@ class WeatherView(APIView):
             try:
                 lat = float(lat_param)
                 lng = float(lon_param)
+
+                # Validate coordinate ranges
+                if lat < -90 or lat > 90:
+                    return Response(
+                        {"error": "Latitude must be between -90 and 90 degrees"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if lng < -180 or lng > 180:
+                    return Response(
+                        {"error": "Longitude must be between -180 and 180 degrees"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 coordinates = {"lat": lat, "lng": lng}
             except ValueError:
                 return Response(
@@ -348,6 +405,28 @@ class WeatherView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         elif location:
+            # Validate location string
+            if len(location) < 2:
+                return Response(
+                    {"error": "Location must be at least 2 characters"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if len(location) > 255:
+                return Response(
+                    {"error": "Location name is too long"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Basic XSS/injection prevention
+            import re
+
+            suspicious_patterns = re.compile(r"<script|javascript:|data:|on\w+=", re.I)
+            if suspicious_patterns.search(location):
+                return Response(
+                    {"error": "Invalid location input"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             coordinates = self.get_coordinates(location)
             if not coordinates:
                 return Response(
