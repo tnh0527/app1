@@ -32,7 +32,7 @@
   );
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
+  border-radius: 0 0 20px 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   display: flex;
@@ -63,13 +63,15 @@
     rgba(6, 84, 129, 0.3) 0%,
     transparent 100%
   );
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
 }
 
 .modal-title {
   font-size: 20px;
   font-weight: 700;
   color: var(--clr-white);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: -0.02em;
 }
 
 .modal-close-btn {
@@ -94,10 +96,13 @@
 /* Tabs */
 .modal-tabs {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 12px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: none;
   background: rgba(0, 0, 0, 0.1);
+  border-radius: 0;
 }
 
 .modal-tab {
@@ -105,23 +110,59 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--clr-silver);
+  border-radius: 0;
   font-size: 13px;
   font-weight: 500;
   transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+/* Stronger, specific selectors to override less-specific rules without using !important */
+.event-modal .modal-tabs > .modal-tab {
+  color: var(--clr-white);
+  border-bottom: none;
+}
+
+/* Ensure the active tab shows the gold underline and sits above the tabs border */
+.event-modal .modal-tabs > .modal-tab--active {
+  color: var(--clr-white);
+  font-weight: 600;
+  position: relative;
+}
+
+.event-modal .modal-tabs > .modal-tab--active::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: 2px;
+  background: var(--clr-accent-gold);
+  border-radius: 0;
+  z-index: 5;
+  pointer-events: none;
 }
 
 .modal-tab:hover {
-  background: rgba(47, 55, 65, 0.4);
+  background: rgba(47, 55, 65, 0.5);
   color: var(--clr-white);
 }
 
 .modal-tab--active {
-  background: var(--modal-accent, var(--clr-pumpkin));
   color: var(--clr-white);
-  box-shadow: 0 4px 12px rgba(212, 168, 83, 0.3);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border-bottom: 2px solid var(--clr-accent-gold);
+}
+
+.modal-tab--active i {
+  color: var(--clr-white);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.modal-tab i {
+  color: inherit;
+  font-size: 14px;
 }
 
 .tab-badge {
@@ -135,14 +176,13 @@
 /* Body */
 .event-modal-body {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
   padding: 24px;
 }
 
 .tab-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
 }
 
 /* Conflict Warning */
@@ -196,6 +236,12 @@
   gap: 8px;
 }
 
+/* Remove default bottom margin for form groups inside the event modal
+   so layout matches modal spacing and avoids external global rules */
+.event-modal .form-group {
+  margin-bottom: 0;
+}
+
 .form-group--inline {
   flex-direction: row;
   align-items: center;
@@ -210,7 +256,7 @@
 .form-label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--clr-silver);
+  color: var(--clr-white);
 }
 
 .required {
@@ -285,6 +331,17 @@
 .form-group--inline .toggle-label {
   gap: 16px;
   align-items: center;
+}
+
+/* Add margin-top to All Day Event toggle */
+.all-day-toggle-group {
+  margin-top: 16px;
+}
+
+/* Add margin-top to Priority and Color sections */
+.priority-group,
+.color-group {
+  margin-top: 16px;
 }
 
 .toggle-switch {
@@ -447,7 +504,7 @@
 
 .interval-label {
   font-size: 14px;
-  color: var(--clr-silver);
+  color: var(--clr-white);
 }
 
 /* Weekday options */
@@ -640,11 +697,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--modal-accent, var(--clr-pumpkin)) 0%,
-    rgba(212, 168, 83, 0.8) 100%
-  );
+  background: var(--clr-accent-gold);
   color: var(--clr-white);
   box-shadow: 0 4px 16px rgba(212, 168, 83, 0.3);
 }

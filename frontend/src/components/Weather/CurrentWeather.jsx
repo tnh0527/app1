@@ -15,6 +15,10 @@ const CurrentWeather = ({
   sunData,
   hourlyForecast,
   isLoadingWeather,
+  onSaveLocation,
+  isLocationSaved,
+  isSavingLocation,
+  onSearchClick,
 }) => {
   // State to track the current 15-minute interval index
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -235,20 +239,49 @@ const CurrentWeather = ({
 
           <div className="temp-toggle">
             <div className="temp-unit-toggle">
-              <button 
-                className={`unit-btn ${currentWeather.unit !== "C" ? "active" : ""}`}
+              <button
+                className={`unit-btn ${
+                  currentWeather.unit !== "C" ? "active" : ""
+                }`}
                 onClick={currentWeather.unit === "C" ? handleToggle : undefined}
               >
                 F
               </button>
-              <button 
-                className={`unit-btn ${currentWeather.unit === "C" ? "active" : ""}`}
+              <button
+                className={`unit-btn ${
+                  currentWeather.unit === "C" ? "active" : ""
+                }`}
                 onClick={currentWeather.unit !== "C" ? handleToggle : undefined}
               >
                 C
               </button>
             </div>
+            <button
+              className="search-icon-btn"
+              onClick={onSearchClick}
+              title="Search location"
+            >
+              <i className="bi bi-search"></i>
+            </button>
           </div>
+
+          {/* Save Location Button */}
+          <button
+            className={`save-location-btn ${isLocationSaved ? "saved" : ""} ${
+              isSavingLocation ? "saving" : ""
+            }`}
+            onClick={onSaveLocation}
+            disabled={isLocationSaved || isSavingLocation}
+            title={isLocationSaved ? "Location saved" : "Save this location"}
+          >
+            {isSavingLocation ? (
+              <i className="bi bi-arrow-repeat spinning"></i>
+            ) : isLocationSaved ? (
+              <i className="bi bi-bookmark-fill"></i>
+            ) : (
+              <i className="bi bi-bookmark-plus"></i>
+            )}
+          </button>
         </div>
 
         {/* Hourly Forecast Scrollable Section */}

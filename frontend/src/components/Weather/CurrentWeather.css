@@ -18,7 +18,8 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  height: auto;
+  /* make container fill parent so the map can expand to the bottom */
+  height: 100%;
 }
 
 @media (max-width: 768px) {
@@ -28,14 +29,17 @@
 }
 
 .current-weather-details {
-  padding: 15px;
+  padding: 8px;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  height: auto;
+  /* Keep the mp4/details area a fixed height so long addresses don't grow it */
+  height: 220px;
+  /* do not grow so the map can take remaining vertical space */
+  flex: 0 0 auto;
 }
 
 .weather-video {
@@ -51,6 +55,11 @@
 
 .current-weather-details h2 {
   width: 80%;
+  /* Prevent very long addresses from expanding the container - clamp to 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .current-weather-details p {
@@ -80,7 +89,6 @@
 
 .high-low-temp i {
   font-size: 70px;
-  /* color: #fff; Removed to allow gradient coloring */
 }
 .high-low-temp {
   display: flex;
@@ -88,6 +96,7 @@
   align-items: center;
   font-size: 16px;
   align-self: flex-end;
+  margin-right: 14%;
 }
 
 @media (max-width: 768px) {
@@ -119,10 +128,17 @@
 }
 
 .weather-map {
-  flex: 1;
+  /* ensure map consumes remaining vertical space */
+  flex: 1 1 auto;
   width: 100%;
   height: 100%;
   position: relative;
+  min-height: 120px;
+}
+
+/* Prevent hourly forecast from forcing extra gap at bottom */
+.hourly-forecast-container {
+  flex: 0 0 auto;
 }
 
 .temp-toggle {
@@ -130,6 +146,37 @@
   top: 20px;
   right: 20px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-icon-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.search-icon-btn:hover {
+  background: rgba(0, 229, 255, 0.2);
+  color: #00e5ff;
+  transform: scale(1.1);
+}
+
+.search-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.search-icon-btn i {
+  font-size: 20px;
 }
 
 .temp-unit-toggle {
@@ -160,6 +207,65 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* Save Location Button */
+.save-location-btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.save-location-btn:hover:not(:disabled) {
+  background: rgba(0, 229, 255, 0.3);
+  color: #00e5ff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3);
+}
+
+.save-location-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.save-location-btn.saved {
+  background: rgba(0, 229, 255, 0.2);
+  color: #00e5ff;
+  cursor: default;
+}
+
+.save-location-btn.saving {
+  cursor: wait;
+}
+
+.save-location-btn i {
+  font-size: 20px;
+}
+
+.save-location-btn i.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 1550px) {
   .current-weather {
     grid-row: 1 / 2;
@@ -184,6 +290,7 @@
   .current-weather-details {
     padding: 10px;
     gap: 6px;
+    height: 180px;
   }
   .high-low-temp {
     font-size: 14px;

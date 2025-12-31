@@ -8,9 +8,9 @@
 
   background: linear-gradient(
     180deg,
-    rgba(15, 23, 35, 0.98) 0%,
-    rgba(20, 30, 45, 0.95) 50%,
-    rgba(15, 23, 35, 0.98) 100%
+    rgba(15, 23, 35, 0.5) 0%,
+    rgba(20, 30, 45, 0.48) 50%,
+    rgba(15, 23, 35, 0.5) 100%
   );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -306,8 +306,8 @@
   margin-top: auto;
   background: linear-gradient(
     135deg,
-    rgba(15, 23, 35, 0.95) 0%,
-    rgba(20, 30, 45, 0.95) 100%
+    rgba(15, 23, 35, 0.9) 0%,
+    rgba(20, 30, 45, 0.9) 100%
   );
   border-radius: 14px;
   border: 1px solid rgba(212, 168, 83, 0.12);
@@ -321,8 +321,8 @@
 .sidebar-profile:hover {
   background: linear-gradient(
     135deg,
-    rgba(20, 30, 45, 0.98) 0%,
-    rgba(25, 38, 55, 0.98) 100%
+    rgba(20, 30, 45, 0.92) 0%,
+    rgba(25, 38, 55, 0.92) 100%
   );
   border-color: rgba(212, 168, 83, 0.2);
 }
@@ -530,7 +530,10 @@
 }
 
 .sidebar-change .profile-section-right {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .sidebar-change .profile-name {

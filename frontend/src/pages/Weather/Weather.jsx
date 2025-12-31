@@ -1,13 +1,18 @@
 import "./Weather.css";
-import LocationSearch from "../../components/Weather/LocationSearch";
+import SearchModal from "../../components/Weather/SearchModal";
 import CurrentWeather from "../../components/Weather/CurrentWeather";
 import Forecast from "../../components/Weather/Forecast";
 import CardSlot from "../../components/Weather/CardSlot";
 import WeatherModal from "../../components/Weather/WeatherModal";
 import WeatherEffects from "../../components/Weather/WeatherEffects";
+import SavedLocations from "../../components/Weather/SavedLocations";
 import { useState, useEffect, useRef, useContext } from "react";
 import { ProfileContext } from "../../contexts/ProfileContext";
 import { transformLocationInput } from "../../utils/capitalCities";
+import {
+  addSavedLocation,
+  getSavedLocations,
+} from "../../api/weatherLocationsApi";
 
 const TOP_CARD_OPTIONS = [
   { value: "wind", label: "Wind Status" },
@@ -52,6 +57,13 @@ const Weather = () => {
   const [currentFeelsLike, setCurrentFeelsLike] = useState(null);
   const { profile } = useContext(ProfileContext);
 
+  // State for saved locations
+  const [savedLocationsRefresh, setSavedLocationsRefresh] = useState(0);
+  const [isLocationSaved, setIsLocationSaved] = useState(false);
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
+  const [savedLocationsList, setSavedLocationsList] = useState([]);
+  const [currentCoordinates, setCurrentCoordinates] = useState(null);
+
   const [cardSlots, setCardSlots] = useState({
     slot1: "wind",
     slot2: "uv",
@@ -63,6 +75,7 @@ const Weather = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: "", data: null });
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   const [currentConditions, setCurrentConditions] = useState({
     visibility: null,
@@ -152,6 +165,103 @@ const Weather = () => {
       setSuggestions([]);
       setLocationSuggestions("");
     }, 100); // Adding a slight delay to ensure click event is captured
+  };
+
+  const handleSearchClick = () => {
+    setSearchModalOpen(true);
+  };
+
+  // Fetch saved locations to check if current location is saved
+  useEffect(() => {
+    const fetchSavedLocations = async () => {
+      try {
+        const locations = await getSavedLocations();
+        setSavedLocationsList(locations);
+      } catch (error) {
+        console.error("Failed to fetch saved locations:", error);
+      }
+    };
+    fetchSavedLocations();
+  }, [savedLocationsRefresh]);
+
+  // Check if current location is already saved
+  useEffect(() => {
+    if (currentLocation && savedLocationsList.length > 0) {
+      const isSaved = savedLocationsList.some(
+        (loc) => loc.name.toLowerCase() === currentLocation.toLowerCase()
+      );
+      setIsLocationSaved(isSaved);
+    } else {
+      setIsLocationSaved(false);
+    }
+  }, [currentLocation, savedLocationsList]);
+
+  // Handle save current location
+  const handleSaveLocation = async () => {
+    if (!currentLocation || isLocationSaved || isSavingLocation) return;
+
+    // Check if we've reached the maximum (5 locations)
+    if (savedLocationsList.length >= 5) {
+      alert(
+        "Maximum 5 locations can be saved. Please remove one to add a new location."
+      );
+      return;
+    }
+
+    setIsSavingLocation(true);
+    try {
+      // Get coordinates from current weather data
+      let coordinates = currentCoordinates;
+
+      if (!coordinates && mapData?.features?.[0]?.geometry?.coordinates) {
+        const [lng, lat] = mapData.features[0].geometry.coordinates;
+        coordinates = { lat, lng };
+      }
+
+      if (!coordinates) {
+        // Fetch fresh coordinates
+        const response = await fetch(
+          `http://localhost:8000/api/weather/?location=${encodeURIComponent(
+            currentLocation
+          )}`
+        );
+        const data = await response.json();
+        if (data.coordinates) {
+          coordinates = data.coordinates;
+        }
+      }
+
+      if (coordinates) {
+        const locationData = {
+          name: currentLocation,
+          latitude: parseFloat(coordinates.lat.toFixed(6)),
+          longitude: parseFloat(coordinates.lng.toFixed(6)),
+          is_primary: savedLocationsList.length === 0,
+        };
+
+        await addSavedLocation(locationData);
+        setIsLocationSaved(true);
+        // Trigger refresh of saved locations component
+        setSavedLocationsRefresh((prev) => prev + 1);
+      } else {
+        alert("Could not get location coordinates. Please try again.");
+      }
+    } catch (error) {
+      console.error("Failed to save location:", error);
+      if (error.response?.data?.name) {
+        alert(error.response.data.name[0] || "Location already saved.");
+      } else {
+        alert("Failed to save location. Please try again.");
+      }
+    } finally {
+      setIsSavingLocation(false);
+    }
+  };
+
+  // Handle clicking on a saved location
+  const handleSavedLocationClick = (locationName) => {
+    const transformedLocation = transformLocationInput(locationName);
+    setCurrentLocation(transformedLocation);
   };
 
   // Helper
@@ -269,6 +379,11 @@ const Weather = () => {
       );
       if (response.ok) {
         const weatherData = await response.json();
+
+        // Store coordinates for save location feature
+        if (weatherData.coordinates) {
+          setCurrentCoordinates(weatherData.coordinates);
+        }
 
         // Set AQI and UV data
         setAQI(weatherData.air_uv_data["aqi_data"]);
@@ -579,16 +694,24 @@ const Weather = () => {
         windSpeed={currentWindSpeed}
         feelsLike={currentFeelsLike}
       />
-
-      {/* LocationSearch */}
-      <LocationSearch
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
         location={locationSuggestions}
         handleInputChange={handleInputChange}
         handleKeyDown={handleKeyDown}
-        handleBlur={handleBlur}
         suggestions={suggestions}
         handleSuggestionClick={handleSuggestionClick}
       />
+      {/* Saved locations top-right */}
+      <div className="top-right-row">
+        <SavedLocations
+          currentLocation={currentLocation}
+          onLocationSelect={handleSavedLocationClick}
+          refreshTrigger={savedLocationsRefresh}
+        />
+      </div>
       {/* Current Weather */}
       <CurrentWeather
         currentWeather={currentWeather}
@@ -601,6 +724,10 @@ const Weather = () => {
         sunData={sunriseSunset}
         hourlyForecast={hourlyForecast}
         isLoadingWeather={isLoading}
+        onSaveLocation={handleSaveLocation}
+        isLocationSaved={isLocationSaved}
+        isSavingLocation={isSavingLocation}
+        onSearchClick={handleSearchClick}
       />
       {/* Today's Highlights */}
       <div className={`highlights-container ${isLoading ? "skeleton" : ""}`}>

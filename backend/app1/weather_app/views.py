@@ -3,8 +3,81 @@ from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from .weather_codes import weather_code_descriptions
+from .models import SavedLocation
+from .serializers import SavedLocationSerializer, SavedLocationReorderSerializer
 from datetime import datetime, timedelta, timezone
+
+
+class SavedLocationListCreateView(ListCreateAPIView):
+    """List all saved locations for the user or create a new one"""
+
+    serializer_class = SavedLocationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return SavedLocation.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Auto-assign order based on current count
+        current_count = SavedLocation.objects.filter(user=self.request.user).count()
+        serializer.save(user=self.request.user, order=current_count)
+
+
+class SavedLocationDetailView(RetrieveUpdateDestroyAPIView):
+    """Retrieve, update, or delete a specific saved location"""
+
+    serializer_class = SavedLocationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return SavedLocation.objects.filter(user=self.request.user)
+
+
+class SavedLocationReorderView(APIView):
+    """Reorder saved locations"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = SavedLocationReorderSerializer(data=request.data)
+        if serializer.is_valid():
+            locations_data = serializer.validated_data["locations"]
+            for item in locations_data:
+                SavedLocation.objects.filter(user=request.user, id=item["id"]).update(
+                    order=item["order"]
+                )
+            return Response(
+                {"message": "Locations reordered successfully"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SavedLocationSetPrimaryView(APIView):
+    """Set a location as primary"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            location = SavedLocation.objects.get(pk=pk, user=request.user)
+            # Unset all other primary locations
+            SavedLocation.objects.filter(user=request.user, is_primary=True).update(
+                is_primary=False
+            )
+            # Set this one as primary
+            location.is_primary = True
+            location.save()
+            return Response(
+                SavedLocationSerializer(location).data, status=status.HTTP_200_OK
+            )
+        except SavedLocation.DoesNotExist:
+            return Response(
+                {"error": "Location not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class PlaceSuggestionsView(APIView):

@@ -3,7 +3,7 @@ import {
   getSavedLocations,
   deleteSavedLocation,
 } from "../../api/weatherLocationsApi";
-import { iconMap } from "../../utils/weatherMapping";
+import { iconMap, videoMap } from "../../utils/weatherMapping";
 import "./SavedLocations.css";
 
 const MAX_SAVED_LOCATIONS = 5;
@@ -39,23 +39,33 @@ const SavedLocations = ({
   };
 
   // Fetch weather previews for saved locations
+  // Behavior: show cached preview immediately if available, then ALWAYS refetch
+  // fresh preview data for each saved location on mount/when savedLocations changes.
   useEffect(() => {
     const fetchPreviews = async () => {
-      const previews = {};
+      // Prefill from cache so UI shows immediately while we refetch
+      const initialPreviews = {};
       for (const location of savedLocations) {
         try {
-          // Check cache first
           const cacheKey = `weather_preview_${location.name}`;
           const cached = localStorage.getItem(cacheKey);
           if (cached) {
-            const { data, timestamp } = JSON.parse(cached);
-            // Cache valid for 30 minutes
-            if (Date.now() - timestamp < 30 * 60 * 1000) {
-              previews[location.id] = data;
-              continue;
-            }
+            const { data } = JSON.parse(cached);
+            initialPreviews[location.id] = data;
           }
+        } catch (err) {
+          // ignore cache parse errors
+        }
+      }
 
+      if (Object.keys(initialPreviews).length > 0) {
+        setLocationPreviews((prev) => ({ ...prev, ...initialPreviews }));
+      }
+
+      // Now fetch fresh previews for all saved locations (always)
+      const previews = {};
+      for (const location of savedLocations) {
+        try {
           const response = await fetch(
             `http://localhost:8000/api/weather/?location=${encodeURIComponent(
               location.name
@@ -78,24 +88,29 @@ const SavedLocations = ({
               tempMax: dailyData[0]?.max_temperature,
               tempMin: dailyData[0]?.min_temperature,
               is_day: currentData.is_day,
+              sunrise: dailyData[0]?.sunrise,
+              sunset: dailyData[0]?.sunset,
+              time_zone: data.time_zone_data || null,
             };
 
             previews[location.id] = previewData;
 
-            // Cache the preview
-            localStorage.setItem(
-              cacheKey,
-              JSON.stringify({
-                data: previewData,
-                timestamp: Date.now(),
-              })
-            );
+            // Update cache with fresh data
+            try {
+              const cacheKey = `weather_preview_${location.name}`;
+              localStorage.setItem(
+                cacheKey,
+                JSON.stringify({ data: previewData, timestamp: Date.now() })
+              );
+            } catch (err) {}
           }
         } catch (error) {
           console.error(`Failed to fetch preview for ${location.name}:`, error);
         }
       }
-      setLocationPreviews(previews);
+
+      // Merge fresh previews into state so UI updates
+      setLocationPreviews((prev) => ({ ...prev, ...previews }));
     };
 
     if (savedLocations.length > 0) {
@@ -132,52 +147,165 @@ const SavedLocations = ({
     return iconMap[condition] || "bi bi-cloud";
   };
 
-  // Get background gradient based on weather condition
-  const getConditionGradient = (condition, isDay) => {
-    if (!condition) return "linear-gradient(135deg, #4a90d9 0%, #67b8de 100%)";
+  // Robust helper: find the best matching video for a condition (case-insensitive,
+  // supports keys that are objects with day/night variants)
+  const findPreviewVideo = (condition, isDay) => {
+    if (!condition) return (videoMap.default && videoMap.default.clear) || "";
+    const conditionLower = String(condition).toLowerCase();
 
-    const conditionLower = condition.toLowerCase();
+    // Try exact match first (case-insensitive)
+    const exactKey = Object.keys(videoMap).find(
+      (k) => k.toLowerCase() === conditionLower
+    );
+    if (exactKey) {
+      const v = videoMap[exactKey];
+      return typeof v === "object" ? (isDay ? v.day : v.night) : v;
+    }
 
-    if (conditionLower.includes("rain") || conditionLower.includes("drizzle")) {
-      return "linear-gradient(135deg, #4a5568 0%, #667eea 100%)";
+    // Try partial match: condition includes map key or vice-versa
+    const partialKey = Object.keys(videoMap).find((k) => {
+      const kl = k.toLowerCase();
+      return conditionLower.includes(kl) || kl.includes(conditionLower);
+    });
+    if (partialKey) {
+      const v = videoMap[partialKey];
+      return typeof v === "object" ? (isDay ? v.day : v.night) : v;
     }
-    if (
-      conditionLower.includes("thunder") ||
-      conditionLower.includes("storm")
-    ) {
-      return "linear-gradient(135deg, #2d3748 0%, #4a5568 100%)";
-    }
-    if (
-      conditionLower.includes("cloud") ||
-      conditionLower.includes("overcast")
-    ) {
+
+    // Fallback to default clear/night
+    if (videoMap.default)
       return isDay
-        ? "linear-gradient(135deg, #94b8d1 0%, #b8c9d9 100%)"
-        : "linear-gradient(135deg, #3a4a5c 0%, #5a6a7c 100%)";
-    }
-    if (conditionLower.includes("snow")) {
-      return "linear-gradient(135deg, #e8f4f8 0%, #d1e8f0 100%)";
-    }
-    if (conditionLower.includes("fog") || conditionLower.includes("mist")) {
-      return "linear-gradient(135deg, #9ca3af 0%, #d1d5db 100%)";
-    }
-    // Clear/sunny
-    return isDay
-      ? "linear-gradient(135deg, #4a90d9 0%, #87ceeb 100%)"
-      : "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)";
+        ? videoMap.default.clear || ""
+        : videoMap.default.night || "";
+    return "";
   };
 
-  // Loading skeleton
+  // Compute day/night from saved sunrise/sunset timestamps (fallback to flag)
+  const computeIsDayFromSun = (sunriseISO, sunsetISO, fallbackIsDay) => {
+    if (sunriseISO && sunsetISO) {
+      try {
+        const now = new Date();
+        const sunrise = new Date(sunriseISO);
+        const sunset = new Date(sunsetISO);
+        // If parsed correctly, compare
+        if (!isNaN(sunrise) && !isNaN(sunset)) {
+          return now >= sunrise && now < sunset;
+        }
+      } catch (err) {
+        // fallthrough to fallback
+      }
+    }
+    return fallbackIsDay === 1;
+  };
+
+  /* background gradient removed: previews use MP4 video instead */
+
+  // Loading skeleton: show cached previews (if any) alongside skeleton slots
   if (isLoading) {
+    // Read cached preview entries from localStorage
+    const cachePrefix = "weather_preview_";
+    const cachedItems = Object.keys(localStorage)
+      .filter((k) => k.startsWith(cachePrefix))
+      .slice(0, MAX_SAVED_LOCATIONS)
+      .map((k) => {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(k));
+          return {
+            cacheKey: k,
+            name: k.replace(cachePrefix, ""),
+            data: parsed?.data || null,
+          };
+        } catch (err) {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    const slots = [];
+    // fill with cached items first
+    for (let i = 0; i < cachedItems.length; i++) {
+      const item = cachedItems[i];
+      const preview = item.data || {};
+      const isDayLocal = computeIsDayFromSun(
+        preview.sunrise,
+        preview.sunset,
+        preview.is_day
+      );
+      const previewVideo = findPreviewVideo(preview.condition, isDayLocal);
+      const weatherIcon = getWeatherIcon(preview.condition, isDayLocal);
+      const itemParts = (item.name || "").split(",").map((s) => s.trim());
+      const itemCountry = itemParts.length > 2 ? itemParts.slice(2).join(", ") : itemParts[1] || "";
+
+      slots.push(
+        <div key={`cached-${i}`} className={`saved-location-card skeleton`}> 
+          {previewVideo && (
+            <video
+              className="location-card-video"
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              aria-hidden="true"
+            >
+              <source src={previewVideo} type="video/mp4" />
+            </video>
+          )}
+          <div className="location-card-overlay"></div>
+          <div className="location-card-content">
+            <div className="location-country">{itemCountry}</div>
+            <div className="location-header">
+                <div className="location-title">
+                  <h4 className="location-city">{item.name.split(",")[0]}</h4>
+                </div>
+                <div className="location-country">{itemCountry}</div>
+            </div>
+            <div className="location-weather">
+              <span className="location-condition">
+                {preview.condition || "Loading..."}
+              </span>
+
+              <div className="right-temps">
+                <i className={`weather-icon ${weatherIcon}`}></i>
+                <div className="location-temps">
+                  <span className="current-temp">
+                    {preview.temperature !== undefined
+                      ? `${Math.round(preview.temperature)}°`
+                      : "--°"}
+                  </span>
+                  <div className="temp-range">
+                    <span>
+                      H:
+                      {preview.tempMax !== undefined
+                        ? `${Math.round(preview.tempMax)}°`
+                        : "--"}
+                    </span>
+                    <span>
+                      L:
+                      {preview.tempMin !== undefined
+                        ? `${Math.round(preview.tempMin)}°`
+                        : "--"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // fill remaining with skeletons
+    for (let i = slots.length; i < MAX_SAVED_LOCATIONS; i++) {
+      slots.push(
+        <div key={`skeleton-${i}`} className="saved-location-card skeleton">
+          <div className="skeleton-shimmer"></div>
+        </div>
+      );
+    }
+
     return (
       <div className="saved-locations-container">
-        <div className="saved-locations-scroll">
-          {Array.from({ length: MAX_SAVED_LOCATIONS }).map((_, i) => (
-            <div key={i} className="saved-location-card skeleton">
-              <div className="skeleton-shimmer"></div>
-            </div>
-          ))}
-        </div>
+        <div className="saved-locations-scroll">{slots}</div>
       </div>
     );
   }
@@ -207,22 +335,106 @@ const SavedLocations = ({
           const isActive = currentLocation
             ?.toLowerCase()
             .includes(location.name.split(",")[0].toLowerCase());
-          const gradient = getConditionGradient(
-            preview.condition,
-            preview.is_day !== 0
+          // gradient removed; using video previews instead
+
+          // Robust helper: find the best matching video for a condition (case-insensitive,
+          // supports keys that are objects with day/night variants)
+          const findPreviewVideo = (condition, isDay) => {
+            if (!condition)
+              return (videoMap.default && videoMap.default.clear) || "";
+            const conditionLower = String(condition).toLowerCase();
+
+            // Try exact match first (case-insensitive)
+            const exactKey = Object.keys(videoMap).find(
+              (k) => k.toLowerCase() === conditionLower
+            );
+            if (exactKey) {
+              const v = videoMap[exactKey];
+              return typeof v === "object" ? (isDay ? v.day : v.night) : v;
+            }
+
+            // Try partial match: condition includes map key or vice-versa
+            const partialKey = Object.keys(videoMap).find((k) => {
+              const kl = k.toLowerCase();
+              return conditionLower.includes(kl) || kl.includes(conditionLower);
+            });
+            if (partialKey) {
+              const v = videoMap[partialKey];
+              return typeof v === "object" ? (isDay ? v.day : v.night) : v;
+            }
+
+            // Fallback to default clear/night
+            if (videoMap.default)
+              return isDay
+                ? videoMap.default.clear || ""
+                : videoMap.default.night || "";
+            return "";
+          };
+
+          // Determine day/night using saved preview's sunrise/sunset if available
+          const computeIsDayFromSun = (
+            sunriseISO,
+            sunsetISO,
+            fallbackIsDay
+          ) => {
+            if (sunriseISO && sunsetISO) {
+              try {
+                const now = new Date();
+                const sunrise = new Date(sunriseISO);
+                const sunset = new Date(sunsetISO);
+                // If parsed correctly, compare
+                if (!isNaN(sunrise) && !isNaN(sunset)) {
+                  return now >= sunrise && now < sunset;
+                }
+              } catch (err) {
+                // fallthrough to fallback
+              }
+            }
+            // fallback to explicit is_day flag if present, otherwise assume night
+            return fallbackIsDay === 1;
+          };
+
+          const isDayLocal = computeIsDayFromSun(
+            preview.sunrise,
+            preview.sunset,
+            preview.is_day
           );
-          const weatherIcon = getWeatherIcon(
-            preview.condition,
-            preview.is_day !== 0
-          );
+
+          const previewVideo = findPreviewVideo(preview.condition, isDayLocal);
+          const weatherIcon = getWeatherIcon(preview.condition, isDayLocal);
 
           return (
             <div
               key={location.id}
               className={`saved-location-card ${isActive ? "active" : ""}`}
-              style={{ background: gradient }}
               onClick={() => handleLocationClick(location)}
+              onMouseEnter={(e) => {
+                const v = e.currentTarget.querySelector("video");
+                if (v && v.paused) v.play().catch(() => {});
+              }}
+              onMouseLeave={(e) => {
+                const v = e.currentTarget.querySelector("video");
+                if (v && !v.paused) {
+                  try {
+                    v.pause();
+                    v.currentTime = 0;
+                  } catch (err) {}
+                }
+              }}
             >
+              {/* background video for weather preview (play on hover) */}
+              {previewVideo && (
+                <video
+                  className="location-card-video"
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-hidden="true"
+                >
+                  <source src={previewVideo} type="video/mp4" />
+                </video>
+              )}
               <div className="location-card-overlay"></div>
 
               <button
@@ -234,41 +446,49 @@ const SavedLocations = ({
               </button>
 
               <div className="location-card-content">
-                <div className="location-header">
-                  <h4 className="location-city">
-                    {location.name.split(",")[0]}
-                  </h4>
-                  <span className="location-region">
-                    {location.name.split(",").slice(1, 2).join("").trim()}
-                  </span>
-                </div>
+                    <div className="location-header">
+                      <div className="location-title">
+                        <h4 className="location-city">{location.name.split(",")[0]}</h4>
+                        <span className="location-region">
+                          {location.name.split(",").slice(1, 2).join("").trim()}
+                        </span>
+                      </div>
+                      <div className="location-country">
+                        {(() => {
+                          const parts = (location.name || "").split(",").map((s) => s.trim());
+                          return parts.length > 2 ? parts.slice(2).join(", ") : parts[1] || "";
+                        })()}
+                      </div>
+                    </div>
 
                 <div className="location-weather">
                   <span className="location-condition">
                     {preview.condition || "Loading..."}
                   </span>
-                  <i className={`weather-icon ${weatherIcon}`}></i>
-                </div>
 
-                <div className="location-temps">
-                  <span className="current-temp">
-                    {preview.temperature !== undefined
-                      ? `${Math.round(preview.temperature)}°`
-                      : "--°"}
-                  </span>
-                  <div className="temp-range">
-                    <span>
-                      H:
-                      {preview.tempMax !== undefined
-                        ? `${Math.round(preview.tempMax)}°`
-                        : "--"}
-                    </span>
-                    <span>
-                      L:
-                      {preview.tempMin !== undefined
-                        ? `${Math.round(preview.tempMin)}°`
-                        : "--"}
-                    </span>
+                  <div className="right-temps">
+                    <i className={`weather-icon ${weatherIcon}`}></i>
+                    <div className="location-temps">
+                      <span className="current-temp">
+                        {preview.temperature !== undefined
+                          ? `${Math.round(preview.temperature)}°`
+                          : "--°"}
+                      </span>
+                      <div className="temp-range">
+                        <span>
+                          H:
+                          {preview.tempMax !== undefined
+                            ? `${Math.round(preview.tempMax)}°`
+                            : "--"}
+                        </span>
+                        <span>
+                          L:
+                          {preview.tempMin !== undefined
+                            ? `${Math.round(preview.tempMin)}°`
+                            : "--"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -290,7 +510,7 @@ const SavedLocations = ({
             <div key={`empty-${i}`} className="saved-location-card empty-slot">
               <div className="empty-slot-content">
                 <i className="bi bi-plus-lg"></i>
-                <span>Save a location</span>
+                <span>Saved location</span>
               </div>
             </div>
           ))}

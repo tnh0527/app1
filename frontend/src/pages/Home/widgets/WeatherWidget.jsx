@@ -24,9 +24,16 @@ export const WeatherWidget = ({
           `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
         );
         const geoData = await geoResponse.json();
-        const city = geoData.address?.city || geoData.address?.town || geoData.address?.village || "";
+        const city =
+          geoData.address?.city ||
+          geoData.address?.town ||
+          geoData.address?.village ||
+          "";
         const state = geoData.address?.state || "";
-        const locationName = city && state ? `${city}, ${state}` : city || state || "Current Location";
+        const locationName =
+          city && state
+            ? `${city}, ${state}`
+            : city || state || "Current Location";
         setLocation(locationName);
 
         // Fetch weather using coordinates
@@ -35,7 +42,9 @@ export const WeatherWidget = ({
         );
 
         if (!response.ok) {
-          throw new Error(`Weather request failed with status ${response.status}`);
+          throw new Error(
+            `Weather request failed with status ${response.status}`
+          );
         }
 
         const data = await response.json();
@@ -54,19 +63,22 @@ export const WeatherWidget = ({
         // Get location from IP address as fallback
         const ipResponse = await fetch("https://ipapi.co/json/");
         const ipData = await ipResponse.json();
-        
+
         if (ipData.latitude && ipData.longitude) {
-          const locationName = ipData.city && ipData.region 
-            ? `${ipData.city}, ${ipData.region}` 
-            : ipData.city || "Current Location";
+          const locationName =
+            ipData.city && ipData.region
+              ? `${ipData.city}, ${ipData.region}`
+              : ipData.city || "Current Location";
           setLocation(locationName);
-          
+
           const response = await fetch(
             `http://localhost:8000/api/weather/?lat=${ipData.latitude}&lon=${ipData.longitude}`
           );
 
           if (!response.ok) {
-            throw new Error(`Weather request failed with status ${response.status}`);
+            throw new Error(
+              `Weather request failed with status ${response.status}`
+            );
           }
 
           const data = await response.json();
@@ -94,10 +106,16 @@ export const WeatherWidget = ({
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
+            fetchWeatherByCoords(
+              position.coords.latitude,
+              position.coords.longitude
+            );
           },
           (error) => {
-            console.warn("Geolocation denied or unavailable, falling back to IP:", error.message);
+            console.warn(
+              "Geolocation denied or unavailable, falling back to IP:",
+              error.message
+            );
             fetchWeatherByIP();
           },
           { timeout: 10000, maximumAge: 300000 } // 10s timeout, cache for 5 minutes
@@ -392,9 +410,15 @@ export const WeatherWidget = ({
                 <button
                   className="video-toggle-btn"
                   onClick={toggleVideo}
-                  title={isVideoPlaying ? "Pause background" : "Play background"}
+                  title={
+                    isVideoPlaying ? "Pause background" : "Play background"
+                  }
                 >
-                  <i className={`bi ${isVideoPlaying ? "bi-pause-fill" : "bi-play-fill"}`}></i>
+                  <i
+                    className={`bi ${
+                      isVideoPlaying ? "bi-pause-fill" : "bi-play-fill"
+                    }`}
+                  ></i>
                 </button>
                 <div className="weather-current-time">
                   {currentTime.toLocaleTimeString("en-US", {

@@ -1,6 +1,4 @@
-.forecast {
-  grid-column: 1 / span 2;
-}
+/* Grid positioning is handled in Weather.css */
 
 @media (max-width: 768px) {
   .forecast {

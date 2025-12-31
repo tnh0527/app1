@@ -1,9 +1,14 @@
 .search-bar {
   grid-column: 2 / 3;
+  grid-row: 2 / 3;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding-left: 10px;
+  padding-left: 0px;
+  gap: 12px;
+  /* override any external margin applied by layout containers */
+  margin: 0 !important;
+  margin-left: 0 !important;
 }
 
 .search-icon {
@@ -61,8 +66,9 @@
 
 .search-input-wrapper {
   position: relative;
-  width: 420px;
-  min-width: 320px;
+  width: 320px;
+  max-width: 360px;
+  min-width: 220px;
   flex-shrink: 0;
   background: linear-gradient(
     135deg,
@@ -72,6 +78,13 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 0; /* keep input padding internal */
+}
+
+/* allow full-width input when placed in the search-top-left container */
+.search-top-left .search-input-wrapper {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
 }
 
 /* external halo so input size/box doesn't change on focus */
@@ -209,16 +222,18 @@
 
 @media (max-width: 1550px) {
   .search-bar {
-    grid-column: 1 / span 1;
+    grid-column: 1 / -1;
+    grid-row: 2 / 3;
     width: 100%;
     max-width: 100%;
+    justify-content: flex-end;
   }
 }
 
 @media (max-width: 768px) {
   .search-bar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: 10px;
   }
   .search-input-wrapper {

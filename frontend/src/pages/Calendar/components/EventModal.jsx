@@ -387,7 +387,7 @@ const EventModal = () => {
                 </div>
 
                 {/* All Day Toggle */}
-                <div className="form-group form-group--inline">
+                <div className="form-group form-group--inline all-day-toggle-group">
                   <label className="toggle-label">
                     <input
                       type="checkbox"
@@ -459,7 +459,7 @@ const EventModal = () => {
                 </div>
 
                 {/* Priority */}
-                <div className="form-group">
+                <div className="form-group priority-group">
                   <label className="form-label">Priority</label>
                   <div className="priority-options">
                     {Object.entries(PRIORITY_LEVELS).map(([key, value]) => (
@@ -482,7 +482,7 @@ const EventModal = () => {
                 </div>
 
                 {/* Color */}
-                <div className="form-group">
+                <div className="form-group color-group">
                   <label className="form-label">Color</label>
                   <div className="color-options">
                     {EVENT_COLORS.map((color) => (
@@ -678,36 +678,38 @@ const EventModal = () => {
             )}
           </div>
 
-          {/* Footer */}
-          <div className="event-modal-footer">
-            {errors.submit && (
-              <span className="form-error">{errors.submit}</span>
-            )}
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={closeEventModal}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="spinner"></span>
-                  Saving...
-                </>
-              ) : editingEvent ? (
-                "Update Event"
-              ) : (
-                "Create Event"
+          {/* Footer - Only show on Details tab */}
+          {activeTab === "details" && (
+            <div className="event-modal-footer">
+              {errors.submit && (
+                <span className="form-error">{errors.submit}</span>
               )}
-            </button>
-          </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={closeEventModal}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner"></span>
+                    Saving...
+                  </>
+                ) : editingEvent ? (
+                  "Update Event"
+                ) : (
+                  "Create Event"
+                )}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
