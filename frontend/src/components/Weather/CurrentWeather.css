@@ -37,7 +37,7 @@
   gap: 6px;
   width: 100%;
   /* Keep the mp4/details area a fixed height so long addresses don't grow it */
-  height: 220px;
+  height: 280px;
   /* do not grow so the map can take remaining vertical space */
   flex: 0 0 auto;
 }
@@ -64,7 +64,7 @@
 
 .current-weather-details p {
   font-style: italic;
-  color: cyan;
+  color: var(--clr-accent-gold);
 }
 
 .current-weather-details h2,
@@ -87,6 +87,13 @@
   z-index: 1;
 }
 
+/* Make temperature area fill the video container so absolute children
+   inside it (like .temp-info) position relative to the full video */
+.temperature {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .high-low-temp i {
   font-size: 70px;
 }
@@ -95,8 +102,38 @@
   flex-direction: column;
   align-items: center;
   font-size: 16px;
-  align-self: flex-end;
-  margin-right: 14%;
+  /* keep icon visually at the top-right of the video area */
+  position: absolute;
+  top: 16px;
+  right: 14%;
+  margin-right: 0;
+}
+
+/* Move the primary temperature block to the bottom of the video area */
+/* Primary temperature block positioned at bottom of video */
+.temp-info {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+  z-index: 2;
+}
+
+.temp-info h1 {
+  margin: 0;
+  font-size: 48px;
+  line-height: 1;
+}
+
+.temp-info p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
 }
 
 @media (max-width: 768px) {
@@ -104,21 +141,6 @@
     height: 100px;
     width: 100px;
   }
-}
-
-.temp-info {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  z-index: 1;
-}
-
-.temp-info h1 {
-  margin: 0;
-  font-size: 36px;
 }
 
 @media (max-width: 480px) {

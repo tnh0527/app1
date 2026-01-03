@@ -11,21 +11,27 @@ export const AuthProvider = ({ children }) => {
   );
 
   const login = (rememberMe = false) => {
-    setIsAuthenticated(true);
+    setIsAuthenticated((prev) => {
+      if (prev === true) return prev;
 
-    // Ensure the flag only lives in one place at a time.
-    localStorage.removeItem(AUTH_KEY);
-    sessionStorage.removeItem(AUTH_KEY);
+      // Ensure the flag only lives in one place at a time.
+      localStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem(AUTH_KEY);
 
-    (rememberMe ? localStorage : sessionStorage).setItem(AUTH_KEY, "true");
+      (rememberMe ? localStorage : sessionStorage).setItem(AUTH_KEY, "true");
+      return true;
+    });
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
+    setIsAuthenticated((prev) => {
+      if (prev === false) return prev;
 
-    // Only clear auth state; don't wipe unrelated caches/preferences.
-    localStorage.removeItem(AUTH_KEY);
-    sessionStorage.removeItem(AUTH_KEY);
+      // Only clear auth state; don't wipe unrelated caches/preferences.
+      localStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem(AUTH_KEY);
+      return false;
+    });
   };
 
   return (

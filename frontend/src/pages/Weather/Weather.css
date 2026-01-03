@@ -1,26 +1,34 @@
 .weather-dashboard {
   display: grid;
-  grid-template-columns: 35% 65%;
+  grid-template-columns: 35fr 65fr;
   grid-template-rows: auto 1fr auto;
   gap: 14px;
-  padding-left: var(--page-horizontal-padding);
-  padding-right: var(--page-horizontal-padding);
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 24px;
   background: transparent;
   color: #ffffff;
-  min-height: 100vh;
+  min-height: 0;
   flex: 1;
-  width: 0;
   min-width: 0;
   overflow-x: hidden;
   position: relative;
   z-index: 1;
 }
 
+/* Wrapper that applies the global page horizontal padding so header and
+   page content align consistently across the app */
+.weather-page-wrapper {
+  /* keep the global left page padding but remove the right gap */
+  padding-left: var(--page-horizontal-padding);
+  padding-right: var(--page-horizontal-padding);
+}
+
 .weather-dashboard h3 {
   margin-bottom: 10px;
 }
 
-/* Top right row (saved locations) */
+/* Saved locations top-right (desktop) */
 .top-right-row {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
@@ -51,6 +59,13 @@
 .forecast {
   grid-column: 1 / -1;
   grid-row: 3 / 4;
+}
+
+/* Advanced Map Section */
+.advanced-map-section {
+  grid-column: 1 / -1;
+  grid-row: 4 / 5;
+  margin-top: 10px;
 }
 
 .highlights {
@@ -162,23 +177,25 @@
     padding-right: var(--page-horizontal-padding);
     padding-top: 0;
   }
-  .saved-locations-container {
+  /* Move saved locations to full width row above current weather */
+  .top-right-row {
     grid-column: 1 / -1;
     grid-row: 1 / 2;
-  }
-  .search-bar {
-    grid-column: 1 / -1;
-    grid-row: 2 / 3;
+    justify-content: flex-start;
   }
   .current-weather {
     grid-column: 1 / -1;
-    grid-row: 3 / 4;
+    grid-row: 2 / 3;
   }
   .highlights-container {
     grid-column: 1 / -1;
-    grid-row: 4 / 5;
+    grid-row: 3 / 4;
   }
   .forecast {
+    grid-column: 1 / -1;
+    grid-row: 4 / 5;
+  }
+  .advanced-map-section {
     grid-column: 1 / -1;
     grid-row: 5 / 6;
   }
@@ -193,23 +210,23 @@
     padding-top: 0;
     width: 100%;
   }
-  .saved-locations-container {
+  .top-right-row {
     grid-column: 1 / -1;
     grid-row: 1 / 2;
   }
-  .search-bar {
+  .current-weather {
     grid-column: 1 / -1;
     grid-row: 2 / 3;
   }
-  .current-weather {
+  .highlights-container {
     grid-column: 1 / -1;
     grid-row: 3 / 4;
   }
-  .highlights-container {
+  .forecast {
     grid-column: 1 / -1;
     grid-row: 4 / 5;
   }
-  .forecast {
+  .advanced-map-section {
     grid-column: 1 / -1;
     grid-row: 5 / 6;
   }
@@ -224,23 +241,24 @@
     padding-top: 0;
     width: 100%;
   }
-  .saved-locations-container {
+  /* Move saved locations above current weather on smaller screens */
+  .top-right-row {
     grid-column: 1 / -1;
     grid-row: 1 / 2;
   }
-  .search-bar {
+  .current-weather {
     grid-column: 1 / -1;
     grid-row: 2 / 3;
   }
-  .current-weather {
+  .highlights-container {
     grid-column: 1 / -1;
     grid-row: 3 / 4;
   }
-  .highlights-container {
+  .forecast {
     grid-column: 1 / -1;
     grid-row: 4 / 5;
   }
-  .forecast {
+  .advanced-map-section {
     grid-column: 1 / -1;
     grid-row: 5 / 6;
   }

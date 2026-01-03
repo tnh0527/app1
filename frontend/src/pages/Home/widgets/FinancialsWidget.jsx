@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { Icon } from "@iconify/react";
+import { iconsImgs } from "../../../utils/images";
 import "./FinancialsWidget.css";
 
 /**
@@ -105,7 +107,7 @@ export const FinancialsWidget = ({ data, onNavigate }) => {
       <div className="widget-header">
         <div className="widget-title-section">
           <div className="widget-icon financials">
-            <i className="bi bi-wallet2"></i>
+            <Icon icon={iconsImgs.wealth} />
           </div>
           <div>
             <h3 className="widget-title">Financials</h3>

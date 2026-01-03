@@ -48,3 +48,6 @@ mcp.json
 .roo
 .vscode/
 frontend/public/
+.shared/
+.github/
+.vscode/

@@ -123,11 +123,36 @@ load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
+# Weather API Keys
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
+TOMORROWIO_API_KEY = os.getenv("TOMORROWIO_API_KEY", "")
+VISUALCROSSING_API_KEY = os.getenv("VISUALCROSSING_API_KEY", "")
+WAQI_API_KEY = os.getenv("WAQI_KEY", "")
+
 # Stock API Keys (used by Dashboard stock tickers)
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
 TWELVEDATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY", "")
 IEX_CLOUD_API_KEY = os.getenv("IEX_CLOUD_API_KEY", "")
 IEX_CLOUD_BASE_URL = os.getenv("IEX_CLOUD_BASE_URL", "https://cloud.iexapis.com/stable")
+
+# Caching Configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "weather-cache",
+        "TIMEOUT": 900,  # 15 minutes default
+        "OPTIONS": {"MAX_ENTRIES": 1000},
+    }
+}
+
+# Weather Cache TTLs (in seconds)
+WEATHER_CACHE_TTL = {
+    "forecast": 900,  # 15 minutes for forecast data
+    "current": 300,  # 5 minutes for current conditions
+    "air_quality": 1800,  # 30 minutes for AQI (doesn't change rapidly)
+    "geocode": 86400,  # 24 hours for geocoding (static data)
+    "timezone": 86400,  # 24 hours for timezone (static data)
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

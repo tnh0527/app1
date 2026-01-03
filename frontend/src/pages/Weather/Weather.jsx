@@ -5,8 +5,8 @@ import CurrentWeather from "../../components/Weather/CurrentWeather";
 import Forecast from "../../components/Weather/Forecast";
 import CardSlot from "../../components/Weather/CardSlot";
 import WeatherModal from "../../components/Weather/WeatherModal";
-import WeatherEffects from "../../components/Weather/WeatherEffects";
 import SavedLocations from "../../components/Weather/SavedLocations";
+import AdvancedWeatherMap from "../../components/Weather/AdvancedWeatherMap";
 import ErrorBoundary from "../../components/shared/ErrorBoundary";
 import { useState, useEffect, useRef, useContext } from "react";
 import { ProfileContext } from "../../contexts/ProfileContext";
@@ -16,6 +16,11 @@ import {
   addSavedLocation,
   getSavedLocations,
 } from "../../api/weatherLocationsApi";
+import {
+  getCache,
+  setCache,
+  getWeatherCacheKey,
+} from "../../utils/sessionCache";
 
 const TOP_CARD_OPTIONS = [
   { value: "wind", label: "Wind Status" },
@@ -431,21 +436,37 @@ const WeatherContent = () => {
     }
   };
 
-  const fetchWeatherData = async (location) => {
+  const fetchWeatherData = async (location, forceRefresh = false) => {
     if (!location) {
       return;
     }
     setIsLoading(true);
-    // Check for cached data
+
+    const sessionCacheKey = getWeatherCacheKey(location);
+
+    // Check session cache first (fastest, within-session navigation)
+    if (!forceRefresh) {
+      const sessionCachedData = getCache(sessionCacheKey);
+      if (sessionCachedData) {
+        setWeatherStates(sessionCachedData);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // Check for localStorage cached data (120min expiration)
     try {
       const cachedData = getCachedWeatherData(location);
       // Ensure cache has the new 'currentConditions' and 'hourlyForecast' fields
       if (
+        !forceRefresh &&
         cachedData &&
         cachedData.currentConditions &&
         cachedData.hourlyForecast
       ) {
         setWeatherStates(cachedData);
+        // Also store in session cache for faster subsequent loads
+        setCache(sessionCacheKey, cachedData);
         setIsLoading(false);
         return;
       }
@@ -624,8 +645,8 @@ const WeatherContent = () => {
         ],
       };
       setMapData(mapboxGeoData);
-      // Cache the fetched data
-      cacheWeatherData(location, {
+      // Prepare cache data object
+      const cacheData = {
         AQI: weatherData.air_uv_data["aqi_data"],
         uvData: weatherData.air_uv_data["uv_data"],
         sunriseSunset: {
@@ -662,7 +683,11 @@ const WeatherContent = () => {
         currentTemp: currentMinuteData.temperature,
         currentWindSpeed: currentHour.wind_speed,
         currentFeelsLike: currentMinuteData.apparent_temperature,
-      });
+      };
+
+      // Cache in both localStorage (long-term) and session cache (navigation)
+      cacheWeatherData(location, cacheData);
+      setCache(sessionCacheKey, cacheData);
     } catch (error) {
       console.error("Error fetching weather data:", error);
     } finally {
@@ -758,114 +783,122 @@ const WeatherContent = () => {
   };
 
   return (
-    <div className="weather-dashboard">
-      {/* Weather Effects Overlay */}
-      <WeatherEffects
-        condition={weatherCondition}
-        temperature={currentTemp}
-        windSpeed={currentWindSpeed}
-        feelsLike={currentFeelsLike}
-      />
-      {/* Search Modal */}
-      <SearchModal
-        isOpen={searchModalOpen}
-        onClose={() => setSearchModalOpen(false)}
-        location={locationSuggestions}
-        handleInputChange={handleInputChange}
-        handleKeyDown={handleKeyDown}
-        suggestions={suggestions}
-        handleSuggestionClick={handleSuggestionClick}
-      />
-      {/* Saved locations top-right */}
-      <div className="top-right-row">
-        <SavedLocations
-          currentLocation={currentLocation}
-          onLocationSelect={handleSavedLocationClick}
-          refreshTrigger={savedLocationsRefresh}
-        />
-      </div>
-      {/* Current Weather */}
-      <CurrentWeather
-        currentWeather={currentWeather}
-        setCurrentWeather={setCurrentWeather}
-        location={currentLocation}
-        dailyTemps={dailyTemps}
-        handleToggle={handleToggle}
-        mapData={mapData}
-        timezone={timeZone.time_zone}
-        sunData={sunriseSunset}
-        hourlyForecast={hourlyForecast}
-        isLoadingWeather={isLoading}
-        onSaveLocation={handleSaveLocation}
-        isLocationSaved={isLocationSaved}
-        isSavingLocation={isSavingLocation}
-        onSearchClick={handleSearchClick}
-      />
-      {/* Today's Highlights */}
-      <div className={`highlights-container ${isLoading ? "skeleton" : ""}`}>
-        <h3>Today's Highlights</h3>
-        <div className="highlights">
-          <CardSlot
-            slotId="slot1"
-            type={cardSlots.slot1}
-            data={allWeatherData}
-            onChange={handleCardChange}
-            onCardClick={handleCardClick}
-            options={[]}
+    <div className="main-content">
+      <div className="weather-page-wrapper">
+        <div className="weather-dashboard">
+          {/* Search Modal */}
+          <SearchModal
+            isOpen={searchModalOpen}
+            onClose={() => setSearchModalOpen(false)}
+            location={locationSuggestions}
+            handleInputChange={handleInputChange}
+            handleKeyDown={handleKeyDown}
+            suggestions={suggestions}
+            handleSuggestionClick={handleSuggestionClick}
           />
-          <CardSlot
-            slotId="slot2"
-            type={cardSlots.slot2}
-            data={allWeatherData}
-            onChange={handleCardChange}
-            onCardClick={handleCardClick}
-            options={[]}
+          {/* Saved locations top-right */}
+          <div className="top-right-row">
+            <SavedLocations
+              currentLocation={currentLocation}
+              onLocationSelect={handleSavedLocationClick}
+              refreshTrigger={savedLocationsRefresh}
+            />
+          </div>
+          {/* Current Weather */}
+          <CurrentWeather
+            currentWeather={currentWeather}
+            setCurrentWeather={setCurrentWeather}
+            location={currentLocation}
+            dailyTemps={dailyTemps}
+            handleToggle={handleToggle}
+            mapData={mapData}
+            timezone={timeZone.time_zone}
+            sunData={sunriseSunset}
+            hourlyForecast={hourlyForecast}
+            isLoadingWeather={isLoading}
+            onSaveLocation={handleSaveLocation}
+            isLocationSaved={isLocationSaved}
+            isSavingLocation={isSavingLocation}
+            onSearchClick={handleSearchClick}
           />
-          <CardSlot
-            slotId="slot3"
-            type={cardSlots.slot3}
-            data={allWeatherData}
-            onChange={handleCardChange}
-            onCardClick={handleCardClick}
-            options={[]}
-          />
-          <CardSlot
-            slotId="slot4"
-            type={cardSlots.slot4}
-            data={allWeatherData}
-            onChange={handleCardChange}
-            onCardClick={handleCardClick}
-            options={getAvailableOptions("slot4", false)}
-          />
-          <CardSlot
-            slotId="slot5"
-            type={cardSlots.slot5}
-            data={allWeatherData}
-            onChange={handleCardChange}
-            onCardClick={handleCardClick}
-            options={getAvailableOptions("slot5", false)}
-          />
-          <CardSlot
-            slotId="slot6"
-            type={cardSlots.slot6}
-            data={allWeatherData}
-            onChange={handleCardChange}
-            onCardClick={handleCardClick}
-            options={getAvailableOptions("slot6", false)}
+          {/* Today's Highlights */}
+          <div
+            className={`highlights-container ${isLoading ? "skeleton" : ""}`}
+          >
+            <h3>Today's Highlights</h3>
+            <div className="highlights">
+              <CardSlot
+                slotId="slot1"
+                type={cardSlots.slot1}
+                data={allWeatherData}
+                onChange={handleCardChange}
+                onCardClick={handleCardClick}
+                options={[]}
+              />
+              <CardSlot
+                slotId="slot2"
+                type={cardSlots.slot2}
+                data={allWeatherData}
+                onChange={handleCardChange}
+                onCardClick={handleCardClick}
+                options={[]}
+              />
+              <CardSlot
+                slotId="slot3"
+                type={cardSlots.slot3}
+                data={allWeatherData}
+                onChange={handleCardChange}
+                onCardClick={handleCardClick}
+                options={[]}
+              />
+              <CardSlot
+                slotId="slot4"
+                type={cardSlots.slot4}
+                data={allWeatherData}
+                onChange={handleCardChange}
+                onCardClick={handleCardClick}
+                options={getAvailableOptions("slot4", false)}
+              />
+              <CardSlot
+                slotId="slot5"
+                type={cardSlots.slot5}
+                data={allWeatherData}
+                onChange={handleCardChange}
+                onCardClick={handleCardClick}
+                options={getAvailableOptions("slot5", false)}
+              />
+              <CardSlot
+                slotId="slot6"
+                type={cardSlots.slot6}
+                data={allWeatherData}
+                onChange={handleCardChange}
+                onCardClick={handleCardClick}
+                options={getAvailableOptions("slot6", false)}
+              />
+            </div>
+          </div>
+          {/* 10 Day Forecast */}
+          <div className={`forecast ${isLoading ? "skeleton" : ""}`}>
+            <h3>10-Day Forecast</h3>
+            <Forecast forecast={forecastData} />
+          </div>
+          {/* Advanced Weather Map - Radar & Analysis */}
+          <div className="advanced-map-section">
+            <AdvancedWeatherMap
+              mapData={mapData}
+              weatherData={currentWeather}
+              windData={windData}
+              airQualityData={AQI}
+            />
+          </div>
+          <WeatherModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            title={modalContent.title}
+            data={modalContent.data}
           />
         </div>
       </div>
-      {/* 10 Day Forecast */}
-      <div className={`forecast ${isLoading ? "skeleton" : ""}`}>
-        <h3>10-Day Forecast</h3>
-        <Forecast forecast={forecastData} />
-      </div>
-      <WeatherModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={modalContent.title}
-        data={modalContent.data}
-      />
     </div>
   );
 };

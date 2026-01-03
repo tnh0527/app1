@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../../../api/axios";
 import { getHolidaysInRange } from "../../../data/usHolidays";
+import { Icon } from "@iconify/react";
+import { iconsImgs } from "../../../utils/images";
 import "./CalendarWidget.css";
 
 const DAYS_OF_WEEK = ["S", "M", "T", "W", "T", "F", "S"];
@@ -18,10 +20,12 @@ export const CalendarWidget = ({ onNavigate }) => {
         const endDate = new Date();
         endDate.setDate(today.getDate() + 7);
 
-        const response = await api.get("/api/schedule/events/", {
+        // Backend exposes schedule endpoints under /events/schedule/
+        // and expects 'start' and 'end' query params.
+        const response = await api.get("/events/schedule/", {
           params: {
-            start_date: today.toISOString().split("T")[0],
-            end_date: endDate.toISOString().split("T")[0],
+            start: today.toISOString().split("T")[0],
+            end: endDate.toISOString().split("T")[0],
           },
         });
 
@@ -133,7 +137,7 @@ export const CalendarWidget = ({ onNavigate }) => {
     today.setHours(0, 0, 0, 0);
     const endOfToday = new Date(today);
     endOfToday.setHours(23, 59, 59, 999);
-    
+
     return getHolidaysInRange(today, endOfToday);
   }, []);
 
@@ -169,14 +173,32 @@ export const CalendarWidget = ({ onNavigate }) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
-    return events
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + 7);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Events from API occurring in the next 7 days (excluding today)
+    const upcomingApiEvents = events
       .filter((event) => {
         const eventDate = new Date(event.start_at);
         eventDate.setHours(0, 0, 0, 0);
-        return eventDate >= tomorrow;
+        return eventDate >= tomorrow && eventDate <= endDate;
       })
-      .sort((a, b) => new Date(a.start_at) - new Date(b.start_at))
-      .slice(0, 3);
+      .map((e) => ({ ...e, isHoliday: false }));
+
+    // Holidays in the next 7 days
+    const upcomingHolidays = getHolidaysInRange(tomorrow, endDate).map((h) => ({
+      ...h,
+      start_at: h.date.toISOString(),
+      isHoliday: true,
+    }));
+
+    // Merge, sort by start date, and limit to 3 items
+    const merged = [...upcomingHolidays, ...upcomingApiEvents].sort(
+      (a, b) => new Date(a.start_at) - new Date(b.start_at)
+    );
+
+    return merged.slice(0, 3);
   }, [events]);
 
   const formatTime = (dateStr) => {
@@ -218,7 +240,7 @@ export const CalendarWidget = ({ onNavigate }) => {
       <div className="widget-header">
         <div className="widget-title-section">
           <div className="widget-icon calendar">
-            <i className="bi bi-calendar3"></i>
+            <Icon icon={iconsImgs.calendar} />
           </div>
           <div>
             <h3 className="widget-title">Calendar</h3>
@@ -269,21 +291,27 @@ export const CalendarWidget = ({ onNavigate }) => {
                 ))}
 
                 {/* Calendar days */}
-                {calendarDays.map(({ day, date, isCurrentMonth, isToday }, idx) => {
-                  const hasItems = hasEventsOrHolidays(date);
+                {calendarDays.map(
+                  ({ day, date, isCurrentMonth, isToday }, idx) => {
+                    const hasItems = hasEventsOrHolidays(date);
 
-                  return (
-                    <div
-                      key={idx}
-                      className={`mini-cal-day ${!isCurrentMonth ? "other-month" : ""} ${isToday ? "today" : ""} ${hasItems ? "has-events" : ""}`}
-                    >
-                      <span className="mini-cal-day-num">{day}</span>
-                      {hasItems && (
-                        <span className="mini-cal-event-dot"></span>
-                      )}
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={idx}
+                        className={`mini-cal-day ${
+                          !isCurrentMonth ? "other-month" : ""
+                        } ${isToday ? "today" : ""} ${
+                          hasItems ? "has-events" : ""
+                        }`}
+                      >
+                        <span className="mini-cal-day-num">{day}</span>
+                        {hasItems && (
+                          <span className="mini-cal-event-dot"></span>
+                        )}
+                      </div>
+                    );
+                  }
+                )}
               </div>
             </div>
 
@@ -294,9 +322,7 @@ export const CalendarWidget = ({ onNavigate }) => {
                 <div className="small-card-header">
                   <i className="bi bi-calendar-date"></i>
                   <span>Today</span>
-                  <span className="event-count-badge">
-                    {todayItems.length}
-                  </span>
+                  <span className="event-count-badge">{todayItems.length}</span>
                 </div>
                 {todayItems.length > 0 ? (
                   <div className="small-card-content">
@@ -392,4 +418,3 @@ export const CalendarWidget = ({ onNavigate }) => {
     </div>
   );
 };
-

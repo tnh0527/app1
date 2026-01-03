@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import moment from "moment-timezone";
 import {
   getSavedLocations,
   deleteSavedLocation,
@@ -8,6 +9,50 @@ import api from "../../api/axios";
 import "./SavedLocations.css";
 
 const MAX_SAVED_LOCATIONS = 5;
+
+// Small helper component: displays live local time for a given timezone
+const LocalTime = ({ timeZone }) => {
+  const [time, setTime] = useState("");
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    const tz = timeZone && (timeZone.time_zone || timeZone);
+    if (!tz) {
+      setTime("");
+      return;
+    }
+
+    const update = () => {
+      try {
+        // show hours:minutes:seconds with am/pm (e.g. 4:21:09 pm)
+        setTime(moment().tz(tz).format("h:mm:ss a"));
+      } catch (err) {
+        setTime("");
+      }
+    };
+
+    update();
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(update, 1000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") update();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [timeZone]);
+
+  if (!time) return null;
+  return (
+    <div className="location-local-time" aria-hidden>
+      {time}
+    </div>
+  );
+};
 
 const SavedLocations = ({
   currentLocation,
@@ -177,22 +222,27 @@ const SavedLocations = ({
     return "";
   };
 
-  // Compute day/night from saved sunrise/sunset timestamps (fallback to flag)
-  const computeIsDayFromSun = (sunriseISO, sunsetISO, fallbackIsDay) => {
-    if (sunriseISO && sunsetISO) {
+  // Compute day/night from saved sunrise/sunset timestamps using current real time with timezone
+  const computeIsDayFromSun = (
+    sunriseISO,
+    sunsetISO,
+    timezone,
+    fallbackIsDay
+  ) => {
+    if (sunriseISO && sunsetISO && timezone) {
       try {
-        const now = new Date();
-        const sunrise = new Date(sunriseISO);
-        const sunset = new Date(sunsetISO);
-        // If parsed correctly, compare
-        if (!isNaN(sunrise) && !isNaN(sunset)) {
-          return now >= sunrise && now < sunset;
-        }
+        const tz = timezone.time_zone || timezone;
+        const currentTime = moment().tz(tz);
+        const sunrise = moment.tz(sunriseISO, tz);
+        const sunset = moment.tz(sunsetISO, tz);
+        return currentTime.isAfter(sunrise) && currentTime.isBefore(sunset);
       } catch (err) {
         // fallthrough to fallback
       }
     }
-    return fallbackIsDay === 1;
+    // Always use current time calculation, don't rely on stored is_day flag
+    // Default to daytime (true) if we can't determine
+    return true;
   };
 
   /* background gradient removed: previews use MP4 video instead */
@@ -226,6 +276,7 @@ const SavedLocations = ({
       const isDayLocal = computeIsDayFromSun(
         preview.sunrise,
         preview.sunset,
+        preview.time_zone,
         preview.is_day
       );
       const previewVideo = findPreviewVideo(preview.condition, isDayLocal);
@@ -293,6 +344,8 @@ const SavedLocations = ({
               </div>
             </div>
           </div>
+          {/* Local time (bottom-left) for cached preview if timezone is available */}
+          <LocalTime timeZone={preview.time_zone} />
         </div>
       );
     }
@@ -308,7 +361,7 @@ const SavedLocations = ({
 
     return (
       <div className="saved-locations-container">
-        <div className="saved-locations-scroll">{slots}</div>
+        <div className="saved-locations-row">{slots}</div>
       </div>
     );
   }
@@ -332,7 +385,7 @@ const SavedLocations = ({
     <div className="saved-locations-container">
       {error && <div className="location-error">{error}</div>}
 
-      <div className="saved-locations-scroll">
+      <div className="saved-locations-row">
         {savedLocations.map((location) => {
           const preview = locationPreviews[location.id] || {};
           const isActive = currentLocation
@@ -374,32 +427,10 @@ const SavedLocations = ({
             return "";
           };
 
-          // Determine day/night using saved preview's sunrise/sunset if available
-          const computeIsDayFromSun = (
-            sunriseISO,
-            sunsetISO,
-            fallbackIsDay
-          ) => {
-            if (sunriseISO && sunsetISO) {
-              try {
-                const now = new Date();
-                const sunrise = new Date(sunriseISO);
-                const sunset = new Date(sunsetISO);
-                // If parsed correctly, compare
-                if (!isNaN(sunrise) && !isNaN(sunset)) {
-                  return now >= sunrise && now < sunset;
-                }
-              } catch (err) {
-                // fallthrough to fallback
-              }
-            }
-            // fallback to explicit is_day flag if present, otherwise assume night
-            return fallbackIsDay === 1;
-          };
-
           const isDayLocal = computeIsDayFromSun(
             preview.sunrise,
             preview.sunset,
+            preview.time_zone,
             preview.is_day
           );
 
@@ -503,6 +534,9 @@ const SavedLocations = ({
                   </div>
                 </div>
               </div>
+
+              {/* Local time (bottom-left) */}
+              <LocalTime timeZone={preview.time_zone} />
 
               {location.is_primary && (
                 <div className="primary-badge" title="Primary Location">

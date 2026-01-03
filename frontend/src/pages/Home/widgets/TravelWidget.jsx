@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Icon } from "@iconify/react";
+import { iconsImgs } from "../../../utils/images";
 import "./TravelWidget.css";
 
 /**
@@ -73,7 +75,7 @@ export const TravelWidget = ({ data, onNavigate }) => {
       <div className="widget-header">
         <div className="widget-title-section">
           <div className="widget-icon travel">
-            <i className="bi bi-airplane"></i>
+            <Icon icon={iconsImgs.plane} />
           </div>
           <div>
             <h3 className="widget-title">Travel</h3>

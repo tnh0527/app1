@@ -475,6 +475,33 @@ button {
   min-width: calc(80px + 24px);
 }
 
+/* Main content area - fills remaining space after sidebar spacer */
+.main-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Page content wrapper - provides spacing for fixed header */
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: calc(72px + 24px); /* header height + top margin + gap */
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media screen and (max-width: 768px) {
+  .page-content {
+    padding-top: calc(64px + 24px);
+  }
+}
+
 @media screen and (max-width: 1248px) {
   .sidebar-spacer,
   .sidebar-spacer.collapsed {

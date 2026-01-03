@@ -1,5 +1,8 @@
 import requests
+import hashlib
+import logging
 from django.conf import settings
+from django.core.cache import cache
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,7 +11,10 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from .weather_codes import weather_code_descriptions
 from .models import SavedLocation
 from .serializers import SavedLocationSerializer, SavedLocationReorderSerializer
+from .services import weather_service
 from datetime import datetime, timedelta, timezone
+
+logger = logging.getLogger(__name__)
 
 
 class SavedLocationListCreateView(ListCreateAPIView):
@@ -153,25 +159,65 @@ class PlaceSuggestionsView(APIView):
 
 
 class WeatherView(APIView):
+    """
+    Weather API endpoint with multi-API fallbacks and intelligent caching.
+
+    API Priority:
+    1. Open-Meteo (Primary) - Unlimited free, excellent accuracy
+    2. Tomorrow.io (1st Fallback) - 500/day, hyperlocal
+    3. VisualCrossing (2nd Fallback) - 1000/day, comprehensive
+    4. OpenWeatherMap (3rd Fallback) - 1000/day, reliable
+
+    Air Quality:
+    1. WAQI (Primary) - Detailed station data
+    2. Open-Meteo AQI (Fallback)
+    """
+
+    # Cache TTLs (in seconds)
+    GEOCODE_CACHE_TTL = 86400  # 24 hours - locations don't change
+    TIMEZONE_CACHE_TTL = 86400  # 24 hours - timezones don't change
+
+    def _get_cache_key(self, prefix, *args):
+        """Generate a cache key from prefix and arguments"""
+        key_string = f"{prefix}:{':'.join(str(a) for a in args)}"
+        return hashlib.md5(key_string.encode()).hexdigest()
+
     def get_coordinates(self, location):
+        """Get coordinates from Google Geocoding with caching"""
+        cache_key = self._get_cache_key("geocode", location.lower())
+        cached = cache.get(cache_key)
+        if cached:
+            logger.info(f"Geocode cache hit for {location}")
+            return cached
+
         url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location}&key={settings.GOOGLE_API_KEY}"
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
             if data["results"]:
-                return data["results"][0]["geometry"]["location"]
+                coords = data["results"][0]["geometry"]["location"]
+                cache.set(cache_key, coords, self.GEOCODE_CACHE_TTL)
+                return coords
             else:
-                print("No results found for coordinates.")
+                logger.warning(f"No results found for location: {location}")
         except requests.exceptions.RequestException as e:
-            print(f"Error in get_coordinates: {e}")
+            logger.error(f"Error in get_coordinates: {e}")
         return None
 
     def get_time_zone(self, lat, lng):
+        """Get timezone from Google Timezone API with caching"""
+        # Round coordinates for cache key (timezone doesn't vary by minor coord changes)
+        cache_key = self._get_cache_key("timezone", round(lat, 2), round(lng, 2))
+        cached = cache.get(cache_key)
+        if cached:
+            logger.info(f"Timezone cache hit for {lat}, {lng}")
+            return cached
+
         timestamp = int(datetime.now().timestamp())
         url = f"https://maps.googleapis.com/maps/api/timezone/json?location={lat},{lng}&timestamp={timestamp}&key={settings.GOOGLE_API_KEY}"
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
 
@@ -180,7 +226,6 @@ class WeatherView(APIView):
                 data["rawOffset"],
                 data["dstOffset"],
             )
-            # Calculate the total UTC offset (in seconds)
             total_offset = raw_offset + dst_offset
 
             time_zone_data = {
@@ -188,192 +233,21 @@ class WeatherView(APIView):
                 "utc_offset": total_offset,
             }
 
+            cache.set(cache_key, time_zone_data, self.TIMEZONE_CACHE_TTL)
             return time_zone_data
 
         except requests.exceptions.RequestException as e:
-            print(f"Error in get_time_zone: {e}")
+            logger.error(f"Error in get_time_zone: {e}")
 
         return None
 
     def get_air_uv(self, lat, lng):
-        url = f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lng}&hourly=uv_index,us_aqi&timezone=auto&forecast_days=1"
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
-
-            hourly_data = data.get("hourly", {})
-            times = hourly_data.get("time", [])
-            uv_indices = hourly_data.get("uv_index", [])
-            us_aqi_values = hourly_data.get("us_aqi", [])
-
-            aqi_data = [
-                {"time": time, "us_aqi": aqi} for time, aqi in zip(times, us_aqi_values)
-            ]
-
-            uv_data = [
-                {"time": time, "uv_index": uv_index}
-                for time, uv_index in zip(times, uv_indices)
-            ]
-
-            return {"aqi_data": aqi_data, "uv_data": uv_data}
-        except requests.exceptions.RequestException as e:
-            print(f"Error in get_air_uv: {e}")
-        return None
+        """Get air quality and UV data using weather service (WAQI primary, Open-Meteo fallback)"""
+        return weather_service.get_air_quality_data(lat, lng)
 
     def get_weather_data(self, lat, lng):
-        # Try Open-Meteo first
-        data = self.fetch_open_meteo(lat, lng)
-        if data:
-            return data
-
-        # Fallback to Secondary API (e.g., NWS)
-        print("Open-Meteo failed, switching to secondary API...")
-        return self.fetch_secondary_api(lat, lng)
-
-    def fetch_open_meteo(self, lat, lng):
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lng}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,weather_code,wind_speed_10m,wind_direction_10m,visibility,surface_pressure,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&minutely_15=temperature_2m,precipitation,weather_code,apparent_temperature,is_day,visibility,surface_pressure,cloud_cover&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=10"
-
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
-
-            hourly_data = data.get("hourly", {})
-            times = hourly_data.get("time", [])[:48]
-            temperatures = hourly_data.get("temperature_2m", [])[:48]
-            humidities = hourly_data.get("relative_humidity_2m", [])[:48]
-            dew_points = hourly_data.get("dew_point_2m", [])[:48]
-            weather_codes = hourly_data.get("weather_code", [])[:48]
-            wind_speeds = hourly_data.get("wind_speed_10m", [])[:48]
-            wind_directions = hourly_data.get("wind_direction_10m", [])[:48]
-            visibilities = hourly_data.get("visibility", [])[:48]
-            pressures = hourly_data.get("surface_pressure", [])[:48]
-            cloud_covers = hourly_data.get("cloud_cover", [])[:48]
-            is_day_values = hourly_data.get("is_day", [])[:48]
-
-            hourly_weather_data = [
-                {
-                    "time": time,
-                    "temperature": temp,
-                    "humidity": humidity,
-                    "dew_point": dew_point,
-                    "weather_code": weather_code_descriptions.get(
-                        weather_code, "Unknown"
-                    ),
-                    "wind_speed": wind_speed,
-                    "wind_direction": wind_direction,
-                    "visibility": visibility,
-                    "pressure": pressure,
-                    "cloud_cover": cloud_cover,
-                    "is_day": is_day,
-                }
-                for time, temp, humidity, dew_point, weather_code, wind_speed, wind_direction, visibility, pressure, cloud_cover, is_day in zip(
-                    times,
-                    temperatures,
-                    humidities,
-                    dew_points,
-                    weather_codes,
-                    wind_speeds,
-                    wind_directions,
-                    visibilities,
-                    pressures,
-                    cloud_covers,
-                    is_day_values,
-                )
-            ]
-
-            daily_data = data.get("daily", {})
-            daily_times = daily_data.get("time", [])
-            weather_codes_daily = daily_data.get("weather_code", [])
-            max_temperatures = daily_data.get("temperature_2m_max", [])
-            min_temperatures = daily_data.get("temperature_2m_min", [])
-            sunrises = daily_data.get("sunrise", [])
-            sunsets = daily_data.get("sunset", [])
-
-            daily_weather_data = [
-                {
-                    "date": date,
-                    "weather_code": weather_code_descriptions.get(
-                        weather_code, "Unknown"
-                    ),
-                    "max_temperature": max_temp,
-                    "min_temperature": min_temp,
-                    "sunrise": sunrise,
-                    "sunset": sunset,
-                }
-                for date, weather_code, max_temp, min_temp, sunrise, sunset in zip(
-                    daily_times,
-                    weather_codes_daily,
-                    max_temperatures,
-                    min_temperatures,
-                    sunrises,
-                    sunsets,
-                )
-            ]
-
-            # Extracting 15-minutely data
-            minutely_15_data = data.get("minutely_15", {})
-            minutely_times = minutely_15_data.get("time", [])[:96]
-            minutely_temperatures = minutely_15_data.get("temperature_2m", [])[:96]
-            minutely_precipitation = minutely_15_data.get("precipitation", [])[:96]
-            minutely_weather_codes = minutely_15_data.get("weather_code", [])[:96]
-            minutely_is_day = minutely_15_data.get("is_day", [])[:96]
-            minutely_apparent_temperatures = minutely_15_data.get(
-                "apparent_temperature", []
-            )[:96]
-            minutely_visibilities = minutely_15_data.get("visibility", [])[:96]
-            minutely_pressures = minutely_15_data.get("surface_pressure", [])[:96]
-            minutely_cloud_covers = minutely_15_data.get("cloud_cover", [])[:96]
-
-            minutely_weather_data = [
-                {
-                    "time": time,
-                    "temperature": temp,
-                    "precipitation": precipitation,
-                    "weather_code": weather_code_descriptions.get(
-                        weather_code, "Unknown"
-                    ),
-                    "is_day": is_day,
-                    "apparent_temperature": apparent_temp,
-                    "visibility": visibility,
-                    "pressure": pressure,
-                    "cloud_cover": cloud_cover,
-                }
-                for time, temp, precipitation, weather_code, is_day, apparent_temp, visibility, pressure, cloud_cover in zip(
-                    minutely_times,
-                    minutely_temperatures,
-                    minutely_precipitation,
-                    minutely_weather_codes,
-                    minutely_is_day,
-                    minutely_apparent_temperatures,
-                    minutely_visibilities,
-                    minutely_pressures,
-                    minutely_cloud_covers,
-                )
-            ]
-
-            weather_data = {
-                "hourly": hourly_weather_data,
-                "daily": daily_weather_data,
-                "minutely_15": minutely_weather_data,
-            }
-            return weather_data
-
-        except requests.exceptions.RequestException as e:
-            print(f"Error in fetch_open_meteo: {e}")
-        return None
-
-    def fetch_secondary_api(self, lat, lng):
-        # Placeholder for Secondary API (e.g., NWS)
-        # For now, return None or implement a basic fetch if needed.
-        # Since I don't have a guaranteed second source that matches the exact structure easily,
-        # I will leave this as a placeholder for the user to fill or for future implementation.
-        # However, to satisfy the prompt "if 1 does not have info, pull from another one",
-        # I should ideally have something here.
-        # I'll implement a mock fallback that returns data if Open-Meteo fails,
-        # just to show the logic works.
-        return None
+        """Get weather data using weather service with multi-API fallbacks"""
+        return weather_service.get_weather_data(lat, lng)
 
     def get(self, request):
         location = request.query_params.get("location", "").strip()
@@ -468,6 +342,64 @@ class WeatherView(APIView):
             "coordinates": coordinates,
             "air_uv_data": air_uv_data,
             "weather_data": weather_data,
+            "data_sources": {
+                "weather": weather_data.get("source", "Unknown"),
+                "air_quality": air_uv_data.get("source", "Unknown"),
+                "geocoding": "Google",
+                "timezone": "Google",
+            },
         }
 
         return Response(combined_data, status=status.HTTP_200_OK)
+
+
+class WeatherAPIStatusView(APIView):
+    """
+    Endpoint to check the status of all weather APIs.
+    Useful for debugging and monitoring.
+    """
+
+    def get(self, request):
+        api_status = weather_service.get_api_status()
+        return Response(
+            {
+                "apis": api_status,
+                "architecture": {
+                    "weather": {
+                        "primary": "Open-Meteo (unlimited free)",
+                        "fallbacks": [
+                            "Tomorrow.io (500/day, hyperlocal)",
+                            "VisualCrossing (1000/day, comprehensive)",
+                            "OpenWeatherMap (1000/day, map tiles)",
+                        ],
+                    },
+                    "air_quality": {
+                        "primary": "WAQI (station-based AQI)",
+                        "fallback": "Open-Meteo AQI",
+                    },
+                    "location_services": {
+                        "geocoding": "Google Geocoding API",
+                        "timezone": "Google Timezone API",
+                        "places": "Google Places Autocomplete",
+                    },
+                    "map_tiles": {
+                        "provider": "OpenWeatherMap",
+                        "layers": [
+                            "precipitation",
+                            "temperature",
+                            "clouds",
+                            "pressure",
+                            "wind",
+                        ],
+                    },
+                },
+                "caching": {
+                    "forecast": "15 minutes",
+                    "current_conditions": "5 minutes",
+                    "air_quality": "30 minutes",
+                    "geocoding": "24 hours",
+                    "timezone": "24 hours",
+                },
+            },
+            status=status.HTTP_200_OK,
+        )

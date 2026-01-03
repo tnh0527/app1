@@ -224,7 +224,6 @@
     rgba(0, 200, 255, 0.1)
   );
   color: #fff;
-  transform: translateX(4px);
 }
 
 .modal-suggestions-list li i {

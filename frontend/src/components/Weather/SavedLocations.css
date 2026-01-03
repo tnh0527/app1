@@ -5,37 +5,28 @@
   flex-direction: column;
   gap: 8px;
   flex: 1 1 auto;
-  min-width: 0;
   width: 100%;
-  max-width: none;
-}
-
-/* keep saved locations visually compact so the search row remains slim */
-.saved-locations-container {
   max-height: 150px;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.saved-locations-scroll {
+.saved-locations-row {
   display: flex;
   gap: 10px;
-  overflow-x: auto;
+  /* No horizontal scroll needed — fixed 5 slots should expand */
+  overflow: visible;
   scroll-behavior: smooth;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  justify-content: flex-start;
-}
-
-.saved-locations-scroll::-webkit-scrollbar {
-  display: none;
+  justify-content: space-between;
+  width: 100%;
+  align-items: stretch;
 }
 
 /* Individual Location Card - iOS Weather Style */
 .saved-location-card {
   position: relative;
   /* make cards evenly distribute across the available row for 5 slots */
-  flex: 1 1 calc((100% - 40px) / 5);
-  max-width: calc((100% - 40px) / 5);
+  /* use fixed basis so 5 cards evenly span the container */
+  flex: 0 0 calc((100% - 40px) / 5);
   min-width: 0;
   height: 130px;
   border-radius: 18px;
@@ -59,7 +50,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  border-left: 2px solid rgba(0, 229, 255, 1);
+  border-left: 2px solid var(--clr-accent-gold);
   border-radius: 20px;
   z-index: 10;
   pointer-events: none;
@@ -283,6 +274,19 @@
   color: #fbbf24;
 }
 
+/* Local time shown bottom-left on each card */
+.location-local-time {
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  color: #c0c0c0; /* silver */
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 6;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
 /* Empty Slot */
 .saved-location-card.empty-slot {
   background: linear-gradient(
@@ -358,7 +362,6 @@
 
 .saved-locations-empty span {
   font-size: 12px;
-  max-width: 250px;
 }
 
 /* Skeleton Loading */
@@ -409,15 +412,21 @@
 /* Responsive */
 @media (max-width: 1548px) {
   .saved-locations-container {
-    grid-column: 1 / -1;
-    grid-row: 1 / 2;
+    max-width: 100%;
+  }
+
+  .saved-location-card {
+    /* keep five cards layout but allow smaller screens to compress gracefully */
+    flex: 0 0 calc((100% - 40px) / 5);
+    min-width: 110px;
   }
 }
 
 @media (max-width: 768px) {
   .saved-location-card {
-    min-width: 160px;
+    min-width: 100px;
     height: 120px;
+    flex: 0 0 calc((100% - 32px) / 5);
   }
 
   .location-city {
@@ -434,14 +443,15 @@
 }
 
 @media (max-width: 480px) {
-  .saved-locations-scroll {
+  .saved-locations-row {
     gap: 12px;
     padding: 4px 2px;
   }
 
   .saved-location-card {
-    min-width: 140px;
+    min-width: 88px;
     height: 110px;
+    flex: 0 0 calc((100% - 24px) / 5);
   }
 
   .location-card-content {

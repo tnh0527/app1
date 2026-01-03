@@ -5,9 +5,11 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 import api from "../../../api/axios";
 import { getHolidaysInRange } from "../../../data/usHolidays";
+import { getCache, setCache, CACHE_KEYS } from "../../../utils/sessionCache";
 
 const CalendarContext = createContext(null);
 
@@ -68,6 +70,11 @@ export const CalendarProvider = ({ children }) => {
     showRecurring: true,
   });
 
+  // Track if we've initialized from cache
+  const initialLoadDoneRef = useRef(false);
+  // Track the last fetched range to avoid redundant fetches
+  const lastFetchedRangeRef = useRef(null);
+
   // Date range helpers
   const getDateRange = useCallback((date, view) => {
     const year = date.getFullYear();
@@ -113,31 +120,76 @@ export const CalendarProvider = ({ children }) => {
   );
 
   // Fetch events
-  const fetchEvents = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  const fetchEvents = useCallback(
+    async (forceRefresh = false) => {
       const { start, end } = getDateRange(currentDate, currentView);
-      const response = await api.get("/events/schedule/", {
-        params: {
-          start: start.toISOString(),
-          end: end.toISOString(),
-        },
-      });
-      setEvents(parseOccurrences(response.data));
-    } catch (error) {
-      console.error("Error fetching events:", error);
-      setEvents([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentDate, currentView, getDateRange, parseOccurrences]);
+      const rangeKey = `${start.toISOString()}_${end.toISOString()}`;
+
+      // Create a cache key based on the date range
+      const cacheKey = `${
+        CACHE_KEYS.CALENDAR_EVENTS
+      }_${currentView}_${start.getFullYear()}_${start.getMonth()}`;
+
+      // Skip if same range was just fetched (prevents double fetches)
+      if (!forceRefresh && lastFetchedRangeRef.current === rangeKey) {
+        return;
+      }
+
+      // Check session cache on initial load
+      if (!forceRefresh && !initialLoadDoneRef.current) {
+        const cachedEvents = getCache(cacheKey);
+        if (cachedEvents) {
+          setEvents(parseOccurrences(cachedEvents));
+          lastFetchedRangeRef.current = rangeKey;
+          initialLoadDoneRef.current = true;
+          return;
+        }
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await api.get("/events/schedule/", {
+          params: {
+            start: start.toISOString(),
+            end: end.toISOString(),
+          },
+        });
+
+        const parsedEvents = parseOccurrences(response.data);
+        setEvents(parsedEvents);
+
+        // Store in session cache
+        setCache(cacheKey, response.data);
+        lastFetchedRangeRef.current = rangeKey;
+        initialLoadDoneRef.current = true;
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentDate, currentView, getDateRange, parseOccurrences]
+  );
 
   // Fetch due reminders
-  const fetchDueReminders = useCallback(async () => {
+  const fetchDueReminders = useCallback(async (forceRefresh = false) => {
+    // Check session cache on initial load
+    if (!forceRefresh) {
+      const cachedReminders = getCache(CACHE_KEYS.CALENDAR_REMINDERS);
+      if (cachedReminders) {
+        setDueReminders(cachedReminders);
+        return;
+      }
+    }
+
     setIsRemindersLoading(true);
     try {
       const response = await api.get("/events/reminders/due/");
-      setDueReminders(response.data || []);
+      const reminders = response.data || [];
+      setDueReminders(reminders);
+      // Store in session cache
+      setCache(CACHE_KEYS.CALENDAR_REMINDERS, reminders);
     } catch (error) {
       console.error("Error fetching reminders:", error);
       setDueReminders([]);
@@ -151,7 +203,8 @@ export const CalendarProvider = ({ children }) => {
     async (eventData) => {
       try {
         const response = await api.post("/events/schedule/", eventData);
-        await fetchEvents();
+        // Force refresh to update cache
+        await fetchEvents(true);
         return response.data;
       } catch (error) {
         console.error("Failed to create event:", error);
@@ -169,7 +222,8 @@ export const CalendarProvider = ({ children }) => {
           `/events/schedule/${eventId}/`,
           eventData
         );
-        await fetchEvents();
+        // Force refresh to update cache
+        await fetchEvents(true);
         return response.data;
       } catch (error) {
         console.error("Failed to update event:", error);
@@ -339,7 +393,8 @@ export const CalendarProvider = ({ children }) => {
 
   useEffect(() => {
     fetchDueReminders();
-    const interval = setInterval(fetchDueReminders, 30000);
+    // Interval always forces refresh to check for new due reminders
+    const interval = setInterval(() => fetchDueReminders(true), 30000);
     return () => clearInterval(interval);
   }, [fetchDueReminders]);
 

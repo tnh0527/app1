@@ -214,21 +214,40 @@ export const ErrorState = ({
   title = "Something went wrong",
   message = "We couldn't load this content. Please try again.",
   onRetry = null,
+  onReload = null,
+  extraActions = null,
   className = "",
+  children,
 }) => {
   return (
     <div className={`error-state ${className}`}>
-      <div className="error-state-icon">
-        <i className="bi bi-exclamation-triangle"></i>
+      <div className="error-state-card">
+        <div className="error-state-icon">
+          <i className="bi bi-exclamation-octagon-fill"></i>
+        </div>
+        <h3 className="error-state-title">{title}</h3>
+        <p className="error-state-message">{message}</p>
+
+        {(onRetry || onReload || extraActions) && (
+          <div className="error-state-actions">
+            {onRetry && (
+              <button className="error-state-retry" onClick={onRetry}>
+                <i className="bi bi-arrow-clockwise"></i>
+                Try Again
+              </button>
+            )}
+            {onReload && (
+              <button className="error-state-reload" onClick={onReload}>
+                <i className="bi bi-arrow-repeat"></i>
+                Reload Page
+              </button>
+            )}
+            {extraActions}
+          </div>
+        )}
+
+        {children && <div className="error-state-content">{children}</div>}
       </div>
-      <h3 className="error-state-title">{title}</h3>
-      <p className="error-state-message">{message}</p>
-      {onRetry && (
-        <button className="error-state-retry" onClick={onRetry}>
-          <i className="bi bi-arrow-clockwise"></i>
-          Try Again
-        </button>
-      )}
     </div>
   );
 };
@@ -262,12 +281,10 @@ export const TimeoutState = ({
 /**
  * useDataFetch - Custom hook for data fetching with timeout
  */
-export const useDataFetch = (fetchFn, {
-  timeout = 15000,
-  dependencies = [],
-  onError = null,
-  onTimeout = null,
-} = {}) => {
+export const useDataFetch = (
+  fetchFn,
+  { timeout = 15000, dependencies = [], onError = null, onTimeout = null } = {}
+) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -341,7 +358,9 @@ export const ContentWrapper = ({
   }
 
   if (error) {
-    return <ErrorState message={error} onRetry={onRetry} className={className} />;
+    return (
+      <ErrorState message={error} onRetry={onRetry} className={className} />
+    );
   }
 
   if (isEmpty) {
@@ -366,4 +385,3 @@ export default {
   ContentWrapper,
   useDataFetch,
 };
-

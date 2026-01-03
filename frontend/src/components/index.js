@@ -10,6 +10,9 @@ export { ProfilePicModal } from "./Modals";
 // Sidebar Component
 export { Sidebar } from "./Sidebar";
 
+// Top Header Component
+export { TopHeader } from "./TopHeader";
+
 // Weather Components
 export {
   AirQuality,
@@ -25,7 +28,6 @@ export {
   SunriseSunset,
   UVIndex,
   Visibility,
-  WeatherEffects,
   WeatherMap,
   WeatherModal,
   WindStatus,

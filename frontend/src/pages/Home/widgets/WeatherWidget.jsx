@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { iconMap, videoMap } from "../../../utils/weatherMapping";
+import { Icon } from "@iconify/react";
+import { iconsImgs } from "../../../utils/images";
 import "./WeatherWidget.css";
+import { Colors } from "chart.js";
 
 export const WeatherWidget = ({
   initialWeather = null,
@@ -339,13 +342,30 @@ export const WeatherWidget = ({
     return aqiData[0]?.us_aqi || aqiData[0]?.aqi || 0;
   };
 
+  // Map AQI value to color (same logic as main Weather page)
+  const getAQIColor = (aqi) => {
+    if (aqi <= 50) {
+      return "#00e400";
+    } else if (aqi <= 100) {
+      return "#ffff00";
+    } else if (aqi <= 150) {
+      return "#ff7e00";
+    } else if (aqi <= 200) {
+      return "#ff0000";
+    } else if (aqi <= 300) {
+      return "#99004c";
+    } else {
+      return "#7e0023";
+    }
+  };
+
   return (
     <div className={`home-widget weather-widget`}>
       <div className="weather-widget-bg"></div>
       <div className="widget-header">
         <div className="widget-title-section">
           <div className="widget-icon weather">
-            <i className="bi bi-cloud-sun"></i>
+            <Icon icon={iconsImgs.weather} />
           </div>
           <div>
             <h3 className="widget-title">Weather</h3>
@@ -557,7 +577,7 @@ export const WeatherWidget = ({
                   </div>
                 </div>
                 <div className="weather-stat-item">
-                  <i className="bi bi-wind"></i>
+                  {<i className="bi bi-wind" style={{ color: "cyan" }}></i>}
                   <div className="stat-info">
                     <span className="stat-value">
                       {(current?.wind_speed || current?.wind || 0).toFixed(1)}
@@ -575,7 +595,10 @@ export const WeatherWidget = ({
                   </div>
                 </div>
                 <div className="weather-stat-item">
-                  <i className="bi bi-lungs-fill"></i>
+                  <i
+                    className="bi bi-lungs-fill"
+                    style={{ color: getAQIColor(Math.round(getCurrentAQI())) }}
+                  ></i>
                   <div className="stat-info">
                     <span className="stat-value">
                       {Math.round(getCurrentAQI())}

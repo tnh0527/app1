@@ -109,6 +109,7 @@ const WeatherMap = ({ mapData }) => {
       bearing: 0,
       antialias: true,
       attributionControl: false,
+      collectResourceTiming: false, // Disable telemetry to prevent ERR_BLOCKED_BY_CLIENT
     });
 
     homeViewRef.current = {
@@ -165,47 +166,12 @@ const WeatherMap = ({ mapData }) => {
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
 
-      {/* Compass that rotates with map */}
-      <div
-        className="map-compass"
-        style={{ transform: `rotate(${-mapBearing}deg)` }}
-      >
-        <div className="compass-ring">
-          <span className="compass-direction compass-n">N</span>
-          <span className="compass-direction compass-e">E</span>
-          <span className="compass-direction compass-s">S</span>
-          <span className="compass-direction compass-w">W</span>
-          <div className="compass-needle">
-            <div className="needle-north"></div>
-            <div className="needle-south"></div>
-          </div>
-        </div>
-      </div>
-
       {/* Map loading overlay - show spinner while map is loading */}
       {isMapLoading && (
         <div className="map-loading-overlay">
           <div className="map-spinner"></div>
         </div>
       )}
-
-      {/* Weather Info Overlay */}
-      <div className="map-weather-overlay">
-        {windSpeed !== undefined && (
-          <div className="map-weather-item">
-            <i className="bi bi-wind"></i>
-            <span>
-              {Math.round(windSpeed)} mph {getWindDirection(windDirection)}
-            </span>
-          </div>
-        )}
-        {precipitation !== undefined && precipitation > 0 && (
-          <div className="map-weather-item precip">
-            <i className="bi bi-droplet-fill"></i>
-            <span>{precipitation.toFixed(2)}"</span>
-          </div>
-        )}
-      </div>
 
       {/* Coordinates Display */}
       {coords && (

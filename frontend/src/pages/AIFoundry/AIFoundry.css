@@ -1,5 +1,6 @@
 .ai-foundry-page {
   flex: 1;
+  min-width: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -8,6 +9,7 @@
   background: transparent;
   position: relative;
   z-index: 1;
+  padding: 0 var(--page-horizontal-padding) 24px;
 }
 
 .ai-foundry-container {

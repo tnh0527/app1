@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { Icon } from "@iconify/react";
+import { iconsImgs } from "../../../utils/images";
 import "./SubscriptionsWidget.css";
 
 /**
@@ -98,7 +100,7 @@ export const SubscriptionsWidget = ({ data, onNavigate }) => {
       <div className="widget-header">
         <div className="widget-title-section">
           <div className="widget-icon subscriptions">
-            <i className="bi bi-credit-card"></i>
+            <Icon icon={iconsImgs.bills} />
           </div>
           <div>
             <h3 className="widget-title">Subscriptions</h3>

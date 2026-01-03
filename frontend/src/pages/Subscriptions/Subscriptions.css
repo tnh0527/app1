@@ -3,8 +3,8 @@
 .subscriptions-page {
   flex: 1;
   min-width: 0;
-  padding: var(--page-vertical-padding) var(--page-horizontal-padding);
-  min-height: 100vh;
+  padding: 0 var(--page-horizontal-padding) 24px;
+  min-height: 0;
   background: transparent;
   overflow-x: hidden;
   position: relative;

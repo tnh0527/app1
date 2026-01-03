@@ -1,3 +1,74 @@
+/* Minimal Login styles overrides to ensure floating labels stay background-transparent
+   This file restores the import and specifically removes the opaque background
+   that appears behind the floated 'Username' label on focus. */
+
+.input-box {
+  position: relative;
+}
+
+/* Removed transparent background override - now using opaque background to cover input border */
+
+/* Target the specific username input label - removed transparent override to allow background for border coverage */
+
+/* Ensure label text remains readable and doesn't inherit weird backgrounds */
+.input-box label {
+  color: inherit;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Keep .input-glow or similar pseudo layers from showing a boxed background */
+.input-box .input-glow {
+  background: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input-box label {
+    transition: none !important;
+  }
+
+  .logo-wrapper::after,
+  .success-logo::after,
+  .success-letter::after {
+    animation: none !important;
+    opacity: 0;
+  }
+}
+
+/* Autofill overrides: prevent browser autofill from applying a white/yellow background
+   Keep text color and caret, but force the background inset shadow to transparent. */
+.input-box input:-webkit-autofill,
+.input-box input:-webkit-autofill:hover,
+.input-box input:-webkit-autofill:focus,
+.input-box textarea:-webkit-autofill,
+.input-box textarea:-webkit-autofill:hover,
+.input-box textarea:-webkit-autofill:focus,
+.input-box select:-webkit-autofill,
+.input-box select:-webkit-autofill:focus {
+  -webkit-text-fill-color: inherit !important;
+  color: inherit !important;
+  background-color: transparent !important;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+  -webkit-transition: background-color 5000s ease-in-out 0s,
+    color 5000s ease-in-out 0s !important;
+  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
+  caret-color: auto !important;
+}
+
+/* Firefox autofill override */
+.input-box input:-moz-autofill,
+.input-box textarea:-moz-autofill,
+.input-box select:-moz-autofill {
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+  background-clip: padding-box !important;
+  color: inherit !important;
+}
+
+/* Ensure any autofill tooltip or browser UI doesn't change the input look */
+.input-box input:-webkit-autofill::first-line {
+  color: inherit !important;
+}
 /* ============================================
    MODERN FUTURISTIC LOGIN PAGE STYLES
    Theme: Dark Navy with Gold Accents - Calm & Refined
@@ -113,67 +184,146 @@
   }
 }
 
-/* Subtle grid overlay */
+/* Enhanced tech grid overlay */
 .grid-overlay {
   position: absolute;
   inset: 0;
   background-image: linear-gradient(
-      rgba(212, 168, 83, 0.02) 1px,
+      rgba(212, 168, 83, 0.015) 1px,
       transparent 1px
     ),
-    linear-gradient(90deg, rgba(212, 168, 83, 0.02) 1px, transparent 1px);
-  background-size: 60px 60px;
+    linear-gradient(90deg, rgba(212, 168, 83, 0.015) 1px, transparent 1px),
+    linear-gradient(rgba(212, 168, 83, 0.008) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 168, 83, 0.008) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.4;
+  opacity: 0.5;
+  animation: gridPulse 8s ease-in-out infinite;
 }
 
-/* Floating shapes - subtle geometric accents */
-.floating-shapes {
+@keyframes gridPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Corner tech decorations */
+.corner-decoration {
   position: absolute;
-  inset: 0;
-  z-index: 1;
+  width: 80px;
+  height: 80px;
   pointer-events: none;
-  overflow: hidden;
+  z-index: 2;
+  opacity: 0.15;
+}
+
+.corner-decoration::before,
+.corner-decoration::after {
+  content: "";
+  position: absolute;
+  background: rgba(212, 168, 83, 0.5);
+}
+
+.corner-tl {
+  top: 20px;
+  left: 20px;
+}
+
+.corner-tl::before {
+  width: 40px;
+  height: 2px;
+  top: 0;
+  left: 0;
+}
+
+.corner-tl::after {
+  width: 2px;
+  height: 40px;
+  top: 0;
+  left: 0;
+}
+
+.corner-tr {
+  top: 20px;
+  right: 20px;
+}
+
+.corner-tr::before {
+  width: 40px;
+  height: 2px;
+  top: 0;
+  right: 0;
+}
+
+.corner-tr::after {
+  width: 2px;
+  height: 40px;
+  top: 0;
+  right: 0;
+}
+
+.corner-bl {
+  bottom: 20px;
+  left: 20px;
+}
+
+.corner-bl::before {
+  width: 40px;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+}
+
+.corner-bl::after {
+  width: 2px;
+  height: 40px;
+  bottom: 0;
+  left: 0;
+}
+
+.corner-br {
+  bottom: 20px;
+  right: 20px;
+}
+
+.corner-br::before {
+  width: 40px;
+  height: 2px;
+  bottom: 0;
+  right: 0;
+}
+
+.corner-br::after {
+  width: 2px;
+  height: 40px;
+  bottom: 0;
+  right: 0;
+}
+
+/* Floating shapes - removed since canvas handles geometric elements now */
+.floating-shapes {
+  display: none;
 }
 
 .shape {
-  position: absolute;
-  border: 1px solid;
-  animation: shapeFloat 25s ease-in-out infinite;
-  will-change: transform;
-  opacity: 0.1;
+  display: none;
 }
 
 .shape-1 {
-  width: 60px;
-  height: 60px;
-  top: 15%;
-  left: 10%;
-  border-color: rgba(212, 168, 83, 0.2);
-  border-radius: 8px;
-  transform: rotate(45deg);
-  animation-delay: 0s;
+  display: none;
 }
 
 .shape-2 {
-  width: 35px;
-  height: 35px;
-  top: 70%;
-  left: 5%;
-  border-color: rgba(212, 168, 83, 0.15);
-  border-radius: 50%;
-  animation-delay: -8s;
+  display: none;
 }
 
 .shape-3 {
-  width: 60px;
-  height: 60px;
-  top: 20%;
-  right: 8%;
-  border-color: rgba(212, 168, 83, 0.12);
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-  animation-delay: -12s;
+  display: none;
 }
 
 .shape-4 {
@@ -251,8 +401,14 @@
   bottom: -1px;
   right: -1px;
   border-bottom-color: rgba(212, 168, 83, 0.25);
-  border-right-color: rgba(212, 168, 83, 0.25);
+  border-right-color: transparent;
   border-bottom-right-radius: 20px;
+}
+
+/* Hide right border accent when register form is active */
+.wrapper.active::after {
+  border-right-color: transparent;
+  border-bottom-color: transparent;
 }
 
 /* Card glow effects - subtle */
@@ -378,22 +534,60 @@
 /* Logo wrapper for actual image */
 .logo-wrapper {
   position: relative;
-  width: 100px;
-  height: 50px;
+  width: 130px;
+  height: 65px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .logo-image {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   filter: drop-shadow(0 0 8px rgba(212, 168, 83, 0.3));
   transition: filter 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .logo-wrapper:hover .logo-image {
   filter: drop-shadow(0 0 12px rgba(212, 168, 83, 0.5));
+}
+
+.logo-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.7) 48%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.7) 52%,
+    rgba(255, 255, 255, 0) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 200%;
+  background-position: 200% 200%;
+  opacity: 0;
+  animation: logoShimmer 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  z-index: 2;
+  mix-blend-mode: screen;
+  mask-image: url("/nexus_logo.svg");
+  -webkit-mask-image: url("/nexus_logo.svg");
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
 }
 
 .logo-glow {
@@ -406,6 +600,7 @@
   );
   animation: subtleLogoGlow 4s ease-in-out infinite;
   pointer-events: none;
+  z-index: 0;
 }
 
 @keyframes subtleLogoGlow {
@@ -417,6 +612,27 @@
   50% {
     opacity: 0.5;
     transform: scale(1.05);
+  }
+}
+
+@keyframes logoShimmer {
+  0% {
+    background-position: 200% 200%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  58% {
+    background-position: 0% 0%;
+    opacity: 1;
+  }
+  62% {
+    opacity: 0;
+  }
+  100% {
+    background-position: 0% 0%;
+    opacity: 0;
   }
 }
 
@@ -518,6 +734,27 @@
 .input-box input.is-invalid {
   border-color: rgba(255, 100, 100, 0.5);
   background: rgba(255, 100, 100, 0.03);
+  animation: inputShake 0.4s ease-in-out;
+}
+
+@keyframes inputShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 .input-box label {
@@ -530,15 +767,20 @@
   pointer-events: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: transparent;
-  padding: 0 5px;
+  padding: 0;
+  z-index: 10;
+  line-height: 1.2;
 }
 
 .input-box input:focus ~ label,
 .input-box input:valid ~ label {
-  top: 0;
-  font-size: 11px;
-  color: rgba(212, 168, 83, 0.9);
-  background: rgba(10, 15, 24, 0.95);
+  top: 50%;
+  transform: translateY(-50%) translateX(100%);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .input-box i {
@@ -645,52 +887,61 @@
 }
 
 /* ============================================
-   SUBMIT BUTTON - Modern Style
+   SUBMIT BUTTON - Compact 'Month' style
+   Gradient, no 3D, centered and sized to content
    ============================================ */
 .button {
   position: relative;
-  width: 100%;
-  height: 48px;
-  background: linear-gradient(
-    135deg,
-    rgba(212, 168, 83, 0.12) 0%,
-    rgba(212, 168, 83, 0.08) 100%
-  );
-  border: 1px solid rgba(212, 168, 83, 0.3);
-  border-radius: 10px;
+  display: block;
+  width: 220px; /* approx. twice the previous compact width */
+  margin: 12px auto 0;
+  padding: 8px 18px;
+  min-height: 36px;
+  background: linear-gradient(180deg, #d4a853 0%, #c49843 60%);
+  border: 1px solid rgba(171, 134, 45, 0.95);
+  color: #fff;
+  border-radius: 8px;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.25s ease, border-color 0.25s ease,
+    transform 0.15s ease, box-shadow 0.25s ease, width 0.2s ease;
+  box-shadow: none;
+  text-align: center;
 }
 
 .button::before {
   content: "";
   position: absolute;
   top: 0;
-  left: -100%;
+  left: 0;
   width: 100%;
   height: 100%;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(212, 168, 83, 0.15),
+    rgba(255, 255, 255, 0.2),
     transparent
   );
-  transition: left 0.5s ease;
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+  border-radius: 8px;
 }
 
 .button:hover::before {
-  left: 100%;
+  transform: translateX(100%);
 }
 
 .button:hover {
-  border-color: rgba(212, 168, 83, 0.5);
+  border-color: rgba(212, 168, 83, 1);
+  background: linear-gradient(180deg, #f0d588 0%, #d4a853 45%, #c49843 100%);
+  box-shadow: 0 6px 18px rgba(212, 168, 83, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
 .button:active {
   transform: translateY(0);
+  box-shadow: none;
 }
 
 .button:disabled {
@@ -816,21 +1067,9 @@
   pointer-events: none;
 }
 
-/* Accent line */
+/* Accent line - hidden */
 .toggle-panel::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(212, 168, 83, 0.2) 30%,
-    rgba(212, 168, 83, 0.2) 70%,
-    transparent 100%
-  );
+  display: none;
 }
 
 .wrapper.active .toggle-panel {
@@ -963,8 +1202,14 @@
 }
 
 .success-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-direction: row;
   text-align: center;
-  animation: successContentIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+  /* Make the success content entrance longer so logo/name animation is visible */
+  animation: successContentIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
   opacity: 0;
   transform: scale(0.9);
 }
@@ -977,32 +1222,173 @@
 }
 
 .success-logo {
-  width: 120px;
-  margin: 0 auto 20px;
+  width: 80px;
+  height: 80px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .success-logo img {
   width: 100%;
-  height: auto;
-  filter: drop-shadow(0 0 20px rgba(212, 168, 83, 0.4));
-  animation: successLogoGlow 1.5s ease-in-out infinite;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  position: relative;
+  z-index: 1;
 }
 
-@keyframes successLogoGlow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 15px rgba(212, 168, 83, 0.3));
-  }
-  50% {
-    filter: drop-shadow(0 0 25px rgba(212, 168, 83, 0.5));
-  }
+.success-logo::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.7) 48%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.7) 52%,
+    rgba(255, 255, 255, 0) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 200%;
+  background-position: 200% 200%;
+  opacity: 0;
+  animation: successLogoShimmer 3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+  mix-blend-mode: screen;
+  mask-image: url("/nexus_logo.svg");
+  -webkit-mask-image: url("/nexus_logo.svg");
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
 }
 
 .success-text {
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
+  font-size: 42px;
+  font-weight: 700;
   letter-spacing: 1px;
+  overflow: visible;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.success-letter {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  background: linear-gradient(
+    135deg,
+    #e8eaed 0%,
+    #a8b4c4 40%,
+    #8b99ab 60%,
+    #c4ccd8 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  overflow: visible;
+}
+
+.success-letter::after {
+  content: attr(data-char);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.7) 48%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.7) 52%,
+    rgba(255, 255, 255, 0) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 250% 250%;
+  background-position: 200% 200%;
+  opacity: 0;
+  animation: successLetterShimmer 3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes letterShimmer {
+  0% {
+    background-position: 200% 200%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  58% {
+    background-position: 0% 0%;
+    opacity: 1;
+  }
+  62% {
+    opacity: 0;
+  }
+  100% {
+    background-position: 0% 0%;
+    opacity: 0;
+  }
+}
+
+@keyframes successLogoShimmer {
+  0% {
+    background-position: 200% 200%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    background-position: 0% 0%;
+    opacity: 1;
+  }
+  60% {
+    opacity: 0;
+  }
+  100% {
+    background-position: 0% 0%;
+    opacity: 0;
+  }
+}
+
+@keyframes successLetterShimmer {
+  0% {
+    background-position: 200% 200%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    background-position: 0% 0%;
+    opacity: 1;
+  }
+  60% {
+    opacity: 0;
+  }
+  100% {
+    background-position: 0% 0%;
+    opacity: 0;
+  }
 }
 
 /* ============================================
@@ -1104,7 +1490,10 @@
   .panel-icon::before,
   .logo-text,
   .button::before,
-  .toggle-panel button::before {
+  .toggle-panel button::before,
+  .logo-wrapper::after,
+  .success-logo::after,
+  .success-letter::after {
     animation: none !important;
     transition: opacity 0.3s ease !important;
   }
@@ -1116,5 +1505,11 @@
   .login-page.mounted .animation {
     opacity: 1;
     transform: none;
+  }
+
+  .logo-wrapper::after,
+  .success-logo::after,
+  .success-letter::after {
+    opacity: 0;
   }
 }

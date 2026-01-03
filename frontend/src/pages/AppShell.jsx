@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "../components";
+import { Sidebar, TopHeader } from "../components";
 import { useContext } from "react";
 import { SidebarContext } from "../contexts/SidebarContext";
 
@@ -25,7 +25,14 @@ const AppShell = () => {
       <Sidebar />
       {/* Spacer to offset the fixed sidebar */}
       <div className={`sidebar-spacer ${!isSidebarOpen ? "collapsed" : ""}`} />
-      <Outlet />
+
+      {/* Main content area with header */}
+      <div className="main-content-area">
+        <TopHeader />
+        <div className="page-content">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 };

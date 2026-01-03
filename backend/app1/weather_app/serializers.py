@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 from rest_framework import serializers
 from .models import SavedLocation
 
@@ -9,10 +10,16 @@ class SavedLocationSerializer(serializers.ModelSerializer):
     # Override fields with explicit validation
     name = serializers.CharField(min_length=2, max_length=255)
     latitude = serializers.DecimalField(
-        max_digits=9, decimal_places=6, min_value=-90, max_value=90
+        max_digits=9,
+        decimal_places=6,
+        min_value=Decimal("-90"),
+        max_value=Decimal("90"),
     )
     longitude = serializers.DecimalField(
-        max_digits=9, decimal_places=6, min_value=-180, max_value=180
+        max_digits=9,
+        decimal_places=6,
+        min_value=Decimal("-180"),
+        max_value=Decimal("180"),
     )
 
     class Meta:

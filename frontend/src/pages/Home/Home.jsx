@@ -10,6 +10,13 @@ import {
   tripsApi,
 } from "../../api/travelApi";
 import { ProfileContext } from "../../contexts/ProfileContext";
+import {
+  getCache,
+  setCache,
+  hasCache,
+  CACHE_KEYS,
+  getWeatherCacheKey,
+} from "../../utils/sessionCache";
 
 // Widget imports
 import { CalendarWidget } from "./widgets/CalendarWidget";
@@ -54,53 +61,92 @@ const Dashboard = () => {
   };
 
   // Fetch all dashboard data
-  const fetchAllData = useCallback(async () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  const fetchAllData = useCallback(
+    async (forceRefresh = false) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-    setLoading(true);
-    setError(null);
-
-    timeoutRef.current = setTimeout(() => {
-      setLoading(false);
-    }, REQUEST_TIMEOUT);
-
-    try {
-      // Fetch all data in parallel
       const weatherLocation = profile?.location || "Richmond, Texas, USA";
+      const weatherCacheKey = getWeatherCacheKey(weatherLocation);
 
-      const [financials, subscriptions, travel, trips, weather] =
-        await Promise.all([
-          financialsDashboardApi.getFullDashboard("1y").catch(() => null),
-          subscriptionsDashboardApi.getFullDashboard().catch(() => null),
-          travelDashboardApi.getDashboard().catch(() => null),
-          tripsApi.getUpcoming().catch(() => []),
-          fetch(`http://localhost:8000/api/weather/?location=${encodeURIComponent(
-            weatherLocation
-          )}
-        `)
-            .then((r) => (r.ok ? r.json() : null))
-            .catch(() => null),
-        ]);
+      // Check for cached data from session (unless forcing refresh)
+      if (!forceRefresh) {
+        const cachedFinancials = getCache(CACHE_KEYS.HOME_FINANCIALS);
+        const cachedSubscriptions = getCache(CACHE_KEYS.HOME_SUBSCRIPTIONS);
+        const cachedTravel = getCache(CACHE_KEYS.HOME_TRAVEL);
+        const cachedWeather = getCache(weatherCacheKey);
 
-      clearTimeout(timeoutRef.current);
+        // If we have any cached data, use it immediately
+        if (
+          cachedFinancials ||
+          cachedSubscriptions ||
+          cachedTravel ||
+          cachedWeather
+        ) {
+          setFinancialsData(cachedFinancials);
+          setSubscriptionsData(cachedSubscriptions);
+          setTravelData(cachedTravel);
+          setWeatherData(cachedWeather);
+          setLoading(false);
+          setError(null);
+          return;
+        }
+      }
 
-      setFinancialsData(financials);
-      setSubscriptionsData(subscriptions);
-      setTravelData({ ...travel, upcomingTrips: trips });
-      setWeatherData(weather);
-
+      setLoading(true);
       setError(null);
-    } catch (err) {
-      clearTimeout(timeoutRef.current);
-      console.error("Failed to fetch dashboard data:", err);
-      setError("Some data couldn't be loaded. Pull to refresh.");
-    } finally {
-      clearTimeout(timeoutRef.current);
-      setLoading(false);
-    }
-  }, [profile?.location]);
+
+      timeoutRef.current = setTimeout(() => {
+        setLoading(false);
+      }, REQUEST_TIMEOUT);
+
+      try {
+        // Fetch all data in parallel
+        const [financials, subscriptions, travel, trips, weather] =
+          await Promise.all([
+            financialsDashboardApi.getFullDashboard("1y").catch(() => null),
+            subscriptionsDashboardApi.getFullDashboard().catch(() => null),
+            travelDashboardApi.getDashboard().catch(() => null),
+            tripsApi.getUpcoming().catch(() => []),
+            fetch(`http://localhost:8000/api/weather/?location=${encodeURIComponent(
+              weatherLocation
+            )}
+        `)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null),
+          ]);
+
+        clearTimeout(timeoutRef.current);
+
+        // Store in session cache for future navigation
+        if (financials) setCache(CACHE_KEYS.HOME_FINANCIALS, financials);
+        if (subscriptions)
+          setCache(CACHE_KEYS.HOME_SUBSCRIPTIONS, subscriptions);
+
+        const travelWithTrips = travel
+          ? { ...travel, upcomingTrips: trips }
+          : null;
+        if (travelWithTrips) setCache(CACHE_KEYS.HOME_TRAVEL, travelWithTrips);
+        if (weather) setCache(weatherCacheKey, weather);
+
+        setFinancialsData(financials);
+        setSubscriptionsData(subscriptions);
+        setTravelData(travelWithTrips);
+        setWeatherData(weather);
+
+        setError(null);
+      } catch (err) {
+        clearTimeout(timeoutRef.current);
+        console.error("Failed to fetch dashboard data:", err);
+        setError("Some data couldn't be loaded. Pull to refresh.");
+      } finally {
+        clearTimeout(timeoutRef.current);
+        setLoading(false);
+      }
+    },
+    [profile?.location]
+  );
 
   useEffect(() => {
     fetchAllData();
@@ -147,7 +193,7 @@ const Dashboard = () => {
           <div className="header-actions">
             <button
               className="refresh-btn"
-              onClick={fetchAllData}
+              onClick={() => fetchAllData(true)}
               disabled={loading}
             >
               <i

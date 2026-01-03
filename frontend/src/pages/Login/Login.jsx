@@ -1,9 +1,21 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useContext } from "react";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { useAuth } from "../../contexts/AuthContext";
+import { ProfileContext } from "../../contexts/ProfileContext";
 import authApi from "../../api/authApi";
+import { dashboardApi as financialsDashboardApi } from "../../api/financialsApi";
+import { dashboardApi as subscriptionsDashboardApi } from "../../api/subscriptionsApi";
+import {
+  dashboardApi as travelDashboardApi,
+  tripsApi,
+} from "../../api/travelApi";
+import {
+  setCache,
+  CACHE_KEYS,
+  getWeatherCacheKey,
+} from "../../utils/sessionCache";
 
 const Login = () => {
   const [isActive, setIsActive] = useState(false);
@@ -19,18 +31,40 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [showLogoutOverlay, setShowLogoutOverlay] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { profile } = useContext(ProfileContext);
   const canvasRef = useRef(null);
   const mouseRef = useRef({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
+  const navTimeoutRef = useRef(null);
 
   // Mount animation trigger
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Show logout overlay if redirected after logout (flag set by Sidebar)
+  useEffect(() => {
+    const justLoggedOut = sessionStorage.getItem("justLoggedOut");
+    if (justLoggedOut === "true") {
+      setShowLogoutOverlay(true);
+      sessionStorage.removeItem("justLoggedOut");
+      const hideTimer = setTimeout(() => setShowLogoutOverlay(false), 800);
+      return () => clearTimeout(hideTimer);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (navTimeoutRef.current) {
+        clearTimeout(navTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Cursor tracking for interactive effects (invisible but affects particles)
@@ -43,243 +77,573 @@ const Login = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [handleMouseMove]);
 
-  // Enhanced particle background with cursor interaction and geometric objects
+  // Advanced futuristic background with neural network, holographic elements, and energy effects
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     let animationId;
-    let particles = [];
-    let geometricObjects = [];
+    let nodes = [];
+    let dataStreams = [];
+    let holoStructures = [];
+    let gridCracks = [];
+    let time = 0;
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
 
-    const createParticle = () => ({
+    // Neural network nodes - interconnected constellation points
+    const createNode = () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      size: Math.random() * 1.5 + 0.5,
-      speedX: (Math.random() - 0.5) * 0.2,
-      speedY: (Math.random() - 0.5) * 0.2,
-      opacity: Math.random() * 0.3 + 0.1,
-      pulse: Math.random() * Math.PI * 2,
-      isGold: Math.random() > 0.3,
+      baseX: 0,
+      baseY: 0,
+      vx: 0,
+      vy: 0,
+      size: Math.random() * 2 + 1,
+      pulsePhase: Math.random() * Math.PI * 2,
+      energy: Math.random() * 0.5 + 0.3,
+      isActive: Math.random() > 0.7,
+      connectionStrength: Math.random() * 0.5 + 0.5,
     });
 
-    // Create geometric objects with physics properties
-    const createGeometricObject = (type) => {
-      const baseSize = 15 + Math.random() * 25;
+    // Data stream - vertical flowing lines
+    const createDataStream = () => {
+      const x = Math.random() * canvas.width;
       return {
-        type, // 'hexagon', 'triangle', 'diamond', 'ring'
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: baseSize,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.008,
+        x,
+        baseX: x,
         vx: 0,
-        vy: 0,
-        baseX: 0,
-        baseY: 0,
-        opacity: 0.08 + Math.random() * 0.08,
-        pulse: Math.random() * Math.PI * 2,
+        chars: [],
+        speed: Math.random() * 1 + 0.5,
+        opacity: Math.random() * 0.15 + 0.05,
+        length: Math.floor(Math.random() * 15) + 5,
       };
     };
 
-    const initParticles = () => {
-      particles = [];
-      const count = Math.floor((canvas.width * canvas.height) / 20000);
-      for (let i = 0; i < count; i++) {
-        particles.push(createParticle());
+    const initElements = () => {
+      // Neural network nodes (reduced)
+      nodes = [];
+      const nodeCount = Math.floor((canvas.width * canvas.height) / 35000);
+      for (let i = 0; i < nodeCount; i++) {
+        const node = createNode();
+        node.baseX = node.x;
+        node.baseY = node.y;
+        nodes.push(node);
       }
 
-      // Initialize geometric objects - sparse distribution
-      geometricObjects = [];
-      const types = ["hexagon", "triangle", "diamond", "ring"];
-      const objectCount = Math.min(
-        8,
-        Math.floor((canvas.width * canvas.height) / 150000)
-      );
+      // 3D holographic structures removed per user request
+      holoStructures = [];
 
-      for (let i = 0; i < objectCount; i++) {
-        const obj = createGeometricObject(types[i % types.length]);
-        obj.baseX = obj.x;
-        obj.baseY = obj.y;
-        geometricObjects.push(obj);
+      // Data streams
+      dataStreams = [];
+      const streamCount = Math.floor(canvas.width / 80);
+      for (let i = 0; i < streamCount; i++) {
+        const stream = createDataStream();
+        stream.chars = Array(stream.length)
+          .fill(0)
+          .map(() => ({
+            y: Math.random() * canvas.height,
+            char: String.fromCharCode(0x30a0 + Math.random() * 96),
+            opacity: Math.random(),
+          }));
+        dataStreams.push(stream);
       }
     };
 
-    // Draw different geometric shapes
-    const drawHexagon = (ctx, x, y, size, rotation) => {
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = rotation + (Math.PI / 3) * i;
-        const px = x + size * Math.cos(angle);
-        const py = y + size * Math.sin(angle);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-    };
+    // Persistent active crack centered on cursor
+    let activeCrack = null;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    let mouseInactive = false;
+    let inactivityTimer = null;
+    let healingProgress = 0; // 0 = fully visible, 1 = fully healed
+    const INACTIVITY_DELAY = 1500; // ms before healing starts
+    const HEALING_DURATION = 4.0; // seconds for full heal (increased)
 
-    const drawTriangle = (ctx, x, y, size, rotation) => {
-      ctx.beginPath();
-      for (let i = 0; i < 3; i++) {
-        const angle = rotation + ((Math.PI * 2) / 3) * i - Math.PI / 2;
-        const px = x + size * Math.cos(angle);
-        const py = y + size * Math.sin(angle);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-    };
-
-    const drawDiamond = (ctx, x, y, size, rotation) => {
-      ctx.beginPath();
-      for (let i = 0; i < 4; i++) {
-        const angle = rotation + (Math.PI / 2) * i;
-        const stretch = i % 2 === 0 ? size * 1.4 : size * 0.8;
-        const px = x + stretch * Math.cos(angle);
-        const py = y + stretch * Math.sin(angle);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-    };
-
-    const drawRing = (ctx, x, y, size) => {
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.closePath();
-    };
-
-    const drawParticles = () => {
+    const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+      time += 0.016;
       const mouse = mouseRef.current;
 
-      // Draw and update geometric objects
-      geometricObjects.forEach((obj) => {
-        const dx = mouse.x - obj.x;
-        const dy = mouse.y - obj.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = 200;
+      // Track mouse activity for healing
+      const currentMouseX = mouse?.x ?? -1000;
+      const currentMouseY = mouse?.y ?? -1000;
+      const mouseMoved =
+        currentMouseX !== lastMouseX || currentMouseY !== lastMouseY;
 
-        // Physics-based cursor repulsion with spring return
-        if (dist < maxDist && dist > 0) {
-          const force = ((maxDist - dist) / maxDist) * 3;
-          const angle = Math.atan2(dy, dx);
-          obj.vx -= Math.cos(angle) * force * 0.15;
-          obj.vy -= Math.sin(angle) * force * 0.15;
-          // Speed up rotation when near cursor
-          obj.rotationSpeed = (Math.random() - 0.5) * 0.02;
-        }
+      if (mouseMoved) {
+        // Reset healing when mouse moves
+        lastMouseX = currentMouseX;
+        lastMouseY = currentMouseY;
+        mouseInactive = false;
+        healingProgress = 0;
 
-        // Spring force back to original position
-        const springStrength = 0.02;
-        const dampening = 0.95;
-        obj.vx += (obj.baseX - obj.x) * springStrength;
-        obj.vy += (obj.baseY - obj.y) * springStrength;
-        obj.vx *= dampening;
-        obj.vy *= dampening;
+        // Clear and restart inactivity timer
+        if (inactivityTimer) clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+          mouseInactive = true;
+        }, INACTIVITY_DELAY);
+      }
 
-        // Update position
-        obj.x += obj.vx;
-        obj.y += obj.vy;
-        obj.rotation += obj.rotationSpeed;
-        obj.pulse += 0.02;
+      // Progress healing animation when inactive
+      if (mouseInactive && healingProgress < 1) {
+        healingProgress = Math.min(
+          1,
+          healingProgress + 0.016 / HEALING_DURATION
+        );
+      }
 
-        // Subtle pulsing
-        const pulseScale = 1 + Math.sin(obj.pulse) * 0.05;
-        const drawSize = obj.size * pulseScale;
-        const opacity = obj.opacity * (0.8 + Math.sin(obj.pulse * 0.5) * 0.2);
+      // Maintain a persistent crack at the cursor position
+      if (mouse && mouse.x != null) {
+        if (!activeCrack)
+          activeCrack = {
+            x: mouse.x,
+            y: mouse.y,
+            maxRadius: 200,
+            opacity: 0.8,
+          };
+        activeCrack.x = mouse.x;
+        activeCrack.y = mouse.y;
+      }
 
-        // Draw the geometric object
-        ctx.save();
-        ctx.strokeStyle = `rgba(212, 168, 83, ${opacity})`;
-        ctx.lineWidth = 1;
+      // Draw persistent grid lines (crack) around the cursor
+      if (activeCrack) {
+        const gridSize = 100;
+        const baseRadius = activeCrack.maxRadius;
+        const globalOpacity = 1 - healingProgress; // Apply global healing fade
 
-        switch (obj.type) {
-          case "hexagon":
-            drawHexagon(ctx, obj.x, obj.y, drawSize, obj.rotation);
-            break;
-          case "triangle":
-            drawTriangle(ctx, obj.x, obj.y, drawSize, obj.rotation);
-            break;
-          case "diamond":
-            drawDiamond(ctx, obj.x, obj.y, drawSize, obj.rotation);
-            break;
-          case "ring":
-            drawRing(ctx, obj.x, obj.y, drawSize);
-            break;
-        }
-        ctx.stroke();
-        ctx.restore();
-      });
+        // Vertical lines with irregular radius
+        for (
+          let px = activeCrack.x - baseRadius;
+          px <= activeCrack.x + baseRadius;
+          px += gridSize
+        ) {
+          const lineX = Math.round(px / gridSize) * gridSize;
+          const distFromCenter = Math.abs(lineX - activeCrack.x);
+          const normalizedDist = distFromCenter / baseRadius;
 
-      // Draw particles
-      particles.forEach((p, i) => {
-        const dx = mouse.x - p.x;
-        const dy = mouse.y - p.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = 150;
+          // Irregular radius variation per line (using line position as seed)
+          const radiusVariation = 0.7 + Math.sin(lineX * 0.05) * 0.3;
+          const effectiveRadius = baseRadius * radiusVariation;
 
-        if (dist < maxDist) {
-          const force = ((maxDist - dist) / maxDist) * 0.5;
-          const angle = Math.atan2(dy, dx);
-          p.x -= Math.cos(angle) * force;
-          p.y -= Math.sin(angle) * force;
-        }
+          if (distFromCenter < effectiveRadius) {
+            // Quadratic falloff for brighter center
+            const falloff = 1 - Math.pow(normalizedDist / radiusVariation, 0.6);
+            const lineOpacity =
+              activeCrack.opacity * Math.max(0, falloff) * 1.2 * globalOpacity;
 
-        p.x += p.speedX;
-        p.y += p.speedY;
-        p.pulse += 0.015;
+            if (lineOpacity > 0.02) {
+              // Variable line length based on distance from center
+              const lengthVariation = 0.6 + (1 - normalizedDist) * 0.4;
+              const lineHeight = effectiveRadius * lengthVariation;
 
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
+              // Healing: outside-in (ends -> center). Visible central segment shrinks inward
+              const healStart = activeCrack.y - lineHeight;
+              const healEnd = activeCrack.y + lineHeight;
+              const totalLen = healEnd - healStart;
+              const healedEdge = (totalLen / 2) * healingProgress; // amount removed from each end
+              const visibleTop = healStart + healedEdge;
+              const visibleBottom = healEnd - healedEdge;
 
-        const pulseOpacity = p.opacity * (0.7 + 0.3 * Math.sin(p.pulse));
-        const color = p.isGold
-          ? `rgba(212, 168, 83, ${pulseOpacity})`
-          : `rgba(100, 180, 180, ${pulseOpacity * 0.5})`;
+              if (visibleTop < visibleBottom) {
+                // gravity-like inward pull: signed displacement toward cursor
+                const MAX_BEND = 100;
+                const distToCursorX = mouse.x - lineX; // signed distance
+                const absDistX = Math.abs(distToCursorX);
+                const bendInfluence = Math.max(
+                  0,
+                  1 - absDistX / effectiveRadius
+                );
+                // cubic falloff for more realistic gravity pull
+                const gravityStrength = Math.pow(bendInfluence, 1.8);
+                let rawBend = distToCursorX * 0.28 * gravityStrength;
+                // damp when inactive or healing
+                rawBend *= mouseInactive ? 0 : 1;
+                rawBend *= 1 - healingProgress;
+                const bend = Math.max(-MAX_BEND, Math.min(MAX_BEND, rawBend));
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-
-        // Connect nearby particles
-        particles.slice(i + 1).forEach((p2) => {
-          const dx2 = p.x - p2.x;
-          const dy2 = p.y - p2.y;
-          const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-          if (dist2 < 80) {
-            const alpha = 0.06 * (1 - dist2 / 80);
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(212, 168, 83, ${alpha})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+                ctx.beginPath();
+                ctx.lineWidth = 1.4 + (1 - normalizedDist) * 0.8;
+                const gradient = ctx.createLinearGradient(
+                  lineX,
+                  visibleTop,
+                  lineX + bend,
+                  visibleBottom
+                );
+                gradient.addColorStop(0, `rgba(212, 168, 83, 0)`);
+                gradient.addColorStop(
+                  0.15,
+                  `rgba(212, 168, 83, ${lineOpacity})`
+                );
+                gradient.addColorStop(
+                  0.85,
+                  `rgba(212, 168, 83, ${lineOpacity})`
+                );
+                gradient.addColorStop(1, `rgba(212, 168, 83, 0)`);
+                ctx.strokeStyle = gradient;
+                const midY = (visibleTop + visibleBottom) * 0.5;
+                ctx.moveTo(lineX, visibleTop);
+                ctx.quadraticCurveTo(lineX + bend, midY, lineX, visibleBottom);
+                ctx.stroke();
+              }
+            }
           }
+        }
+
+        // Horizontal lines with irregular radius
+        for (
+          let py = activeCrack.y - baseRadius;
+          py <= activeCrack.y + baseRadius;
+          py += gridSize
+        ) {
+          const lineY = Math.round(py / gridSize) * gridSize;
+          const distFromCenter = Math.abs(lineY - activeCrack.y);
+          const normalizedDist = distFromCenter / baseRadius;
+
+          // Irregular radius variation per line (using line position as seed)
+          const radiusVariation = 0.7 + Math.sin(lineY * 0.05) * 0.3;
+          const effectiveRadius = baseRadius * radiusVariation;
+
+          if (distFromCenter < effectiveRadius) {
+            // Quadratic falloff for brighter center
+            const falloff = 1 - Math.pow(normalizedDist / radiusVariation, 0.6);
+            const lineOpacity =
+              activeCrack.opacity * Math.max(0, falloff) * 1.2 * globalOpacity;
+
+            if (lineOpacity > 0.02) {
+              // Variable line length based on distance from center
+              const lengthVariation = 0.6 + (1 - normalizedDist) * 0.4;
+              const lineWidth = effectiveRadius * lengthVariation;
+
+              // Healing: outside-in (ends -> center). Visible central segment shrinks inward
+              const healStart = activeCrack.x - lineWidth;
+              const healEnd = activeCrack.x + lineWidth;
+              const totalLen = healEnd - healStart;
+              const healedEdge = (totalLen / 2) * healingProgress;
+              const visibleLeft = healStart + healedEdge;
+              const visibleRight = healEnd - healedEdge;
+
+              if (visibleLeft < visibleRight) {
+                // gravity-like inward pull vertically: signed displacement toward cursor
+                const MAX_BEND_H = 95;
+                const distToCursorY = mouse.y - lineY; // signed distance
+                const absDistY = Math.abs(distToCursorY);
+                const bendInfluenceH = Math.max(
+                  0,
+                  1 - absDistY / effectiveRadius
+                );
+                // cubic falloff for more realistic gravity pull
+                const gravityStrengthH = Math.pow(bendInfluenceH, 1.8);
+                let rawBendV = distToCursorY * 0.24 * gravityStrengthH;
+                rawBendV *= mouseInactive ? 0 : 1;
+                rawBendV *= 1 - healingProgress;
+                const bendV = Math.max(
+                  -MAX_BEND_H,
+                  Math.min(MAX_BEND_H, rawBendV)
+                );
+
+                ctx.beginPath();
+                ctx.lineWidth = 1.4 + (1 - normalizedDist) * 0.8;
+                const gradient = ctx.createLinearGradient(
+                  visibleLeft,
+                  lineY,
+                  visibleRight,
+                  lineY + bendV
+                );
+                gradient.addColorStop(0, `rgba(212, 168, 83, 0)`);
+                gradient.addColorStop(
+                  0.15,
+                  `rgba(212, 168, 83, ${lineOpacity})`
+                );
+                gradient.addColorStop(
+                  0.85,
+                  `rgba(212, 168, 83, ${lineOpacity})`
+                );
+                gradient.addColorStop(1, `rgba(212, 168, 83, 0)`);
+                ctx.strokeStyle = gradient;
+                const midX = (visibleLeft + visibleRight) * 0.5;
+                ctx.moveTo(visibleLeft, lineY);
+                ctx.quadraticCurveTo(midX, lineY + bendV, visibleRight, lineY);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+
+        // Small random cracks near the center (denser, random per-line pattern)
+        const smallGridSize = 20;
+        const innerRadiusMax = baseRadius * 0.6;
+        // vertical small cracks
+        for (
+          let sx = activeCrack.x - innerRadiusMax;
+          sx <= activeCrack.x + innerRadiusMax;
+          sx += smallGridSize
+        ) {
+          const lineX = Math.round(sx / smallGridSize) * smallGridSize;
+          // match randomness of outer grid per-line
+          const radiusVariation = 0.7 + Math.sin(lineX * 0.05) * 0.3;
+          const innerRadius = baseRadius * 0.36 * radiusVariation;
+          const dx = Math.abs(lineX - activeCrack.x);
+          const normalized = dx / innerRadius;
+          // deterministic "random" seed per line so pattern is stable
+          const seed = Math.abs(
+            Math.sin(lineX * 0.043 + activeCrack.y * 0.027)
+          );
+          if (seed > 0.25 && normalized < 1) {
+            const localFall = 1 - Math.pow(normalized, 1.2);
+            const opacity =
+              activeCrack.opacity * seed * localFall * 1.6 * globalOpacity;
+            if (opacity > 0.02) {
+              const length =
+                innerRadius * (0.3 + (1 - normalized) * 0.9 * seed);
+
+              // Healing: outside-in for small vertical cracks (central visible segment shrinks)
+              const healStart = activeCrack.y - length;
+              const healEnd = activeCrack.y + length;
+              const totalLen = healEnd - healStart;
+              const healedEdge = (totalLen / 2) * healingProgress;
+              const visibleTop = healStart + healedEdge;
+              const visibleBottom = healEnd - healedEdge;
+
+              if (visibleTop < visibleBottom) {
+                ctx.beginPath();
+                ctx.lineWidth = 0.8 + seed * 0.8;
+                const g = ctx.createLinearGradient(
+                  lineX,
+                  visibleTop,
+                  lineX,
+                  visibleBottom
+                );
+                g.addColorStop(0, `rgba(212, 168, 83, 0)`);
+                g.addColorStop(0.15, `rgba(212, 168, 83, ${opacity})`);
+                g.addColorStop(0.85, `rgba(212, 168, 83, ${opacity})`);
+                g.addColorStop(1, `rgba(212, 168, 83, 0)`);
+                ctx.strokeStyle = g;
+                ctx.moveTo(lineX, visibleTop);
+                ctx.lineTo(lineX, visibleBottom);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+
+        // horizontal small cracks
+        for (
+          let sy = activeCrack.y - innerRadiusMax;
+          sy <= activeCrack.y + innerRadiusMax;
+          sy += smallGridSize
+        ) {
+          const lineY = Math.round(sy / smallGridSize) * smallGridSize;
+          const radiusVariation = 0.7 + Math.sin(lineY * 0.05) * 0.3;
+          const innerRadius = baseRadius * 0.36 * radiusVariation;
+          const dy = Math.abs(lineY - activeCrack.y);
+          const normalized = dy / innerRadius;
+          const seed = Math.abs(
+            Math.sin(lineY * 0.037 + activeCrack.x * 0.031)
+          );
+          if (seed > 0.25 && normalized < 1) {
+            const localFall = 1 - Math.pow(normalized, 1.2);
+            const opacity =
+              activeCrack.opacity * seed * localFall * 1.6 * globalOpacity;
+            if (opacity > 0.02) {
+              const length =
+                innerRadius * (0.3 + (1 - normalized) * 0.9 * seed);
+
+              // Healing: outside-in for small horizontal cracks (central visible segment shrinks)
+              const healStart = activeCrack.x - length;
+              const healEnd = activeCrack.x + length;
+              const totalLen = healEnd - healStart;
+              const healedEdge = (totalLen / 2) * healingProgress;
+              const visibleLeft = healStart + healedEdge;
+              const visibleRight = healEnd - healedEdge;
+
+              if (visibleLeft < visibleRight) {
+                ctx.beginPath();
+                ctx.lineWidth = 0.8 + seed * 0.8;
+                const g = ctx.createLinearGradient(
+                  visibleLeft,
+                  lineY,
+                  visibleRight,
+                  lineY
+                );
+                g.addColorStop(0, `rgba(212, 168, 83, 0)`);
+                g.addColorStop(0.15, `rgba(212, 168, 83, ${opacity})`);
+                g.addColorStop(0.85, `rgba(212, 168, 83, ${opacity})`);
+                g.addColorStop(1, `rgba(212, 168, 83, 0)`);
+                ctx.strokeStyle = g;
+                ctx.moveTo(visibleLeft, lineY);
+                ctx.lineTo(visibleRight, lineY);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+      }
+
+      // Draw data streams (subtle matrix-like effect) with cursor push
+      const STREAM_PUSH_RADIUS = 160;
+      const STREAM_PUSH_STRENGTH = 1.2;
+      const STREAM_DAMPING = 0.88;
+      const STREAM_SPRING = 0.04;
+      dataStreams.forEach((stream) => {
+        // apply horizontal push and spring-back
+        const dxStream = stream.x - mouse.x;
+        const distStream = Math.abs(dxStream);
+        if (!isNaN(mouse.x)) {
+          const influence = Math.max(0, 1 - distStream / STREAM_PUSH_RADIUS);
+          const force =
+            (dxStream / (distStream + 0.001)) *
+            influence *
+            STREAM_PUSH_STRENGTH *
+            (mouseInactive ? 0 : 1) *
+            (1 - healingProgress);
+          stream.vx += force;
+        }
+        // spring back to base and damping
+        stream.vx += (stream.baseX - stream.x) * STREAM_SPRING;
+        stream.vx *= STREAM_DAMPING;
+        // clamp velocity
+        stream.vx = Math.max(-40, Math.min(40, stream.vx));
+        stream.x += stream.vx;
+        // keep streams inside canvas bounds
+        if (stream.x < -40) stream.x = -40;
+        if (stream.x > canvas.width + 40) stream.x = canvas.width + 40;
+
+        stream.chars.forEach((char, i) => {
+          // falling
+          char.y += stream.speed;
+          if (char.y > canvas.height) {
+            char.y = -20;
+            char.char = String.fromCharCode(0x30a0 + Math.random() * 96);
+          }
+          // slight horizontal jitter per char for organic look
+          const sway = Math.sin(time * 3 + i * 0.2) * 0.4;
+          const charX = stream.x + sway;
+
+          const distToMouse = Math.hypot(charX - mouse.x, char.y - mouse.y);
+          const highlight = distToMouse < 100 ? 1.5 : 1;
+          const fade =
+            i === stream.chars.length - 1
+              ? 1
+              : 0.3 + (i / stream.chars.length) * 0.7;
+          ctx.fillStyle = `rgba(212, 168, 83, ${
+            stream.opacity * fade * highlight
+          })`;
+          ctx.font = "12px monospace";
+          ctx.fillText(char.char, charX, char.y);
         });
       });
 
-      animationId = requestAnimationFrame(drawParticles);
+      // 3D structures disabled — removed per user request
+
+      // Draw neural network nodes and connections
+      nodes.forEach((node, i) => {
+        const dx = mouse.x - node.x;
+        const dy = mouse.y - node.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const maxDist = 180;
+
+        // Cursor attraction/interaction
+        if (dist < maxDist && dist > 0) {
+          const force = ((maxDist - dist) / maxDist) * 0.8;
+          node.vx += (dx / dist) * force * 0.05;
+          node.vy += (dy / dist) * force * 0.05;
+          node.energy = Math.min(1, node.energy + 0.02);
+          node.isActive = true;
+        } else {
+          node.energy = Math.max(0.2, node.energy - 0.005);
+          if (Math.random() > 0.995) node.isActive = !node.isActive;
+        }
+
+        // Spring back
+        node.vx += (node.baseX - node.x) * 0.008;
+        node.vy += (node.baseY - node.y) * 0.008;
+        node.vx *= 0.97;
+        node.vy *= 0.97;
+        node.x += node.vx;
+        node.y += node.vy;
+        node.pulsePhase += 0.03;
+
+        // Draw connections to nearby nodes
+        nodes.slice(i + 1).forEach((other) => {
+          const d = Math.hypot(node.x - other.x, node.y - other.y);
+          if (d < 120 * node.connectionStrength) {
+            const alpha =
+              0.08 * (1 - d / (120 * node.connectionStrength)) * node.energy;
+            // Connection line
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y);
+            ctx.lineTo(other.x, other.y);
+            const gradient = ctx.createLinearGradient(
+              node.x,
+              node.y,
+              other.x,
+              other.y
+            );
+            gradient.addColorStop(0, `rgba(212, 168, 83, ${alpha})`);
+            gradient.addColorStop(0.5, `rgba(212, 168, 83, ${alpha * 1.5})`);
+            gradient.addColorStop(1, `rgba(212, 168, 83, ${alpha})`);
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            // Traveling pulse along connection
+            if (node.isActive && Math.random() > 0.98) {
+              const pulsePos = (time * 2) % 1;
+              const px = node.x + (other.x - node.x) * pulsePos;
+              const py = node.y + (other.y - node.y) * pulsePos;
+              ctx.beginPath();
+              ctx.arc(px, py, 2, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(212, 168, 83, ${alpha * 3})`;
+              ctx.fill();
+            }
+          }
+        });
+
+        // Draw node with glow
+        const pulseSize =
+          node.size * (1 + Math.sin(node.pulsePhase) * 0.3 * node.energy);
+        const nodeOpacity = 0.3 + node.energy * 0.5;
+
+        // Outer glow
+        const glowGradient = ctx.createRadialGradient(
+          node.x,
+          node.y,
+          0,
+          node.x,
+          node.y,
+          pulseSize * 4
+        );
+        glowGradient.addColorStop(
+          0,
+          `rgba(212, 168, 83, ${nodeOpacity * 0.3})`
+        );
+        glowGradient.addColorStop(1, "rgba(212, 168, 83, 0)");
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, pulseSize * 4, 0, Math.PI * 2);
+        ctx.fillStyle = glowGradient;
+        ctx.fill();
+
+        // Core
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, pulseSize, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212, 168, 83, ${nodeOpacity})`;
+        ctx.fill();
+      });
+
+      animationId = requestAnimationFrame(draw);
     };
 
     resize();
-    initParticles();
-    drawParticles();
+    initElements();
+    draw();
 
     const handleResize = () => {
       resize();
-      initParticles();
+      initElements();
     };
 
     window.addEventListener("resize", handleResize);
@@ -287,6 +651,7 @@ const Login = () => {
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
+      if (inactivityTimer) clearTimeout(inactivityTimer);
     };
   }, []);
 
@@ -320,7 +685,7 @@ const Login = () => {
 
       if (!validateUsername(newUsername)) {
         validationErrors.username =
-          "Username must be 3-20 characters (letters, numbers, underscores only)";
+          "3-20 characters (letters, numbers, underscores)";
       }
       if (!validateEmail(newEmail)) {
         validationErrors.email = "Please enter a valid email address";
@@ -378,7 +743,6 @@ const Login = () => {
         setNewPassword("");
         setNewFirstName("");
         setNewLastName("");
-        console.log("Registered successfully!");
       } else {
         await authApi.login({
           username: username.trim(),
@@ -390,11 +754,47 @@ const Login = () => {
         setLoginSuccess(true);
         // Store flag to trigger dashboard animation
         sessionStorage.setItem("justLoggedIn", "true");
-        // Navigate after animation
-        setTimeout(() => {
+
+        // Preload dashboard data during animation and store in session cache
+        const weatherLocation = profile?.location || "Houston, Texas, USA";
+        const preloadPromises = [
+          financialsDashboardApi.getFullDashboard("1y").catch(() => null),
+          subscriptionsDashboardApi.getFullDashboard().catch(() => null),
+          travelDashboardApi.getDashboard().catch(() => null),
+          tripsApi.getUpcoming().catch(() => []),
+          fetch(
+            `http://localhost:8000/api/weather/?location=${encodeURIComponent(
+              weatherLocation
+            )}`
+          )
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null),
+        ];
+
+        // Store preloaded data in session cache for immediate use
+        Promise.all(preloadPromises)
+          .then(([financials, subscriptions, travel, trips, weather]) => {
+            // Store each piece of data in the session cache separately
+            if (financials) setCache(CACHE_KEYS.HOME_FINANCIALS, financials);
+            if (subscriptions)
+              setCache(CACHE_KEYS.HOME_SUBSCRIPTIONS, subscriptions);
+            if (travel)
+              setCache(CACHE_KEYS.HOME_TRAVEL, {
+                ...travel,
+                upcomingTrips: trips,
+              });
+            if (weather) setCache(getWeatherCacheKey(weatherLocation), weather);
+          })
+          .catch(() => {
+            // Silently fail - Dashboard will fetch fresh data
+          });
+
+        // Show the success overlay briefly so the user sees feedback,
+        // then navigate. Keep a short delay so animations can begin.
+        const LOGIN_SUCCESS_DELAY_MS = 2000; // match the success animation duration
+        navTimeoutRef.current = setTimeout(() => {
           navigate("/dashboard");
-        }, 800);
-        console.log("Logged in successfully!");
+        }, LOGIN_SUCCESS_DELAY_MS);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -434,15 +834,21 @@ const Login = () => {
         loginSuccess ? "login-success" : ""
       }`}
     >
-      {/* Animated particle canvas background */}
+      {/* Advanced futuristic canvas background */}
       <canvas ref={canvasRef} className="particle-canvas" />
 
       {/* Subtle ambient orbs */}
       <div className="orb orb-1"></div>
       <div className="orb orb-2"></div>
 
-      {/* Subtle grid overlay */}
+      {/* Enhanced tech grid overlay */}
       <div className="grid-overlay"></div>
+
+      {/* Corner tech decorations */}
+      <div className="corner-decoration corner-tl"></div>
+      <div className="corner-decoration corner-tr"></div>
+      <div className="corner-decoration corner-bl"></div>
+      <div className="corner-decoration corner-br"></div>
 
       {/* Login success overlay */}
       {loginSuccess && (
@@ -451,7 +857,34 @@ const Login = () => {
             <div className="success-logo">
               <img src="/nexus_logo.svg" alt="Nexus" />
             </div>
-            <div className="success-text">Welcome back</div>
+            <div className="success-text">
+              {"Nexus".split("").map((ch, idx) => (
+                <span
+                  key={idx}
+                  className="success-letter"
+                  style={{ "--i": idx }}
+                  data-char={ch}
+                  aria-hidden="true"
+                >
+                  {ch}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout overlay (shown when redirected here after logout) */}
+      {showLogoutOverlay && (
+        <div className="logout-overlay">
+          <div className="logout-content">
+            <div className="logout-logo">
+              <img src="/nexus_logo.svg" alt="Nexus" />
+            </div>
+            <div className="logout-text">Signed out</div>
+            <div className="logout-progress">
+              <div className="logout-progress-bar"></div>
+            </div>
           </div>
         </div>
       )}
@@ -570,7 +1003,6 @@ const Login = () => {
                 ) : (
                   <>
                     <span>Sign In</span>
-                    <i className="bx bx-right-arrow-alt"></i>
                   </>
                 )}
               </span>
@@ -785,7 +1217,6 @@ const Login = () => {
                 ) : (
                   <>
                     <span>Create Account</span>
-                    <i className="bx bx-right-arrow-alt"></i>
                   </>
                 )}
               </span>

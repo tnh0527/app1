@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import { ErrorState } from "./LoadingStates/LoadingStates";
+import "./ErrorBoundary.css";
 
 /**
  * ErrorBoundary - Catches JavaScript errors anywhere in child component tree
@@ -45,34 +47,21 @@ class ErrorBoundary extends Component {
           : fallback;
       }
 
-      // Default fallback UI
+      // Default fallback UI using ErrorState component
       return (
-        <div className="error-boundary-container" style={styles.container}>
-          <div style={styles.content}>
-            <div style={styles.icon}>⚠️</div>
-            <h2 style={styles.title}>Something went wrong</h2>
-            <p style={styles.message}>
-              An unexpected error occurred while loading the {pageName}.
-            </p>
-            {process.env.NODE_ENV === "development" && error && (
-              <details style={styles.details}>
-                <summary style={styles.summary}>Error Details</summary>
-                <pre style={styles.errorText}>{error.toString()}</pre>
-              </details>
-            )}
-            <div style={styles.actions}>
-              <button onClick={this.handleReset} style={styles.button}>
-                Try Again
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                style={styles.secondaryButton}
-              >
-                Reload Page
-              </button>
-            </div>
-          </div>
-        </div>
+        <ErrorState
+          title="Something went wrong"
+          message={`An unexpected error occurred while loading the ${pageName}.`}
+          onRetry={this.handleReset}
+          onReload={() => window.location.reload()}
+        >
+          {process.env.NODE_ENV === "development" && error && (
+            <details className="error-details">
+              <summary>Error Details</summary>
+              <pre className="error-text">{error.toString()}</pre>
+            </details>
+          )}
+        </ErrorState>
       );
     }
 
@@ -80,86 +69,5 @@ class ErrorBoundary extends Component {
   }
 }
 
-// Default styles for the error boundary
-const styles = {
-  container: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "400px",
-    padding: "24px",
-    backgroundColor: "#fafafa",
-    borderRadius: "8px",
-    margin: "16px",
-  },
-  content: {
-    textAlign: "center",
-    maxWidth: "500px",
-  },
-  icon: {
-    fontSize: "48px",
-    marginBottom: "16px",
-  },
-  title: {
-    fontSize: "24px",
-    fontWeight: "600",
-    color: "#1a1a1a",
-    margin: "0 0 8px 0",
-  },
-  message: {
-    fontSize: "16px",
-    color: "#666",
-    margin: "0 0 24px 0",
-  },
-  details: {
-    textAlign: "left",
-    backgroundColor: "#fff",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
-    padding: "12px",
-    marginBottom: "24px",
-  },
-  summary: {
-    cursor: "pointer",
-    fontWeight: "500",
-    color: "#333",
-  },
-  errorText: {
-    marginTop: "12px",
-    padding: "12px",
-    backgroundColor: "#f5f5f5",
-    borderRadius: "4px",
-    overflow: "auto",
-    fontSize: "12px",
-    color: "#d32f2f",
-  },
-  actions: {
-    display: "flex",
-    gap: "12px",
-    justifyContent: "center",
-  },
-  button: {
-    padding: "10px 24px",
-    fontSize: "14px",
-    fontWeight: "500",
-    color: "#fff",
-    backgroundColor: "#1976d2",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    transition: "background-color 0.2s",
-  },
-  secondaryButton: {
-    padding: "10px 24px",
-    fontSize: "14px",
-    fontWeight: "500",
-    color: "#1976d2",
-    backgroundColor: "#fff",
-    border: "1px solid #1976d2",
-    borderRadius: "6px",
-    cursor: "pointer",
-    transition: "background-color 0.2s",
-  },
-};
 
 export default ErrorBoundary;

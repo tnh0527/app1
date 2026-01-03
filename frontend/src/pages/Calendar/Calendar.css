@@ -7,15 +7,14 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 100vh;
+  min-height: 0;
   background: transparent;
   overflow: hidden;
   flex: 1;
-  /* Allow the spacer to push content, don't force full width */
-  width: 0;
   min-width: 0;
   padding-right: var(--page-horizontal-padding);
   padding-left: var(--page-horizontal-padding);
+  padding-bottom: 24px;
   position: relative;
   z-index: 1;
 }

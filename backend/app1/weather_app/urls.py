@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     WeatherView,
+    WeatherAPIStatusView,
     PlaceSuggestionsView,
     SavedLocationListCreateView,
     SavedLocationDetailView,
@@ -10,6 +11,9 @@ from .views import (
 
 urlpatterns = [
     path("weather/", WeatherView.as_view(), name="weather_view"),
+    path(
+        "weather/api-status/", WeatherAPIStatusView.as_view(), name="weather_api_status"
+    ),
     path("place/", PlaceSuggestionsView.as_view(), name="place_view"),
     # Saved locations endpoints
     path(

@@ -1,11 +1,10 @@
 .settings-page {
   background: transparent;
   flex: 1;
-  width: 0;
   min-width: 0;
-  padding: 40px;
+  padding: 0 var(--page-horizontal-padding) 24px;
   color: var(--clr-white);
-  min-height: 100vh;
+  min-height: 0;
   overflow-x: hidden;
   position: relative;
   z-index: 1;
