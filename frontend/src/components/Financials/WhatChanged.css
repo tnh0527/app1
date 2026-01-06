@@ -1,7 +1,8 @@
 /* What Changed Panel Styles */
 
 .changes-panel {
-  height: 100%;
+  /* size to content; inner .changes-content manages scrolling */
+  height: auto;
   display: flex;
   flex-direction: column;
 }

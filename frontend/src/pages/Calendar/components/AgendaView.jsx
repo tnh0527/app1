@@ -9,10 +9,11 @@ const AgendaView = () => {
     holidays,
     showHolidays,
     openEventModal,
-    deleteEvent,
+    openDeleteModal,
     goToDate,
     setCurrentView,
     CALENDAR_VIEWS,
+    getDateRange,
   } = useCalendar();
 
   const today = useMemo(() => {
@@ -21,13 +22,12 @@ const AgendaView = () => {
     return t;
   }, []);
 
-  // Group events by date for the next 30 days
+  // Group events by date for the agenda range (use getDateRange for consistency)
   const groupedEvents = useMemo(() => {
-    const startDate = new Date(currentDate);
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 30);
+    const { start: startDate, end: endDate } = getDateRange(
+      currentDate,
+      CALENDAR_VIEWS.AGENDA
+    );
 
     // Filter and sort events
     const filteredEvents = events
@@ -81,13 +81,11 @@ const AgendaView = () => {
   );
 
   const handleEventDelete = useCallback(
-    (e, eventId) => {
+    (e, event) => {
       e.stopPropagation();
-      if (confirm("Delete this event?")) {
-        deleteEvent(eventId);
-      }
+      openDeleteModal(event);
     },
-    [deleteEvent]
+    [openDeleteModal]
   );
 
   const handleDateClick = useCallback(
@@ -316,14 +314,18 @@ const AgendaView = () => {
                           >
                             <i className="bi bi-pencil"></i>
                           </button>
-                          <button
-                            type="button"
-                            className="event-action-btn event-action-btn--delete"
-                            onClick={(e) => handleEventDelete(e, event.id)}
-                            aria-label="Delete event"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
+                          {!(
+                            event.is_immutable || event.event?.is_immutable
+                          ) && (
+                            <button
+                              type="button"
+                              className="event-action-btn event-action-btn--delete"
+                              onClick={(e) => handleEventDelete(e, event)}
+                              aria-label="Delete event"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

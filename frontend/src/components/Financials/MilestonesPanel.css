@@ -1,7 +1,8 @@
 /* Milestones Panel Styles */
 
 .milestones-panel {
-  height: 100%;
+  /* let the panel size to its content and rely on inner scrolling */
+  height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -187,4 +188,3 @@
   font-size: 12px;
   color: var(--clr-silver);
 }
-

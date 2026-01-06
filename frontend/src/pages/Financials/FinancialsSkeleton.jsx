@@ -1,6 +1,5 @@
 import {
   SkeletonElement,
-  SkeletonCard,
   SkeletonChart,
 } from "../../components/shared/LoadingStates";
 import "./Financials.css";
@@ -10,7 +9,7 @@ import "./Financials.css";
  */
 export const FinancialsSkeleton = () => {
   return (
-    <div className="financials-page">
+    <>
       {/* Header Skeleton */}
       <div className="financials-header skeleton-header">
         <div className="header-title">
@@ -167,7 +166,7 @@ export const FinancialsSkeleton = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

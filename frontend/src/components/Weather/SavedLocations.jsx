@@ -26,7 +26,7 @@ const LocalTime = ({ timeZone }) => {
       try {
         // show hours:minutes:seconds with am/pm (e.g. 4:21:09 pm)
         setTime(moment().tz(tz).format("h:mm:ss a"));
-      } catch (err) {
+      } catch {
         setTime("");
       }
     };
@@ -99,7 +99,7 @@ const SavedLocations = ({
             const { data } = JSON.parse(cached);
             initialPreviews[location.id] = data;
           }
-        } catch (err) {
+        } catch {
           // ignore cache parse errors
         }
       }
@@ -145,7 +145,9 @@ const SavedLocations = ({
               cacheKey,
               JSON.stringify({ data: previewData, timestamp: Date.now() })
             );
-          } catch (err) {}
+          } catch {
+            // Ignore sessionStorage errors
+          }
         } catch (error) {
           console.error(`Failed to fetch preview for ${location.name}:`, error);
         }
@@ -227,6 +229,7 @@ const SavedLocations = ({
     sunriseISO,
     sunsetISO,
     timezone,
+    // eslint-disable-next-line no-unused-vars
     fallbackIsDay
   ) => {
     if (sunriseISO && sunsetISO && timezone) {
@@ -236,7 +239,7 @@ const SavedLocations = ({
         const sunrise = moment.tz(sunriseISO, tz);
         const sunset = moment.tz(sunsetISO, tz);
         return currentTime.isAfter(sunrise) && currentTime.isBefore(sunset);
-      } catch (err) {
+      } catch {
         // fallthrough to fallback
       }
     }
@@ -262,7 +265,7 @@ const SavedLocations = ({
             name: k.replace(cachePrefix, ""),
             data: parsed?.data || null,
           };
-        } catch (err) {
+        } catch {
           return null;
         }
       })
@@ -454,7 +457,9 @@ const SavedLocations = ({
                   try {
                     v.pause();
                     v.currentTime = 0;
-                  } catch (err) {}
+                  } catch {
+                    // Ignore video control errors
+                  }
                 }
               }}
             >

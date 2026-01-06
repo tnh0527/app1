@@ -1,21 +1,65 @@
-import { useContext } from "react";
+import { useContext, useState, useRef, useEffect } from "react";
 import { SidebarContext } from "../../../contexts/SidebarContext";
 import { useCalendar, CALENDAR_VIEWS } from "../context/CalendarContext";
 import "./CalendarTopBar.css";
 
 const CalendarTopBar = () => {
+  // eslint-disable-next-line no-unused-vars
   const { toggleSidebar } = useContext(SidebarContext);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const topBarRef = useRef(null);
   const {
     currentDate,
     currentView,
     setCurrentView,
     navigateDate,
     goToToday,
+    goToDate,
     openEventModal,
     showHolidays,
     setShowHolidays,
     dueReminders,
   } = useCalendar();
+
+  const handleMonthSelect = (year, month) => {
+    const newDate = new Date(year, month, 1);
+    goToDate(newDate);
+    setShowMonthPicker(false);
+  };
+
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+
+  useEffect(() => {
+    if (showMonthPicker) setSelectedYear(currentDate.getFullYear());
+  }, [showMonthPicker, currentDate]);
+
+  const prevYear = () =>
+    setSelectedYear((y) => {
+      const newY = y - 1;
+      goToDate(new Date(newY, currentDate.getMonth(), 1));
+      return newY;
+    });
+
+  const nextYear = () =>
+    setSelectedYear((y) => {
+      const newY = y + 1;
+      goToDate(new Date(newY, currentDate.getMonth(), 1));
+      return newY;
+    });
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (
+        showMonthPicker &&
+        topBarRef.current &&
+        !topBarRef.current.contains(e.target)
+      ) {
+        setShowMonthPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [showMonthPicker]);
 
   const getDateRangeLabel = () => {
     const options = { month: "long", year: "numeric" };
@@ -70,7 +114,7 @@ const CalendarTopBar = () => {
   ];
 
   return (
-    <div className="calendar-top-bar">
+    <div className="calendar-top-bar" ref={topBarRef}>
       <div className="calendar-top-bar-left">
         <div className="calendar-navigation">
           <button
@@ -82,7 +126,32 @@ const CalendarTopBar = () => {
             <i className="bi bi-chevron-left"></i>
           </button>
 
-          <h1 className="calendar-date-label">{getDateRangeLabel()}</h1>
+          <h1
+            className={`calendar-date-label ${
+              currentView === CALENDAR_VIEWS.MONTH
+                ? "calendar-date-label--clickable"
+                : ""
+            }`}
+            onClick={() =>
+              currentView === CALENDAR_VIEWS.MONTH &&
+              setShowMonthPicker((s) => !s)
+            }
+            role={currentView === CALENDAR_VIEWS.MONTH ? "button" : "heading"}
+            tabIndex={currentView === CALENDAR_VIEWS.MONTH ? 0 : undefined}
+            title={
+              currentView === CALENDAR_VIEWS.MONTH
+                ? "Click to select month"
+                : undefined
+            }
+          >
+            {getDateRangeLabel()}
+            {currentView === CALENDAR_VIEWS.MONTH && (
+              <i
+                className="bi bi-chevron-down"
+                style={{ marginLeft: "8px", fontSize: "0.8em" }}
+              ></i>
+            )}
+          </h1>
 
           <button
             type="button"
@@ -157,6 +226,75 @@ const CalendarTopBar = () => {
           )}
         </div>
       </div>
+
+      {/* Month Picker Dropdown */}
+      {showMonthPicker && (
+        <div
+          className="month-picker-dropdown"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-label="Select month"
+        >
+          <div className="month-picker-panel">
+            <div className="month-picker-header">
+              <button
+                type="button"
+                className="year-btn"
+                onClick={prevYear}
+                aria-label="Previous year"
+              >
+                <i className="bi bi-chevron-left"></i>
+              </button>
+              <div className="year-display">{selectedYear}</div>
+              <button
+                type="button"
+                className="year-btn"
+                onClick={nextYear}
+                aria-label="Next year"
+              >
+                <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
+
+            <div className="months-grid">
+              {[
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+              ].map((monthName, monthIndex) => {
+                const isCurrentMonth =
+                  selectedYear === currentDate.getFullYear() &&
+                  monthIndex === currentDate.getMonth();
+                const today = new Date();
+                const isToday =
+                  selectedYear === today.getFullYear() &&
+                  monthIndex === today.getMonth();
+                return (
+                  <button
+                    key={monthIndex}
+                    type="button"
+                    className={`month-btn ${
+                      isCurrentMonth ? "month-btn--current" : ""
+                    } ${isToday ? "month-btn--today" : ""}`}
+                    onClick={() => handleMonthSelect(selectedYear, monthIndex)}
+                  >
+                    {monthName.slice(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

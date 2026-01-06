@@ -228,6 +228,41 @@ const EventModal = () => {
       }
     }
 
+    // Custom weekly recurrence must have at least one weekday selected
+    if (showCustomRecurrence && recurrenceFreq === "WEEKLY") {
+      if (!recurrenceWeekdays || recurrenceWeekdays.length === 0) {
+        newErrors.recurrenceWeekdays =
+          "Select at least one weekday for weekly recurrence";
+      }
+    }
+
+    // Priority validation (must be one of allowed values or empty)
+    const allowedPriorities = Object.values(PRIORITY_LEVELS || {});
+    if (priority && !allowedPriorities.includes(priority)) {
+      newErrors.priority = "Invalid priority selected";
+    }
+
+    // Color validation (allow named ids or hex codes)
+    if (eventColor) {
+      const colorValid =
+        /^[a-zA-Z0-9_-]+$/.test(eventColor) ||
+        /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(eventColor);
+      if (!colorValid) {
+        newErrors.color = "Invalid color";
+      }
+    }
+
+    // Reminders validation
+    if (reminders && reminders.length > 0) {
+      const validReminderValues = REMINDER_OPTIONS.map((o) => o.value);
+      for (const r of reminders) {
+        if (!validReminderValues.includes(r)) {
+          newErrors.reminders = "Invalid reminder value";
+          break;
+        }
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [
@@ -266,6 +301,8 @@ const EventModal = () => {
         start_at: start.toISOString(),
         end_at: end.toISOString(),
         all_day: allDay,
+        color: eventColor,
+        priority: priority || null,
       };
 
       // Add recurrence if set
@@ -548,6 +585,9 @@ const EventModal = () => {
                       </button>
                     ))}
                   </div>
+                  {errors.priority && (
+                    <span className="form-error">{errors.priority}</span>
+                  )}
                 </div>
 
                 {/* Color */}
@@ -572,6 +612,9 @@ const EventModal = () => {
                       </button>
                     ))}
                   </div>
+                  {errors.color && (
+                    <span className="form-error">{errors.color}</span>
+                  )}
                 </div>
               </div>
             )}
@@ -591,29 +634,45 @@ const EventModal = () => {
 
                 {(recurrenceFreq || showCustomRecurrence) && (
                   <>
-                    <div className="form-group">
-                      <label className="form-label">Repeat every</label>
-                      <div className="interval-input">
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Repeat every</label>
+                        <div className="interval-input">
+                          <input
+                            type="number"
+                            className="form-input form-input--number"
+                            min={1}
+                            max={99}
+                            value={recurrenceInterval}
+                            onChange={(e) =>
+                              setRecurrenceInterval(
+                                Math.max(1, parseInt(e.target.value) || 1)
+                              )
+                            }
+                          />
+                          <span className="interval-label">
+                            {recurrenceFreq === "DAILY"
+                              ? "day(s)"
+                              : recurrenceFreq === "WEEKLY"
+                              ? "week(s)"
+                              : recurrenceFreq === "MONTHLY"
+                              ? "month(s)"
+                              : "time(s)"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">End repeat</label>
                         <input
-                          type="number"
-                          className="form-input form-input--number"
-                          min={1}
-                          max={99}
-                          value={recurrenceInterval}
-                          onChange={(e) =>
-                            setRecurrenceInterval(
-                              Math.max(1, parseInt(e.target.value) || 1)
-                            )
-                          }
+                          type="date"
+                          className="form-input"
+                          value={recurrenceUntil}
+                          onChange={(e) => setRecurrenceUntil(e.target.value)}
+                          placeholder="Never"
                         />
-                        <span className="interval-label">
-                          {recurrenceFreq === "DAILY"
-                            ? "day(s)"
-                            : recurrenceFreq === "WEEKLY"
-                            ? "week(s)"
-                            : recurrenceFreq === "MONTHLY"
-                            ? "month(s)"
-                            : "time(s)"}
+                        <span className="form-hint">
+                          Leave empty for no end date
                         </span>
                       </div>
                     </div>
@@ -637,22 +696,13 @@ const EventModal = () => {
                             </button>
                           ))}
                         </div>
+                        {errors.recurrenceWeekdays && (
+                          <span className="form-error">
+                            {errors.recurrenceWeekdays}
+                          </span>
+                        )}
                       </div>
                     )}
-
-                    <div className="form-group">
-                      <label className="form-label">End repeat</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={recurrenceUntil}
-                        onChange={(e) => setRecurrenceUntil(e.target.value)}
-                        placeholder="Never"
-                      />
-                      <span className="form-hint">
-                        Leave empty for no end date
-                      </span>
-                    </div>
 
                     {/* Recurrence Preview - Hidden when Custom is selected */}
                     {!showCustomRecurrence && (
@@ -736,6 +786,9 @@ const EventModal = () => {
                       Add a reminder to get notified before this event
                     </span>
                   </div>
+                )}
+                {errors.reminders && (
+                  <span className="form-error">{errors.reminders}</span>
                 )}
               </div>
             )}

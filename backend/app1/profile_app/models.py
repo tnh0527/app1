@@ -31,6 +31,7 @@ class Profile(models.Model):
     # Personal Information
     birthdate = models.DateField(null=True, blank=True)
     profile_pic = models.CharField(max_length=150, blank=True)
+    google_picture_url = models.URLField(max_length=500, blank=True, help_text="Google profile picture URL")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True, null=True)

@@ -5,30 +5,31 @@ const Visibility = ({ visibilityData, currentVisibility }) => {
   const [displayVisibility, setDisplayVisibility] = useState(null);
 
   useEffect(() => {
+    // Convert meters to miles for display
+    const metersToMiles = (m) => m / 1609.344;
+
     if (currentVisibility !== undefined && currentVisibility !== null) {
-      // Convert meters to km
-      setDisplayVisibility((currentVisibility / 1000).toFixed(1));
+      setDisplayVisibility(metersToMiles(currentVisibility).toFixed(1));
     } else if (visibilityData) {
       const updateLevel = () => {
         const currentHour = new Date().getHours();
         const currentData = visibilityData.find((hourData) => {
-          const hour = parseInt(hourData.time.split("T")[1].split(":")[0], 10);
+          const parts = (hourData.time || "").split("T");
+          if (!parts[1]) return false;
+          const hour = parseInt(parts[1].split(":")[0], 10);
           return hour === currentHour;
         });
-        if (currentData) {
-          setDisplayVisibility((currentData.visibility / 1000).toFixed(1));
+        if (currentData && currentData.visibility != null) {
+          setDisplayVisibility(
+            metersToMiles(currentData.visibility).toFixed(1)
+          );
         }
       };
       updateLevel();
     }
   }, [visibilityData, currentVisibility]);
 
-  const visibilityKm =
-    displayVisibility === null ? null : Number(displayVisibility);
-  const visibilityPct =
-    visibilityKm === null
-      ? 0
-      : Math.max(0, Math.min(100, (visibilityKm / 20) * 100));
+  // For now just display the value
 
   return (
     <div
@@ -41,7 +42,7 @@ const Visibility = ({ visibilityData, currentVisibility }) => {
               <i className="bi bi-eye visibility-icon"></i>
               <div className="visibility-value-unit">
                 <span className="visibility-value">{displayVisibility}</span>
-                <span className="visibility-unit">km</span>
+                <span className="visibility-unit">mi</span>
               </div>
             </div>
 

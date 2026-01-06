@@ -11,7 +11,8 @@ const LocationSelector = ({
 }) => {
   const [savedLocations, setSavedLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [_error, _setError] = useState(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -23,10 +24,10 @@ const LocationSelector = ({
       setIsLoading(true);
       const locations = await getSavedLocations();
       setSavedLocations(locations);
-      setError(null);
+      _setError(null);
     } catch (err) {
       console.error("Failed to fetch saved locations:", err);
-      setError(null); // Don't show error to user, just continue
+      _setError(null); // Don't show error to user, just continue
       setSavedLocations([]);
     } finally {
       setIsLoading(false);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import "./TravelHero.css";
 
 /**
@@ -66,6 +66,7 @@ const getTripTypeIcon = (type) => {
   return icons[type] || "bi-airplane";
 };
 
+// eslint-disable-next-line no-unused-vars
 export const TravelHero = ({ summary, activeTrip, nextTrip, onViewTrip }) => {
   const hasUpcomingTrip = nextTrip && nextTrip.days_until_trip <= 30;
   const countdown = useCountdown(nextTrip?.start_date);

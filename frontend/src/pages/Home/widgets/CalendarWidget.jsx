@@ -244,7 +244,7 @@ export const CalendarWidget = ({ onNavigate }) => {
           </div>
           <div>
             <h3 className="widget-title">Calendar</h3>
-            <p className="widget-subtitle">Today's agenda</p>
+            <p className="widget-subtitle">Today&apos;s agenda</p>
           </div>
         </div>
         <div className="widget-arrow" onClick={onNavigate}>

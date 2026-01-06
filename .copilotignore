@@ -1,0 +1,45 @@
+# Reduce scan scope for AI agents.
+
+# VCS and editor cruft
+.git/
+**/.git/
+**/.DS_Store
+**/Thumbs.db
+**/.idea/
+**/.vscode/
+
+# Python virtualenvs, caches, compiled files
+backend/djangoenv/
+**/.venv/
+**/env/
+**/__pycache__/
+**/*.py[cod]
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.cache/
+**/.coverage*
+**/htmlcov/
+
+# Logs and artifacts
+**/*.log
+**/logs/
+
+# Backend generated assets
+backend/media/
+backend/staticfiles/
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/playwright-artifacts/
+frontend/puppeteer-screenshots/
+frontend/public/videos/
+
+# Misc large outputs
+**/*.sqlite3

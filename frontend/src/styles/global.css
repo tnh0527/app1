@@ -723,6 +723,60 @@ i.bi-cloud-fog2-fill {
   -webkit-text-fill-color: transparent;
 }
 
+/* ============================================
+   SKELETON LOADING ANIMATION
+   ============================================ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-section {
+  opacity: 0.8;
+}
+
+.skeleton-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+
+.skeleton-icon {
+  flex-shrink: 0;
+}
+
+.skeleton-title {
+  border-radius: 6px;
+}
+
+.skeleton-text {
+  border-radius: 4px;
+}
+
+.skeleton-button {
+  margin-left: auto;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

@@ -9,7 +9,7 @@ class Calendar(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="calendars"
     )
     name = models.CharField(max_length=100)
-    color = models.CharField(max_length=20, default="teal")  # Theme color for calendar
+    color = models.CharField(max_length=255, default="teal")  # Theme color for calendar
     timezone = models.CharField(max_length=64, default="UTC")
     is_default = models.BooleanField(default=False)
     is_visible = models.BooleanField(default=True)  # Toggle visibility in UI
@@ -44,7 +44,7 @@ class EventCategory(models.Model):
         related_name="event_categories",
     )
     name = models.CharField(max_length=50)
-    color = models.CharField(max_length=20, default="teal")
+    color = models.CharField(max_length=255, default="teal")
     icon = models.CharField(max_length=50, blank=True)  # Icon identifier
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -92,12 +92,14 @@ class Event(models.Model):
     timezone = models.CharField(max_length=64, default="UTC")
 
     # Event styling
-    color = models.CharField(max_length=20, default="teal")
+    color = models.CharField(max_length=255, default="teal")
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, blank=True)
 
     # RFC5545-ish rule fragment, e.g. "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE,FR"
     rrule = models.TextField(blank=True)
     recurrence_until = models.DateTimeField(null=True, blank=True)
+    # System flag: prevent deletion/modification by users for system-generated events
+    is_immutable = models.BooleanField(default=False)
 
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
@@ -112,6 +114,11 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+
+    def delete(self, *args, **kwargs):
+        if getattr(self, "is_immutable", False):
+            raise ValueError("Cannot delete an immutable system event")
+        return super().delete(*args, **kwargs)
 
 
 class EventOccurrence(models.Model):

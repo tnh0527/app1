@@ -9,7 +9,7 @@ const DayView = () => {
     currentDate,
     events,
     openEventModal,
-    deleteEvent,
+    openDeleteModal,
     navigateDate,
     getHolidaysForDate,
   } = useCalendar();
@@ -75,13 +75,11 @@ const DayView = () => {
   );
 
   const handleEventDelete = useCallback(
-    (e, eventId) => {
+    (e, event) => {
       e.stopPropagation();
-      if (confirm("Delete this event?")) {
-        deleteEvent(eventId);
-      }
+      openDeleteModal(event);
     },
-    [deleteEvent]
+    [openDeleteModal]
   );
 
   const formatHour = (hour) => {
@@ -174,14 +172,16 @@ const DayView = () => {
                     />
                   )}
                   <span className="event-title">{event.title}</span>
-                  <button
-                    type="button"
-                    className="event-delete"
-                    onClick={(e) => handleEventDelete(e, event.id)}
-                    aria-label="Delete event"
-                  >
-                    <i className="bi bi-x"></i>
-                  </button>
+                  {!(event.is_immutable || event.event?.is_immutable) && (
+                    <button
+                      type="button"
+                      className="event-delete"
+                      onClick={(e) => handleEventDelete(e, event)}
+                      aria-label="Delete event"
+                    >
+                      <i className="bi bi-x"></i>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -267,14 +267,16 @@ const DayView = () => {
                           hour12: true,
                         })}
                       </span>
-                      <button
-                        type="button"
-                        className="event-delete"
-                        onClick={(e) => handleEventDelete(e, event.id)}
-                        aria-label="Delete event"
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
+                      {!(event.is_immutable || event.event?.is_immutable) && (
+                        <button
+                          type="button"
+                          className="event-delete"
+                          onClick={(e) => handleEventDelete(e, event)}
+                          aria-label="Delete event"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      )}
                     </div>
                     <h3 className="event-title">{event.title}</h3>
                     {event.description && (

@@ -6,7 +6,8 @@ import "./WeatherMap.css";
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_REACT_APP_MAPBOX_ACCESS_TOKEN;
 
 // Helper to get wind direction label
-const getWindDirection = (degrees) => {
+// eslint-disable-next-line no-unused-vars
+const _getWindDirection = (degrees) => {
   if (degrees === null || degrees === undefined) return "";
   const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const index = Math.round(degrees / 45) % 8;
@@ -19,8 +20,10 @@ const WeatherMap = ({ mapData }) => {
   const map = useRef(null);
   const markerRef = useRef(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
-  const [hasLocation, setHasLocation] = useState(true); // show default map by default
-  const [mapBearing, setMapBearing] = useState(0); // Track map rotation for compass
+  // eslint-disable-next-line no-unused-vars
+  const [_hasLocation, _setHasLocation] = useState(true); // show default map by default
+  // eslint-disable-next-line no-unused-vars
+  const [_mapBearing, _setMapBearing] = useState(0); // Track map rotation for compass
 
   // Home view = where the map should return after pan/zoom.
   const homeViewRef = useRef({
@@ -51,7 +54,7 @@ const WeatherMap = ({ mapData }) => {
       rawCoords && rawCoords.length >= 2 ? rawCoords : DEFAULT_CENTER;
 
     // If no explicit location provided, we'll show the default Houston center.
-    setHasLocation(true);
+    _setHasLocation(true);
     setIsMapLoading(true); // show loading while map updates
 
     if (!MAPBOX_ACCESS_TOKEN) {
@@ -63,7 +66,12 @@ const WeatherMap = ({ mapData }) => {
 
     // Disable telemetry to prevent "ERR_BLOCKED_BY_CLIENT" errors from ad blockers
     try {
-      mapboxgl.config.TELEMETRY = false;
+      if (mapboxgl?.setTelemetryEnabled) {
+        mapboxgl.setTelemetryEnabled(false);
+      }
+      if (mapboxgl?.config) {
+        mapboxgl.config.TELEMETRY = false;
+      }
     } catch (e) {
       console.warn("Could not disable Mapbox telemetry", e);
     }
@@ -137,7 +145,7 @@ const WeatherMap = ({ mapData }) => {
 
     // Track map rotation for compass
     map.current.on("rotate", () => {
-      setMapBearing(map.current.getBearing());
+      _setMapBearing(map.current.getBearing());
     });
 
     return () => {
@@ -154,10 +162,6 @@ const WeatherMap = ({ mapData }) => {
   }, [mapData]);
 
   // Extract weather properties for overlay
-  const weatherProps = mapData?.features?.[0]?.properties || {};
-  const windSpeed = weatherProps.wind_speed;
-  const windDirection = weatherProps.wind_direction;
-  const precipitation = weatherProps.precip;
   const coords = mapData?.features?.[0]?.geometry?.coordinates;
 
   // Always render map wrapper — default location will be shown when none selected

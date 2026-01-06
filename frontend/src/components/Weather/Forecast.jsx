@@ -1,15 +1,10 @@
 import "./Forecast.css";
-import { useEffect, useState } from "react";
 import { iconMap } from "../../utils/weatherMapping";
 import { Tooltip } from "react-tooltip";
 
-const Forecast = ({ forecast }) => {
-  const [loading, setLoading] = useState(true);
+const Forecast = ({ forecast, isLoading = false }) => {
   const data = forecast && forecast.length > 0 ? forecast : null;
-
-  useEffect(() => {
-    if (data) setLoading(false);
-  }, [data]);
+  const loading = isLoading || !data;
   // console.log("Forecasts:", forecast);
 
   // Helper function to format date into weekday and day/month, treating date as local
@@ -187,7 +182,20 @@ const Forecast = ({ forecast }) => {
           })
         : [...Array(10)].map((_, index) => (
             // Placeholder for skeleton loading state
-            <div className="forecast-card skeleton" key={index}></div>
+            <div className="forecast-card" key={index}>
+              <div
+                className="skeleton-element skeleton-text"
+                style={{ width: "50%", height: "16px", marginBottom: "12px" }}
+              />
+              <div
+                className="skeleton-element skeleton-circle"
+                style={{ width: "48px", height: "48px", margin: "12px auto" }}
+              />
+              <div
+                className="skeleton-element skeleton-text"
+                style={{ width: "70%", height: "20px", marginTop: "12px" }}
+              />
+            </div>
           ))}
     </div>
   );

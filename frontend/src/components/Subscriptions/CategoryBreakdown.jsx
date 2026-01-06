@@ -53,7 +53,8 @@ const formatCurrency = (value) => {
 export const CategoryBreakdown = ({ breakdown }) => {
   const chartData = useMemo(() => {
     const categories = Object.entries(breakdown || {}).filter(
-      ([_, value]) => value > 0
+      // eslint-disable-next-line no-unused-vars
+      ([_key, value]) => value > 0
     );
 
     if (categories.length === 0) {
@@ -68,6 +69,7 @@ export const CategoryBreakdown = ({ breakdown }) => {
       ),
       datasets: [
         {
+          // eslint-disable-next-line no-unused-vars
           data: sortedCategories.map(([_, value]) => value),
           backgroundColor: sortedCategories.map(
             ([cat]) => CATEGORY_COLORS[cat] || "#94a3b8"
@@ -86,7 +88,8 @@ export const CategoryBreakdown = ({ breakdown }) => {
 
   const topCategories = useMemo(() => {
     return Object.entries(breakdown || {})
-      .filter(([_, value]) => value > 0)
+      // eslint-disable-next-line no-unused-vars
+      .filter(([_key, value]) => value > 0)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
   }, [breakdown]);

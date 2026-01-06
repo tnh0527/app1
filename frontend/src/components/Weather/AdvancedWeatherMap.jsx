@@ -2,34 +2,34 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./AdvancedWeatherMap.css";
+import { fetchAQIGrid } from "../../api/weatherApi";
 import {
-  fetchAQIGrid,
-  fetchWindGrid,
-  getAPIStatus,
-} from "../../api/weatherApi";
+  fetchGeoapifyAutocomplete,
+  fetchRouting,
+  fetchNearbyPlaces as fetchNearbyPlacesProxy,
+  fetchMapboxGeocode,
+  fetchTileConfig,
+  fetchOpenWeather,
+} from "../../api/mapProxyApi";
 
+// Mapbox token - this MUST stay in frontend for mapbox-gl to render maps
+// Mapbox tokens are designed to be public and restricted by domain/usage
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_REACT_APP_MAPBOX_ACCESS_TOKEN;
 
-// OpenWeatherMap API key for weather tiles
-const OWM_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY || "";
-
-// WAQI API key for detailed air quality
-const WAQI_API_KEY = import.meta.env.VITE_REACT_APP_WAQI_KEY || "";
-
 // Default map zoom (higher = closer)
-const DEFAULT_ZOOM = 12;
+const DEFAULT_ZOOM = 16;
 
 // Zoom constraints to prevent globe view and maintain flat map projection
-const MIN_ZOOM = 2; // Prevents zooming out to see full globe
-const MAX_ZOOM = 18; // Maximum zoom for detailed view
+const MIN_ZOOM = 2;
+const MAX_ZOOM = 20;
 
 // Weather layer configurations - Updated with gold accent theme
 const WEATHER_LAYERS = {
-  radar: {
-    id: "radar",
-    name: "Precipitation Radar",
+  precipitation: {
+    id: "precipitation",
+    name: "Precipitation",
     icon: "bi-cloud-rain-heavy",
-    description: "Real-time precipitation data",
+    description: "Real-time precipitation radar",
     color: "#60a5fa",
   },
   temperature: {
@@ -98,15 +98,40 @@ const MAP_STYLES = {
 };
 
 // Helper: Get wind direction label
-const getWindDirection = (degrees) => {
+// eslint-disable-next-line no-unused-vars
+const _getWindDirection = (degrees) => {
   if (degrees === null || degrees === undefined) return "";
   const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const index = Math.round(degrees / 45) % 8;
   return directions[index];
 };
 
+// Helper: Format duration (minutes) to hours and minutes display
+const formatDuration = (totalMinutes) => {
+  if (!totalMinutes || totalMinutes <= 0) return "0 min";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = Math.round(totalMinutes % 60);
+  if (hours === 0) return `${minutes} min`;
+  if (minutes === 0) return `${hours} hr`;
+  return `${hours} hr ${minutes} min`;
+};
+
+// Helper: Get timezone offset for coordinates using Mapbox API
+// eslint-disable-next-line no-unused-vars
+const _getTimezoneOffset = async (lng) => {
+  try {
+    // Use a simple approximation: 1 hour per 15 degrees longitude
+    // This is a basic estimate; for production, use a timezone API
+    const offsetHours = Math.round(lng / 15);
+    return offsetHours * 60; // Return in minutes
+  } catch {
+    return 0;
+  }
+};
+
 // Helper: Format temperature color - Updated with theme colors
-const getTempColor = (temp) => {
+// eslint-disable-next-line no-unused-vars
+const _getTempColor = (temp) => {
   if (temp <= 32) return "#60a5fa"; // Blue for freezing
   if (temp <= 50) return "#10b981"; // Green for cool
   if (temp <= 68) return "#d4a853"; // Gold for moderate
@@ -114,21 +139,24 @@ const getTempColor = (temp) => {
   return "#ef4444"; // Red for hot
 };
 
-// Legend data for different layers - Updated colors
+// Legend data for different layers - Enhanced with more categories
 const LAYER_LEGENDS = {
-  radar: {
-    title: "Precipitation",
+  precipitation: {
+    title: "Precipitation Intensity",
     items: [
+      { color: "#10b981", label: "Drizzle" },
       { color: "#22c55e", label: "Light" },
       { color: "#eab308", label: "Moderate" },
       { color: "#f97316", label: "Heavy" },
-      { color: "#ef4444", label: "Extreme" },
+      { color: "#ef4444", label: "Very Heavy" },
+      { color: "#dc2626", label: "Extreme" },
     ],
   },
   temperature: {
     title: "Temperature (°F)",
     items: [
-      { color: "#60a5fa", label: "< 32°" },
+      { color: "#3b82f6", label: "< 20°" },
+      { color: "#60a5fa", label: "20-32°" },
       { color: "#10b981", label: "32-50°" },
       { color: "#d4a853", label: "50-68°" },
       { color: "#fb923c", label: "68-86°" },
@@ -138,27 +166,32 @@ const LAYER_LEGENDS = {
   wind: {
     title: "Wind Speed (mph)",
     items: [
-      { color: "#d4a853", label: "< 10" },
-      { color: "#e5c07b", label: "10-20" },
-      { color: "#fb923c", label: "20-30" },
-      { color: "#ef4444", label: "> 30" },
+      { color: "#d4a853", label: "Calm (< 5)" },
+      { color: "#e5c07b", label: "Light (5-10)" },
+      { color: "#eab308", label: "Moderate (10-20)" },
+      { color: "#fb923c", label: "Fresh (20-30)" },
+      { color: "#ef4444", label: "Strong (30-50)" },
+      { color: "#a855f7", label: "Storm (> 50)" },
     ],
   },
   clouds: {
     title: "Cloud Cover",
     items: [
-      { color: "rgba(148,163,184,0.2)", label: "Clear" },
-      { color: "rgba(148,163,184,0.5)", label: "Partly" },
-      { color: "rgba(148,163,184,0.7)", label: "Mostly" },
-      { color: "rgba(148,163,184,0.9)", label: "Overcast" },
+      { color: "rgba(148,163,184,0.15)", label: "Clear (0-10%)" },
+      { color: "rgba(148,163,184,0.35)", label: "Few (10-30%)" },
+      { color: "rgba(148,163,184,0.55)", label: "Scattered (30-60%)" },
+      { color: "rgba(148,163,184,0.75)", label: "Broken (60-90%)" },
+      { color: "rgba(148,163,184,0.9)", label: "Overcast (90%+)" },
     ],
   },
   pressure: {
     title: "Pressure (hPa)",
     items: [
-      { color: "#60a5fa", label: "Low" },
-      { color: "#a855f7", label: "Normal" },
-      { color: "#ef4444", label: "High" },
+      { color: "#3b82f6", label: "Very Low (< 1000)" },
+      { color: "#60a5fa", label: "Low (1000-1010)" },
+      { color: "#a855f7", label: "Normal (1010-1020)" },
+      { color: "#f97316", label: "High (1020-1030)" },
+      { color: "#ef4444", label: "Very High (> 1030)" },
     ],
   },
   airquality: {
@@ -168,38 +201,46 @@ const LAYER_LEGENDS = {
       { color: "#eab308", label: "Moderate (51-100)" },
       { color: "#f97316", label: "Sensitive (101-150)" },
       { color: "#ef4444", label: "Unhealthy (151-200)" },
-      { color: "#a855f7", label: "Very Unhealthy (201+)" },
+      { color: "#dc2626", label: "Very Unhealthy (201-300)" },
+      { color: "#a855f7", label: "Hazardous (300+)" },
     ],
   },
 };
 
 // Wind Particle System for iOS-style animated wind visualization
 class WindParticleSystem {
-  constructor(canvas, map, apiKey) {
+  constructor(canvas, map) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.map = map;
-    this.apiKey = apiKey;
     this.particles = [];
     this.windGrid = null;
-    this.gridSize = 8; // Grid of wind data points
+    this.gridSize = 4; // Reduced grid size to prevent rate limiting
     this.isRunning = false;
     this.animationId = null;
-    this.particleCount = 800; // Reduced for cleaner look
-    this.fadeOpacity = 0.92;
-    this.lineWidth = 1.0;
-    this.particleAge = 60;
-    this.speedFactor = 0.15; // Reduced for subtler animation
+    this.particleCount = 400; // Reduced for cleaner look and fewer calculations
+    this.fadeOpacity = 0.96; // Higher fade for smoother trails
+    this.lineWidth = 1.2;
+    this.particleAge = 100; // Longer particle life for smoother flow
+    this.speedFactor = 0.06; // Much slower - color represents speed, not animation
     this.lastFetchBounds = null;
+    this.lastFetchTime = 0;
     this.fetchDebounceTimer = null;
+    this.zoomLevel = 15;
+    this.isFetching = false; // Prevent concurrent fetches
 
-    // Color gradient based on wind speed - Updated with gold theme
+    // Color gradient based on wind speed - Enhanced with more categories
     this.colorStops = [
-      { speed: 0, color: [212, 168, 83, 0.4] }, // Gold (light wind)
-      { speed: 10, color: [229, 192, 123, 0.5] }, // Light gold
-      { speed: 20, color: [251, 146, 60, 0.6] }, // Orange
-      { speed: 30, color: [239, 68, 68, 0.7] }, // Red (strong wind)
-      { speed: 50, color: [168, 85, 247, 0.8] }, // Purple (extreme)
+      { speed: 0, color: [212, 168, 83, 0.35] }, // Calm - Gold (very light)
+      { speed: 5, color: [212, 168, 83, 0.45] }, // Light breeze - Gold
+      { speed: 10, color: [229, 192, 123, 0.5] }, // Gentle breeze - Light gold
+      { speed: 15, color: [234, 179, 8, 0.55] }, // Moderate breeze - Yellow
+      { speed: 20, color: [251, 146, 60, 0.6] }, // Fresh breeze - Orange
+      { speed: 25, color: [249, 115, 22, 0.65] }, // Strong breeze - Deep orange
+      { speed: 30, color: [239, 68, 68, 0.7] }, // High wind - Red
+      { speed: 40, color: [220, 38, 38, 0.75] }, // Gale - Deep red
+      { speed: 50, color: [168, 85, 247, 0.8] }, // Storm - Purple
+      { speed: 65, color: [139, 92, 246, 0.85] }, // Hurricane - Violet
     ];
 
     // Listen for map movements
@@ -211,23 +252,82 @@ class WindParticleSystem {
   onMapMove() {
     if (!this.isRunning) return;
 
-    // Debounce fetch calls
+    // Update zoom level for particle density adjustment
+    this.zoomLevel = this.map.getZoom();
+    this.updateParticleSettings();
+
+    // Check if we should skip fetching (rate limit protection)
+    const now = Date.now();
+    const minFetchInterval = 2000; // Minimum 2 seconds between fetches
+
+    // Check if bounds changed significantly (>15% of viewport)
+    const bounds = this.map.getBounds();
+    if (this.lastFetchBounds) {
+      const latDiff = Math.abs(
+        bounds.getCenter().lat - this.lastFetchBounds.getCenter().lat
+      );
+      const lngDiff = Math.abs(
+        bounds.getCenter().lng - this.lastFetchBounds.getCenter().lng
+      );
+      const latSpan = bounds.getNorth() - bounds.getSouth();
+      const lngSpan = bounds.getEast() - bounds.getWest();
+
+      // Skip fetch if movement is minimal and we fetched recently
+      if (
+        latDiff < latSpan * 0.15 &&
+        lngDiff < lngSpan * 0.15 &&
+        now - this.lastFetchTime < 30000
+      ) {
+        return;
+      }
+    }
+
+    // Debounce fetch calls with longer delay
     if (this.fetchDebounceTimer) {
       clearTimeout(this.fetchDebounceTimer);
     }
     this.fetchDebounceTimer = setTimeout(() => {
-      this.fetchWindGrid();
-    }, 300);
+      if (now - this.lastFetchTime >= minFetchInterval) {
+        this.fetchWindGrid();
+      }
+    }, 800); // Increased debounce to 800ms
+  }
+
+  // Adjust particle settings based on zoom level for better accuracy
+  updateParticleSettings() {
+    const zoom = this.zoomLevel;
+
+    // Reduced particle counts for better performance
+    if (zoom >= 14) {
+      this.particleCount = 500;
+      this.lineWidth = 1.4;
+      this.speedFactor = 0.04;
+    } else if (zoom >= 10) {
+      this.particleCount = 400;
+      this.lineWidth = 1.2;
+      this.speedFactor = 0.06;
+    } else if (zoom >= 6) {
+      this.particleCount = 300;
+      this.lineWidth = 1.0;
+      this.speedFactor = 0.08;
+    } else {
+      this.particleCount = 200;
+      this.lineWidth = 0.8;
+      this.speedFactor = 0.1;
+    }
   }
 
   async fetchWindGrid() {
-    if (!this.apiKey) return;
+    // Prevent concurrent fetches
+    if (this.isFetching) return;
+    this.isFetching = true;
 
     const bounds = this.map.getBounds();
     const zoom = this.map.getZoom();
 
-    // Adjust grid density based on zoom level
-    const gridPoints = zoom > 10 ? 6 : zoom > 7 ? 5 : 4;
+    // Drastically reduced grid density to prevent rate limiting
+    // Max 16 requests (4x4 grid) instead of 64 (8x8)
+    const gridPoints = zoom >= 12 ? 4 : zoom >= 8 ? 3 : 3;
 
     const north = bounds.getNorth();
     const south = bounds.getSouth();
@@ -237,7 +337,6 @@ class WindParticleSystem {
     const latStep = (north - south) / (gridPoints - 1);
     const lngStep = (east - west) / (gridPoints - 1);
 
-    const newGrid = [];
     const fetchPromises = [];
 
     for (let i = 0; i < gridPoints; i++) {
@@ -245,11 +344,10 @@ class WindParticleSystem {
         const lat = south + latStep * i;
         const lng = west + lngStep * j;
 
+        // Use proxy API to fetch weather data (keeps API key secure)
+        // Client-side cache in fetchOpenWeather prevents redundant calls
         fetchPromises.push(
-          fetch(
-            `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${this.apiKey}&units=imperial`
-          )
-            .then((res) => res.json())
+          fetchOpenWeather(lat, lng)
             .then((data) => ({
               lat,
               lng,
@@ -268,8 +366,12 @@ class WindParticleSystem {
         bounds: { north, south, east, west },
         gridPoints,
       };
+      this.lastFetchBounds = bounds;
+      this.lastFetchTime = Date.now();
     } catch (error) {
       console.error("Error fetching wind grid:", error);
+    } finally {
+      this.isFetching = false;
     }
   }
 
@@ -278,15 +380,23 @@ class WindParticleSystem {
       return { u: 0, v: 0, speed: 5 };
     }
 
-    const { bounds, points, gridPoints } = this.windGrid;
+    const { bounds, points } = this.windGrid;
 
-    // Convert canvas coords to lat/lng
+    // Use map.unproject for accurate coordinate conversion
     const canvasRect = this.canvas.getBoundingClientRect();
-    const lngRange = bounds.east - bounds.west;
-    const latRange = bounds.north - bounds.south;
+    const topLeft = this.map.project([bounds.west, bounds.north]);
+    const bottomRight = this.map.project([bounds.east, bounds.south]);
 
-    const lng = bounds.west + (x / canvasRect.width) * lngRange;
-    const lat = bounds.north - (y / canvasRect.height) * latRange;
+    // Convert canvas position to map pixel position
+    const mapX =
+      topLeft.x + (x / canvasRect.width) * (bottomRight.x - topLeft.x);
+    const mapY =
+      topLeft.y + (y / canvasRect.height) * (bottomRight.y - topLeft.y);
+
+    // Unproject to get accurate lat/lng
+    const lngLat = this.map.unproject([mapX, mapY]);
+    const lng = lngLat.lng;
+    const lat = lngLat.lat;
 
     // Find nearest grid points and interpolate
     let totalWeight = 0;
@@ -480,13 +590,15 @@ const AdvancedWeatherMap = ({
   mapData,
   weatherData,
   windData,
+  // eslint-disable-next-line no-unused-vars
   airQualityData,
   onRouteCalculated,
 }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markerRef = useRef(null);
-  const routeLayerRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
+  const _routeLayerRef = useRef(null);
   const windCanvasRef = useRef(null);
   const windParticleSystemRef = useRef(null);
   const aqiCanvasRef = useRef(null);
@@ -497,20 +609,22 @@ const AdvancedWeatherMap = ({
   // State
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState("dark");
-  const [activeLayers, setActiveLayers] = useState(["radar"]);
+  const [activeLayers, setActiveLayers] = useState(["precipitation"]);
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [showStylePanel, setShowStylePanel] = useState(false);
   const [mapBearing, setMapBearing] = useState(0);
-  const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [animationFrame, setAnimationFrame] = useState(0);
-  const animationIntervalRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
+  const [_zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
   const [showRoutePanel, setShowRoutePanel] = useState(false);
   const [routeOrigin, setRouteOrigin] = useState("");
   const [routeDestination, setRouteDestination] = useState("");
+  // Store coordinates from autocomplete suggestions to skip geocoding
+  const [routeOriginCoords, setRouteOriginCoords] = useState(null);
+  const [routeDestCoords, setRouteDestCoords] = useState(null);
   const [routeInfo, setRouteInfo] = useState(null);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
-  const [currentWeatherInfo, setCurrentWeatherInfo] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [_currentWeatherInfo, _setCurrentWeatherInfo] = useState(null);
   const [cursorPosition, setCursorPosition] = useState(null);
 
   // Location suggestions state
@@ -524,6 +638,95 @@ const AdvancedWeatherMap = ({
   const originInputRef = useRef(null);
   const destInputRef = useRef(null);
   const suggestionsDebounceRef = useRef(null);
+
+  // Apple Maps-style Route Features State
+  const [routeMode, setRouteMode] = useState("driving"); // driving, walking, transit
+  const [recentSearches, setRecentSearches] = useState(() => {
+    const saved = localStorage.getItem("awm-recent-searches");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [savedPlaces, setSavedPlaces] = useState(() => {
+    const saved = localStorage.getItem("awm-saved-places");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          home: null,
+          work: null,
+          favorites: [],
+        };
+  });
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
+  const [nearbySearchRadius, setNearbySearchRadius] = useState(null); // Current search radius in miles
+  const [routePanelView, setRoutePanelView] = useState("main"); // main, directions, editPlace, findNearby
+  const [selectedNearbyCategory, setSelectedNearbyCategory] = useState(null);
+  const [routePanelPosition, setRoutePanelPosition] = useState({
+    x: null,
+    y: null,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const routePanelRef = useRef(null);
+  const nearbyMarkersRef = useRef([]);
+  const originMarkerRef = useRef(null);
+  const destMarkerRef = useRef(null);
+
+  // Find Nearby category constants - Apple Maps style
+  const NEARBY_CATEGORIES = useMemo(
+    () => [
+      {
+        id: "restaurant",
+        name: "Restaurants",
+        icon: "bi-cup-hot",
+        color: "#ef4444",
+      },
+    {
+      id: "fast_food",
+      name: "Fast Food",
+      icon: "bi-box-seam",
+      color: "#f97316",
+    },
+    {
+      id: "gas_station",
+      name: "Gas Stations",
+      icon: "bi-fuel-pump",
+      color: "#10b981",
+    },
+    { id: "coffee", name: "Coffee", icon: "bi-cup-straw", color: "#8b5cf6" },
+    { id: "grocery", name: "Groceries", icon: "bi-cart3", color: "#3b82f6" },
+    { id: "parking", name: "Parking", icon: "bi-p-circle", color: "#06b6d4" },
+    { id: "hotel", name: "Hotels", icon: "bi-building", color: "#ec4899" },
+    {
+      id: "hospital",
+      name: "Hospitals",
+      icon: "bi-hospital",
+      color: "#dc2626",
+    },
+    {
+      id: "pharmacy",
+      name: "Pharmacies",
+      icon: "bi-capsule",
+      color: "#22c55e",
+    },
+    { id: "bank", name: "Banks", icon: "bi-bank", color: "#0891b2" },
+    { id: "atm", name: "ATMs", icon: "bi-cash-stack", color: "#059669" },
+    {
+      id: "ev_charging",
+      name: "EV Charging",
+      icon: "bi-ev-station",
+      color: "#84cc16",
+    },
+    ],
+    []
+  );
+  const [editingPlaceType, setEditingPlaceType] = useState(null); // home, work, or null
+  const [routeSteps, setRouteSteps] = useState([]);
+  const [alternateRoutes, setAlternateRoutes] = useState([]);
+  const [trafficInfo, setTrafficInfo] = useState(null);
+  const [routeError, setRouteError] = useState(null); // For walk/transit unavailable
+
+  // Route options state (Apple Maps style - avoid tolls/highways)
+  const [avoidTolls, setAvoidTolls] = useState(false);
+  const [avoidHighways, setAvoidHighways] = useState(false);
 
   // Extract coordinates from mapData
   const coordinates = useMemo(() => {
@@ -565,18 +768,23 @@ const AdvancedWeatherMap = ({
     setMapBearing(bearing);
   }, []);
 
-  // Fetch and display Air Quality heatmap using WAQI/OWM via API service
+  // Fetch and display Air Quality heatmap using WAQI/OWM via backend proxy
   const fetchAndDisplayAQI = useCallback(async () => {
     if (!map.current || !aqiCanvasRef.current) return;
-    if (!OWM_API_KEY && !WAQI_API_KEY) return;
 
     const canvas = aqiCanvasRef.current;
     const ctx = canvas.getContext("2d");
     const bounds = map.current.getBounds();
     const zoom = map.current.getZoom();
 
-    // Adjust grid density based on zoom level
-    const gridPoints = zoom > 10 ? 6 : zoom > 7 ? 5 : 4;
+    // Reduced grid points to prevent rate limiting (max 25 requests vs 100 before)
+    // Use center-based grid for consistent color mapping across zoom levels
+    const gridPoints =
+      zoom >= 12
+        ? 5 // 25 requests at high zoom
+        : zoom >= 9
+        ? 4 // 16 requests at medium zoom
+        : 3; // 9 requests at low zoom
 
     const north = bounds.getNorth();
     const south = bounds.getSouth();
@@ -611,27 +819,31 @@ const AdvancedWeatherMap = ({
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Calculate cell dimensions for heatmap
+      // Calculate larger radius for better coverage with fewer points
       const cellWidth = canvas.width / (gridPoints - 1);
       const cellHeight = canvas.height / (gridPoints - 1);
-      const radius = Math.max(cellWidth, cellHeight) * 1.2;
+      const radius = Math.max(cellWidth, cellHeight) * 1.5; // Increased from 1.2 to 1.5
 
       aqiData.forEach((point) => {
-        // Convert lat/lng to canvas coordinates
-        const x = ((point.lng - west) / (east - west)) * canvas.width;
-        const y = ((north - point.lat) / (north - south)) * canvas.height;
+        // Convert lat/lng to pixel coordinates using map's project method for accuracy
+        const pixelPoint = map.current.project([point.lng, point.lat]);
+        const canvasTopLeft = map.current.project([west, north]);
+
+        // Calculate canvas position relative to top-left
+        const x = pixelPoint.x - canvasTopLeft.x;
+        const y = pixelPoint.y - canvasTopLeft.y;
 
         const color = aqiColors[Math.min(point.aqi - 1, 4)];
 
-        // Create radial gradient
+        // Create radial gradient with smoother falloff
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
         gradient.addColorStop(
           0,
           `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`
         );
         gradient.addColorStop(
-          0.5,
-          `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] * 0.5})`
+          0.6,
+          `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] * 0.4})`
         );
         gradient.addColorStop(
           1,
@@ -655,15 +867,40 @@ const AdvancedWeatherMap = ({
   const setupAQIMapListeners = useCallback(() => {
     if (!map.current) return;
 
+    let lastBounds = null;
+    let lastZoom = null;
+
     const updateAQI = () => {
       if (!activeLayers.includes("airquality")) return;
+
+      const currentBounds = map.current.getBounds();
+      const currentZoom = map.current.getZoom();
+
+      // Only update if bounds changed significantly (>10% of viewport) or zoom changed
+      if (lastBounds && lastZoom === currentZoom) {
+        const latDiff = Math.abs(
+          currentBounds.getCenter().lat - lastBounds.getCenter().lat
+        );
+        const lngDiff = Math.abs(
+          currentBounds.getCenter().lng - lastBounds.getCenter().lng
+        );
+        const latSpan = currentBounds.getNorth() - currentBounds.getSouth();
+        const lngSpan = currentBounds.getEast() - currentBounds.getWest();
+
+        // Skip update if movement is less than 10% of viewport
+        if (latDiff < latSpan * 0.1 && lngDiff < lngSpan * 0.1) {
+          return;
+        }
+      }
 
       if (aqiFetchTimerRef.current) {
         clearTimeout(aqiFetchTimerRef.current);
       }
       aqiFetchTimerRef.current = setTimeout(() => {
+        lastBounds = map.current.getBounds();
+        lastZoom = map.current.getZoom();
         fetchAndDisplayAQI();
-      }, 500);
+      }, 800); // Increased debounce to 800ms to reduce rapid requests
     };
 
     map.current.on("moveend", updateAQI);
@@ -677,18 +914,21 @@ const AdvancedWeatherMap = ({
     };
   }, [activeLayers, fetchAndDisplayAQI]);
 
+  // Tile config cache (fetched from backend)
+  const tileConfigRef = useRef(null);
+  const tileConfigLoadingRef = useRef(false);
+
   // Add weather tile layer to map
   const addWeatherLayer = useCallback(
-    (layerId) => {
-      if (!map.current || !OWM_API_KEY) return;
+    async (layerId) => {
+      if (!map.current) return;
 
       // Special handling for wind - use particle animation instead of tile layer
       if (layerId === "wind") {
         if (windCanvasRef.current && !windParticleSystemRef.current) {
           windParticleSystemRef.current = new WindParticleSystem(
             windCanvasRef.current,
-            map.current,
-            OWM_API_KEY
+            map.current
           );
         }
         if (windParticleSystemRef.current) {
@@ -713,26 +953,37 @@ const AdvancedWeatherMap = ({
         return;
       }
 
-      const layerConfig = {
-        radar: {
-          url: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-          opacity: 0.7,
-        },
-        temperature: {
-          url: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-          opacity: 0.6,
-        },
-        clouds: {
-          url: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-          opacity: 0.5,
-        },
-        pressure: {
-          url: `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-          opacity: 0.6,
-        },
+      // Fetch tile config from backend (with caching)
+      if (!tileConfigRef.current && !tileConfigLoadingRef.current) {
+        tileConfigLoadingRef.current = true;
+        try {
+          tileConfigRef.current = await fetchTileConfig();
+        } catch (error) {
+          console.error("Failed to fetch tile config:", error);
+          tileConfigLoadingRef.current = false;
+          return;
+        }
+        tileConfigLoadingRef.current = false;
+      }
+
+      if (!tileConfigRef.current) {
+        console.warn("Tile config not available");
+        return;
+      }
+
+      // Get current zoom level for dynamic opacity/quality adjustment
+      const currentZoom = map.current.getZoom();
+
+      // Calculate zoom-based opacity - more opacity when zoomed in for better detail
+      const getZoomBasedOpacity = (baseOpacity) => {
+        if (currentZoom >= 12) return Math.min(baseOpacity + 0.15, 0.9);
+        if (currentZoom >= 10) return Math.min(baseOpacity + 0.1, 0.85);
+        if (currentZoom >= 8) return baseOpacity + 0.05;
+        if (currentZoom >= 6) return baseOpacity;
+        return Math.max(baseOpacity - 0.1, 0.4); // Lower opacity when very zoomed out
       };
 
-      const config = layerConfig[layerId];
+      const config = tileConfigRef.current[layerId];
       if (!config) return;
 
       const sourceId = `weather-${layerId}-source`;
@@ -758,12 +1009,12 @@ const AdvancedWeatherMap = ({
         type: "raster",
         source: sourceId,
         paint: {
-          "raster-opacity": config.opacity,
+          "raster-opacity": getZoomBasedOpacity(config.opacity),
           "raster-fade-duration": 300,
         },
       });
     },
-    [OWM_API_KEY, windData, weatherData, fetchAndDisplayAQI]
+    [windData, weatherData, fetchAndDisplayAQI]
   );
 
   // Remove weather layer from map
@@ -807,27 +1058,32 @@ const AdvancedWeatherMap = ({
     }
   }, []);
 
-  // Calculate route using Mapbox Directions API
+  // Calculate route using Geoapify Routing API (via backend proxy)
   const calculateRoute = useCallback(async () => {
     if (!routeOrigin || !routeDestination || !map.current) return;
 
     setIsCalculatingRoute(true);
     setRouteInfo(null);
+    setRouteError(null);
 
     try {
-      // Geocode origin and destination
+      // Geocode helper - only used if we don't have coordinates from suggestion
       const geocodeLocation = async (location) => {
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-            location
-          )}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=1`
+        const data = await fetchMapboxGeocode(
+          location,
+          coordinates[0],
+          coordinates[1],
+          1
         );
-        const data = await response.json();
         return data.features?.[0]?.center;
       };
 
-      const originCoords = await geocodeLocation(routeOrigin);
-      const destCoords = await geocodeLocation(routeDestination);
+      // Use stored coordinates from Geoapify autocomplete if available
+      // Otherwise fall back to geocoding via Mapbox
+      const originCoords =
+        routeOriginCoords || (await geocodeLocation(routeOrigin));
+      const destCoords =
+        routeDestCoords || (await geocodeLocation(routeDestination));
 
       if (!originCoords || !destCoords) {
         alert("Could not find one or both locations. Please try again.");
@@ -835,30 +1091,112 @@ const AdvancedWeatherMap = ({
         return;
       }
 
-      // Get route from Mapbox Directions API
-      const routeResponse = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${originCoords[0]},${originCoords[1]};${destCoords[0]},${destCoords[1]}?geometries=geojson&overview=full&steps=true&access_token=${MAPBOX_ACCESS_TOKEN}`
-      );
-      const routeData = await routeResponse.json();
+      // Save destination to recent searches
+      saveRecentSearch({
+        name: routeDestination.split(",")[0],
+        fullName: routeDestination,
+        coordinates: destCoords,
+      });
 
-      if (!routeData.routes || routeData.routes.length === 0) {
-        alert("No route found between these locations.");
+      // Map route mode to Geoapify mode
+      // Geoapify modes: drive, walk, bicycle, transit, approximated_transit
+      const geoapifyMode =
+        routeMode === "walking"
+          ? "walk"
+          : routeMode === "cycling"
+          ? "bicycle"
+          : routeMode === "transit"
+          ? "transit"
+          : "drive";
+
+      // Build avoid parameter for tolls/highways (only for driving modes)
+      let avoidParams = [];
+      if (geoapifyMode === "drive") {
+        if (avoidTolls) avoidParams.push("tolls");
+        if (avoidHighways) avoidParams.push("highways");
+      }
+      const avoidString = avoidParams.length > 0 ? avoidParams.join("|") : "";
+
+      // Geoapify uses lat,lon format (opposite of Mapbox which uses lon,lat)
+      const waypoints = `${originCoords[1]},${originCoords[0]}|${destCoords[1]},${destCoords[0]}`;
+
+      // Get route from Geoapify Routing API via backend proxy
+      const routeData = await fetchRouting(
+        waypoints,
+        geoapifyMode,
+        avoidString
+      );
+
+      // Handle errors from Geoapify
+      if (routeData.error || routeData.statusCode >= 400) {
+        console.error("Geoapify routing error:", routeData);
+        if (routeMode === "walking") {
+          setRouteError({
+            type: "walking",
+            message: "Walking directions unavailable",
+            reason:
+              "The distance may be too far for walking, or no pedestrian path exists.",
+          });
+        } else if (routeMode === "transit") {
+          setRouteError({
+            type: "transit",
+            message: "Public transit directions unavailable",
+            reason:
+              "Transit routing requires integration with local transit agencies. Try using a dedicated transit app.",
+          });
+        } else {
+          setRouteError({
+            type: "general",
+            message: "No route found",
+            reason: "Could not find a route between these locations.",
+          });
+        }
+        setRoutePanelView("directions");
         setIsCalculatingRoute(false);
         return;
       }
 
-      const route = routeData.routes[0];
-      const routeGeometry = route.geometry;
+      // Geoapify returns features with properties containing legs array
+      const feature = routeData.features[0];
+      const properties = feature.properties;
+      const geometry = feature.geometry;
 
-      // Remove existing route layer
-      if (map.current.getLayer("route-layer")) {
-        map.current.removeLayer("route-layer");
-      }
-      if (map.current.getSource("route-source")) {
-        map.current.removeSource("route-source");
+      // Geoapify returns MultiLineString, need to flatten to LineString for Mapbox display
+      let routeCoordinates = [];
+      if (geometry.type === "MultiLineString") {
+        // Flatten all line segments into one array
+        geometry.coordinates.forEach((lineString) => {
+          routeCoordinates = routeCoordinates.concat(lineString);
+        });
+      } else if (geometry.type === "LineString") {
+        routeCoordinates = geometry.coordinates;
       }
 
-      // Add route to map
+      const routeGeometry = {
+        type: "LineString",
+        coordinates: routeCoordinates,
+      };
+
+      // Geoapify doesn't return alternates in the same way, so clear alternate routes
+      setAlternateRoutes([]);
+
+      // Remove existing route layers
+      ["route-layer", "route-layer-alt-1", "route-layer-alt-2"].forEach(
+        (layerId) => {
+          if (map.current.getLayer(layerId)) {
+            map.current.removeLayer(layerId);
+          }
+        }
+      );
+      ["route-source", "route-source-alt-1", "route-source-alt-2"].forEach(
+        (sourceId) => {
+          if (map.current.getSource(sourceId)) {
+            map.current.removeSource(sourceId);
+          }
+        }
+      );
+
+      // Add main route to map
       map.current.addSource("route-source", {
         type: "geojson",
         data: {
@@ -867,6 +1205,9 @@ const AdvancedWeatherMap = ({
           geometry: routeGeometry,
         },
       });
+
+      // Route color based on avoid settings
+      const routeColor = avoidTolls ? "#22c55e" : "#d4a853"; // Green for toll-free, gold for normal
 
       map.current.addLayer({
         id: "route-layer",
@@ -877,26 +1218,148 @@ const AdvancedWeatherMap = ({
           "line-cap": "round",
         },
         paint: {
-          "line-color": "#d4a853",
-          "line-width": 5,
-          "line-opacity": 0.9,
+          "line-color": routeColor,
+          "line-width": 6,
+          "line-opacity": 0.95,
         },
       });
 
       // Fit map to route bounds
       const bounds = new mapboxgl.LngLatBounds();
-      routeGeometry.coordinates.forEach((coord) => bounds.extend(coord));
-      map.current.fitBounds(bounds, { padding: 50 });
+      routeCoordinates.forEach((coord) => bounds.extend(coord));
+      map.current.fitBounds(bounds, { padding: 80 });
 
-      // Set route info
-      const durationMinutes = Math.round(route.duration / 60);
-      const distanceMiles = (route.distance / 1609.34).toFixed(1);
+      // Remove existing route markers
+      if (originMarkerRef.current) {
+        originMarkerRef.current.remove();
+        originMarkerRef.current = null;
+      }
+      if (destMarkerRef.current) {
+        destMarkerRef.current.remove();
+        destMarkerRef.current = null;
+      }
+
+      // Add origin marker (green circle)
+      const originEl = document.createElement("div");
+      originEl.className = "route-origin-marker";
+      originEl.innerHTML = `
+        <div style="
+          width: 24px;
+          height: 24px;
+          background: #22c55e;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div>
+        </div>
+      `;
+      originMarkerRef.current = new mapboxgl.Marker({
+        element: originEl,
+        anchor: "center",
+      })
+        .setLngLat(originCoords)
+        .addTo(map.current);
+
+      // Add destination marker (red pin with flag icon)
+      const destEl = document.createElement("div");
+      destEl.className = "route-dest-marker";
+      destEl.innerHTML = `
+        <div style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        ">
+          <div style="
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: 3px solid white;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <i class="bi bi-flag-fill" style="
+              transform: rotate(45deg);
+              color: white;
+              font-size: 14px;
+            "></i>
+          </div>
+          <div style="
+            width: 4px;
+            height: 8px;
+            background: #dc2626;
+            margin-top: -2px;
+            border-radius: 0 0 2px 2px;
+          "></div>
+        </div>
+      `;
+      destMarkerRef.current = new mapboxgl.Marker({
+        element: destEl,
+        anchor: "bottom",
+      })
+        .setLngLat(destCoords)
+        .addTo(map.current);
+
+      // Geoapify: time in seconds, distance in meters
+      const durationMinutes = Math.round(properties.time / 60);
+      const distanceMiles = (properties.distance / 1609.34).toFixed(1);
+
+      // Extract steps from legs (Geoapify format)
+      const legs = properties.legs || [];
+      const steps = legs.length > 0 ? legs[0].steps || [] : [];
+
+      // Format route steps for turn-by-turn directions (Geoapify format)
+      const formattedSteps = steps.map((step, idx) => ({
+        id: idx,
+        instruction: step.instruction?.text || "",
+        distance: (step.distance / 1609.34).toFixed(2),
+        duration: Math.round(step.time / 60),
+        modifier: step.instruction?.transition_instruction || "",
+        type: step.instruction?.type || "",
+        name: step.name || step.instruction?.street_name || "",
+      }));
+
+      setRouteSteps(formattedSteps);
+
+      // Geoapify doesn't provide real-time traffic data, so set basic traffic info
+      setTrafficInfo({
+        delay: 0,
+        condition: "unknown",
+      });
+
+      // Calculate arrival time based on origin location's approximate timezone
+      // Using the origin coordinates to estimate local time
+      const originLng = originCoords[0];
+      const timezoneOffsetHours = Math.round(originLng / 15); // Rough timezone estimate
+      const now = new Date();
+      const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+      const localTime = new Date(
+        utcTime + timezoneOffsetHours * 3600000 + durationMinutes * 60000
+      );
 
       setRouteInfo({
         duration: durationMinutes,
+        durationFormatted: formatDuration(durationMinutes),
         distance: distanceMiles,
-        steps: route.legs[0]?.steps?.length || 0,
+        steps: steps.length,
+        arrivalTime: localTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        originTimezone: timezoneOffsetHours,
+        avoidTolls: avoidTolls,
+        avoidHighways: avoidHighways,
       });
+
+      // Switch to directions view
+      setRoutePanelView("directions");
 
       if (onRouteCalculated) {
         onRouteCalculated({
@@ -908,11 +1371,27 @@ const AdvancedWeatherMap = ({
       }
     } catch (error) {
       console.error("Error calculating route:", error);
-      alert("Failed to calculate route. Please try again.");
+      setRouteError({
+        type: "general",
+        message: "Route calculation failed",
+        reason:
+          "An error occurred while calculating the route. Please try again.",
+      });
+      setRoutePanelView("directions");
     } finally {
       setIsCalculatingRoute(false);
     }
-  }, [routeOrigin, routeDestination, onRouteCalculated]);
+  }, [
+    routeOrigin,
+    routeDestination,
+    routeOriginCoords,
+    routeDestCoords,
+    routeMode,
+    avoidTolls,
+    avoidHighways,
+    onRouteCalculated,
+    coordinates,
+  ]);
 
   // Clear route
   const clearRoute = useCallback(() => {
@@ -925,71 +1404,381 @@ const AdvancedWeatherMap = ({
       map.current.removeSource("route-source");
     }
 
+    // Remove route markers
+    if (originMarkerRef.current) {
+      originMarkerRef.current.remove();
+      originMarkerRef.current = null;
+    }
+    if (destMarkerRef.current) {
+      destMarkerRef.current.remove();
+      destMarkerRef.current = null;
+    }
+
     setRouteInfo(null);
+    setRouteError(null);
     setRouteOrigin("");
     setRouteDestination("");
+    // Clear stored coordinates
+    setRouteOriginCoords(null);
+    setRouteDestCoords(null);
+    setRouteSteps([]);
+    setAlternateRoutes([]);
+    setRoutePanelView("main");
   }, []);
 
-  // Fetch location suggestions using Mapbox Geocoding API
-  const fetchSuggestions = useCallback(async (query, type) => {
-    if (!query || query.length < 2) {
-      if (type === "origin") {
-        setOriginSuggestions([]);
-        setShowOriginSuggestions(false);
-      } else {
-        setDestSuggestions([]);
-        setShowDestSuggestions(false);
-      }
-      return;
-    }
-
-    if (type === "origin") {
-      setIsLoadingOrigin(true);
-    } else {
-      setIsLoadingDest(true);
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          query
-        )}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=5&types=place,locality,neighborhood,address,poi`
+  // Save recent search to localStorage
+  function saveRecentSearch(location) {
+    setRecentSearches((prev) => {
+      const filtered = prev.filter(
+        (item) => item.fullName !== location.fullName
       );
-      const data = await response.json();
+      const updated = [location, ...filtered].slice(0, 10); // Keep last 10
+      localStorage.setItem("awm-recent-searches", JSON.stringify(updated));
+      return updated;
+    });
+  }
 
-      const suggestions =
-        data.features?.map((feature) => ({
-          id: feature.id,
-          name: feature.text,
-          fullName: feature.place_name,
-          coordinates: feature.center,
-        })) || [];
+  // Save place (home/work) to localStorage
+  const savePlace = useCallback((type, place) => {
+    setSavedPlaces((prev) => {
+      const updated = { ...prev, [type]: place };
+      localStorage.setItem("awm-saved-places", JSON.stringify(updated));
+      return updated;
+    });
+    setEditingPlaceType(null);
+    setRoutePanelView("main");
+  }, []);
 
-      if (type === "origin") {
-        setOriginSuggestions(suggestions);
-        setShowOriginSuggestions(suggestions.length > 0);
-      } else {
-        setDestSuggestions(suggestions);
-        setShowDestSuggestions(suggestions.length > 0);
+  // Fetch nearby places using backend proxy - supports category filtering with zoom-aware radius
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Fetch nearby places using Geoapify Places API via backend proxy
+  const fetchNearbyPlaces = useCallback(
+    async (category = null) => {
+      if (!coordinates || !map.current) return;
+
+      // Map UI categories to Geoapify categories
+      // Reference: https://apidocs.geoapify.com/docs/places/#categories
+      const categoryMapping = {
+        restaurant: "catering.restaurant",
+        fast_food: "catering.fast_food",
+        gas_station: "service.vehicle.fuel",
+        coffee: "catering.cafe",
+        grocery: "commercial.supermarket,commercial.food_and_drink",
+        parking: "parking.cars",
+        hotel: "accommodation.hotel,accommodation.motel",
+        hospital: "healthcare.hospital",
+        pharmacy: "healthcare.pharmacy,commercial.health_and_beauty.pharmacy",
+        bank: "service.financial.bank",
+        atm: "service.financial.atm",
+        ev_charging: "service.vehicle.charging_station",
+      };
+
+      setIsLoadingNearby(true);
+      try {
+        // Dynamic search radius based on zoom level (Apple Maps style)
+        const currentZoom = map.current.getZoom();
+        let searchRadiusMiles;
+
+        if (currentZoom >= 16) {
+          searchRadiusMiles = 1;
+        } else if (currentZoom >= 14) {
+          searchRadiusMiles = 2;
+        } else if (currentZoom >= 12) {
+          searchRadiusMiles = 5;
+        } else if (currentZoom >= 10) {
+          searchRadiusMiles = 10;
+        } else if (currentZoom >= 8) {
+          searchRadiusMiles = 20;
+        } else {
+          searchRadiusMiles = 30;
+        }
+
+        const radiusMeters = Math.round(searchRadiusMiles * 1609.34);
+        setNearbySearchRadius(searchRadiusMiles);
+
+        // Get coordinates
+        const lon = coordinates[0];
+        const lat = coordinates[1];
+
+        // Determine which categories to search
+        let geoapifyCategories;
+        if (category) {
+          geoapifyCategories = categoryMapping[category] || "catering";
+        } else {
+          // Default: show mix of common categories
+          geoapifyCategories =
+            "catering.restaurant,service.vehicle.fuel,catering.cafe";
+        }
+
+        console.log("[Nearby Search] Parameters:", {
+          currentZoom,
+          searchRadiusMiles,
+          radiusMeters,
+          category,
+          geoapifyCategories,
+          coordinates,
+        });
+
+        // Use backend proxy for Geoapify Places API
+        const data = await fetchNearbyPlacesProxy(
+          geoapifyCategories,
+          lat,
+          lon,
+          radiusMeters,
+          20
+        );
+
+        if (data.error || !data.features) {
+          console.error("Geoapify Places error:", data);
+          setNearbyPlaces([]);
+          return;
+        }
+
+        // Transform Geoapify response to our format
+        const places = data.features.map((feature) => {
+          const props = feature.properties;
+          const distance =
+            props.distance || calculateDistance(lat, lon, props.lat, props.lon);
+
+          return {
+            id:
+              props.place_id ||
+              feature.properties.osm_id ||
+              Math.random().toString(36),
+            name: props.name || props.address_line1 || "Unknown Place",
+            fullName: props.formatted || props.address_line1,
+            coordinates: [props.lon, props.lat], // Mapbox format: [lon, lat]
+            category:
+              category || props.categories?.[0]?.split(".").pop() || "place",
+            distance,
+            distanceMiles: (distance / 1609.34).toFixed(1),
+            address: props.address_line2 || props.street || props.city || "",
+            // Additional Geoapify properties
+            website: props.website,
+            phone: props.contact?.phone,
+            openingHours: props.opening_hours,
+          };
+        });
+
+        // Sort by distance
+        places.sort((a, b) => a.distance - b.distance);
+
+        console.log("[Nearby Search] Results:", {
+          total: data.features.length,
+          places: places.slice(0, 5),
+        });
+
+        // If no results found and we have a category, try expanding radius
+        if (places.length === 0 && category && searchRadiusMiles < 30) {
+          const expandedRadius = Math.min(searchRadiusMiles * 2, 30);
+          const expandedRadiusMeters = Math.round(expandedRadius * 1609.34);
+          setNearbySearchRadius(expandedRadius);
+
+          console.log(
+            "[Nearby Search] Expanding radius to:",
+            expandedRadius,
+            "miles"
+          );
+
+          // Use backend proxy for expanded search
+          const expandedData = await fetchNearbyPlacesProxy(
+            geoapifyCategories,
+            lat,
+            lon,
+            expandedRadiusMeters,
+            20
+          );
+
+          if (expandedData.features) {
+            const expandedPlaces = expandedData.features.map((feature) => {
+              const props = feature.properties;
+              const distance =
+                props.distance ||
+                calculateDistance(lat, lon, props.lat, props.lon);
+
+              return {
+                id: props.place_id || Math.random().toString(36),
+                name: props.name || props.address_line1 || "Unknown Place",
+                fullName: props.formatted || props.address_line1,
+                coordinates: [props.lon, props.lat],
+                category:
+                  category ||
+                  props.categories?.[0]?.split(".").pop() ||
+                  "place",
+                distance,
+                distanceMiles: (distance / 1609.34).toFixed(1),
+                address:
+                  props.address_line2 || props.street || props.city || "",
+                website: props.website,
+                phone: props.contact?.phone,
+                openingHours: props.opening_hours,
+              };
+            });
+            expandedPlaces.sort((a, b) => a.distance - b.distance);
+            setNearbyPlaces(expandedPlaces.slice(0, 20));
+          } else {
+            setNearbyPlaces([]);
+          }
+        } else {
+          setNearbyPlaces(places.slice(0, 20));
+        }
+      } catch (error) {
+        console.error("Error fetching nearby places:", error);
+        setNearbyPlaces([]);
+      } finally {
+        setIsLoadingNearby(false);
       }
-    } catch (error) {
-      console.error("Error fetching suggestions:", error);
-    } finally {
-      if (type === "origin") {
-        setIsLoadingOrigin(false);
-      } else {
-        setIsLoadingDest(false);
-      }
+    },
+    [coordinates]
+  );
+
+  // Use saved place as destination
+  const applySavedPlace = useCallback((place, asOrigin = false) => {
+    if (asOrigin) {
+      setRouteOrigin(place.fullName);
+    } else {
+      setRouteDestination(place.fullName);
     }
   }, []);
+
+  // Use recent search
+  const applyRecentSearch = useCallback((search, asOrigin = false) => {
+    if (asOrigin) {
+      setRouteOrigin(search.fullName);
+    } else {
+      setRouteDestination(search.fullName);
+    }
+  }, []);
+
+  // Clear recent searches
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    localStorage.removeItem("awm-recent-searches");
+  }, []);
+
+  // Fetch location suggestions using Geoapify Autocomplete API via backend proxy
+  // Geoapify provides rich POI data with place names (e.g., "University of Houston")
+  // Falls back to Mapbox Geocoding if Geoapify fails
+  const fetchSuggestions = useCallback(
+    async (query, type) => {
+      if (!query || query.length < 2) {
+        if (type === "origin") {
+          setOriginSuggestions([]);
+          setShowOriginSuggestions(false);
+        } else {
+          setDestSuggestions([]);
+          setShowDestSuggestions(false);
+        }
+        return;
+      }
+
+      if (type === "origin") {
+        setIsLoadingOrigin(true);
+      } else {
+        setIsLoadingDest(true);
+      }
+
+      try {
+        // Use backend proxy for Geoapify Autocomplete (primary)
+        // coordinates[0] = lon, coordinates[1] = lat
+        const suggestions = await fetchGeoapifyAutocomplete(
+          query,
+          coordinates[1], // latitude for bias
+          coordinates[0], // longitude for bias
+          6 // limit
+        );
+
+        // Geoapify response is already transformed by backend proxy
+        // Each suggestion has: id, name, fullName, secondaryText, coordinates, category, type
+        if (suggestions && suggestions.length > 0) {
+          if (type === "origin") {
+            setOriginSuggestions(suggestions);
+            setShowOriginSuggestions(true);
+          } else {
+            setDestSuggestions(suggestions);
+            setShowDestSuggestions(true);
+          }
+        } else {
+          // No results from Geoapify, try Mapbox fallback
+          throw new Error("No Geoapify results");
+        }
+      } catch (error) {
+        console.error(
+          "Geoapify autocomplete error, trying Mapbox fallback:",
+          error
+        );
+        // Fallback to Mapbox Geocoding via backend proxy
+        try {
+          const data = await fetchMapboxGeocode(
+            query,
+            coordinates[0], // proximity_lon
+            coordinates[1], // proximity_lat
+            5
+          );
+
+          const suggestions =
+            data.features?.map((feature) => ({
+              id: feature.id,
+              name: feature.text || feature.place_name?.split(",")[0] || "",
+              fullName: feature.place_name || "",
+              secondaryText:
+                feature.place_name?.split(",").slice(1).join(",").trim() || "",
+              coordinates: feature.center,
+            })) || [];
+
+          if (type === "origin") {
+            setOriginSuggestions(suggestions);
+            setShowOriginSuggestions(suggestions.length > 0);
+          } else {
+            setDestSuggestions(suggestions);
+            setShowDestSuggestions(suggestions.length > 0);
+          }
+        } catch (fallbackError) {
+          console.error("Mapbox fallback also failed:", fallbackError);
+          if (type === "origin") {
+            setOriginSuggestions([]);
+            setShowOriginSuggestions(false);
+          } else {
+            setDestSuggestions([]);
+            setShowDestSuggestions(false);
+          }
+        }
+      } finally {
+        if (type === "origin") {
+          setIsLoadingOrigin(false);
+        } else {
+          setIsLoadingDest(false);
+        }
+      }
+    },
+    [coordinates]
+  );
 
   // Debounced suggestion fetch
   const handleLocationInput = useCallback(
     (value, type) => {
       if (type === "origin") {
         setRouteOrigin(value);
+        // Clear stored coords when user types manually (will geocode on submit)
+        setRouteOriginCoords(null);
       } else {
         setRouteDestination(value);
+        // Clear stored coords when user types manually (will geocode on submit)
+        setRouteDestCoords(null);
       }
 
       // Clear existing debounce
@@ -1005,14 +1794,18 @@ const AdvancedWeatherMap = ({
     [fetchSuggestions]
   );
 
-  // Select a suggestion
+  // Select a suggestion - store coordinates if available from Geoapify
   const selectSuggestion = useCallback((suggestion, type) => {
     if (type === "origin") {
-      setRouteOrigin(suggestion.fullName);
+      setRouteOrigin(suggestion.fullName || suggestion.name);
+      // Store coordinates from Geoapify (format: [lon, lat])
+      setRouteOriginCoords(suggestion.coordinates || null);
       setOriginSuggestions([]);
       setShowOriginSuggestions(false);
     } else {
-      setRouteDestination(suggestion.fullName);
+      setRouteDestination(suggestion.fullName || suggestion.name);
+      // Store coordinates from Geoapify (format: [lon, lat])
+      setRouteDestCoords(suggestion.coordinates || null);
       setDestSuggestions([]);
       setShowDestSuggestions(false);
     }
@@ -1052,6 +1845,18 @@ const AdvancedWeatherMap = ({
   // Initialize map
   useEffect(() => {
     if (!MAPBOX_ACCESS_TOKEN || !mapContainer.current) return;
+
+    // Explicitly disable Mapbox telemetry/event pings to avoid ad-blocked POST errors
+    try {
+      if (mapboxgl?.setTelemetryEnabled) {
+        mapboxgl.setTelemetryEnabled(false);
+      }
+      if (mapboxgl?.config) {
+        mapboxgl.config.TELEMETRY = false;
+      }
+    } catch (err) {
+      console.warn("Could not disable Mapbox telemetry", err);
+    }
 
     setIsMapLoading(true);
 
@@ -1236,23 +2041,207 @@ const AdvancedWeatherMap = ({
     }
   }, [coordinates]);
 
-  // Animation effect for weather layers (iPhone-style)
+  // Draggable panel handlers
+  const handlePanelMouseDown = useCallback((e) => {
+    // Only allow dragging from the header area
+    if (!e.target.closest(".awm-panel-header")) return;
+    if (e.target.closest("button")) return; // Don't drag when clicking buttons
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const panel = routePanelRef.current;
+    if (!panel) return;
+
+    const initialRect = panel.getBoundingClientRect();
+    const mapWrapper = panel.closest(".awm-map-wrapper");
+    if (!mapWrapper) return;
+
+    const offsetX = e.clientX - initialRect.left;
+    const offsetY = e.clientY - initialRect.top;
+
+    setIsDragging(true);
+
+    const handleMove = (moveEvent) => {
+      if (!panel || !mapWrapper) return;
+
+      const currentPanelRect = panel.getBoundingClientRect();
+      const currentContainerRect = mapWrapper.getBoundingClientRect();
+
+      // Calculate new position relative to container
+      let newX = moveEvent.clientX - currentContainerRect.left - offsetX;
+      let newY = moveEvent.clientY - currentContainerRect.top - offsetY;
+
+      // Constrain to container bounds with padding
+      const maxX = currentContainerRect.width - currentPanelRect.width - 10;
+      const maxY = currentContainerRect.height - currentPanelRect.height - 10;
+
+      newX = Math.max(10, Math.min(newX, maxX));
+      newY = Math.max(10, Math.min(newY, maxY));
+
+      setRoutePanelPosition({ x: newX, y: newY });
+    };
+
+    const handleUp = () => {
+      setIsDragging(false);
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+  }, []);
+
+  // Reset panel position when closed
+  const handleClosePanelAndReset = useCallback(() => {
+    // Clear nearby markers
+    nearbyMarkersRef.current.forEach((marker) => marker.remove());
+    nearbyMarkersRef.current = [];
+
+    setShowRoutePanel(false);
+    setRoutePanelPosition({ x: null, y: null });
+    setRoutePanelView("main");
+    setSelectedNearbyCategory(null);
+    setNearbyPlaces([]);
+    setIsDragging(false);
+  }, []);
+
+  // Open route panel with proper initialization
+  const openRoutePanel = useCallback(() => {
+    // Reset all state for clean open
+    setRoutePanelPosition({ x: null, y: null });
+    setRoutePanelView("main");
+    setSelectedNearbyCategory(null);
+    setIsDragging(false);
+    // Close other panels
+    setShowLayerPanel(false);
+    setShowStylePanel(false);
+    // Open route panel
+    setShowRoutePanel(true);
+    // Fetch nearby places
+    fetchNearbyPlaces();
+  }, [fetchNearbyPlaces]);
+
+  // Refetch nearby places when map zoom changes (Apple Maps style)
   useEffect(() => {
-    if (isAnimating && activeLayers.length > 0) {
-      animationIntervalRef.current = setInterval(() => {
-        setAnimationFrame((prev) => (prev + 1) % 100);
-      }, 100);
-    } else {
-      if (animationIntervalRef.current) {
-        clearInterval(animationIntervalRef.current);
-      }
-    }
-    return () => {
-      if (animationIntervalRef.current) {
-        clearInterval(animationIntervalRef.current);
+    if (!map.current || !showRoutePanel) return;
+
+    const handleZoomEnd = () => {
+      // Only refetch if we're in the findNearby view or main view with a category selected
+      if (routePanelView === "findNearby" && selectedNearbyCategory) {
+        fetchNearbyPlaces(selectedNearbyCategory);
       }
     };
-  }, [isAnimating, activeLayers.length]);
+
+    map.current.on("zoomend", handleZoomEnd);
+    return () => {
+      if (map.current) {
+        map.current.off("zoomend", handleZoomEnd);
+      }
+    };
+  }, [
+    showRoutePanel,
+    routePanelView,
+    selectedNearbyCategory,
+    fetchNearbyPlaces,
+  ]);
+
+  // Display nearby places as markers on the map
+  useEffect(() => {
+    if (!map.current) return;
+
+    // Clear existing markers
+    nearbyMarkersRef.current.forEach((marker) => marker.remove());
+    nearbyMarkersRef.current = [];
+
+    // Add markers for nearby places if in findNearby view with a selected category
+    if (
+      routePanelView === "findNearby" &&
+      selectedNearbyCategory &&
+      nearbyPlaces.length > 0
+    ) {
+      nearbyPlaces.forEach((place) => {
+        const categoryInfo = NEARBY_CATEGORIES.find(
+          (c) => c.id === selectedNearbyCategory
+        );
+        const color = categoryInfo?.color || "#d4a853";
+
+        // Create marker element
+        const el = document.createElement("div");
+        el.className = "nearby-place-marker";
+        el.style.cssText = `
+          width: 32px;
+          height: 32px;
+          background: ${color};
+          border: 2px solid rgba(255, 255, 255, 0.9);
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+
+        const icon = document.createElement("i");
+        icon.className = `bi ${categoryInfo?.icon || "bi-geo-alt-fill"}`;
+        icon.style.cssText = `
+          color: white;
+          font-size: 14px;
+          transform: rotate(45deg);
+        `;
+        el.appendChild(icon);
+
+        // Create popup
+        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+          <div style="padding: 4px; min-width: 150px;">
+            <strong style="color: #0f1723; font-size: 13px;">${
+              place.name
+            }</strong>
+            <p style="margin: 4px 0 2px 0; font-size: 11px; color: #666;">${
+              place.address || ""
+            }</p>
+            <p style="margin: 2px 0 0 0; font-size: 11px; color: ${color}; font-weight: 600;">${
+          place.distanceMiles
+        } mi away</p>
+          </div>
+        `);
+
+        // Add marker to map
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat(place.coordinates)
+          .setPopup(popup)
+          .addTo(map.current);
+
+        // Click handler to use as destination
+        el.addEventListener("click", () => {
+          applySavedPlace(place);
+          setRoutePanelView("main");
+          setSelectedNearbyCategory(null);
+        });
+
+        nearbyMarkersRef.current.push(marker);
+      });
+
+      console.log(
+        "[Nearby Markers] Added",
+        nearbyMarkersRef.current.length,
+        "markers to map"
+      );
+    }
+
+    // Cleanup on unmount
+    return () => {
+      nearbyMarkersRef.current.forEach((marker) => marker.remove());
+      nearbyMarkersRef.current = [];
+    };
+  }, [
+    nearbyPlaces,
+    routePanelView,
+    selectedNearbyCategory,
+    applySavedPlace,
+    NEARBY_CATEGORIES,
+  ]);
 
   // Update wind particle system when wind data changes
   useEffect(() => {
@@ -1301,20 +2290,8 @@ const AdvancedWeatherMap = ({
             <i className="bi bi-map"></i>
           </div>
           <div>
-            <h3>Weather Radar & Analysis</h3>
+            <h3>Advanced Mapping & Direction</h3>
           </div>
-        </div>
-        <div className="awm-header-right">
-          <button
-            className={`awm-animate-btn ${isAnimating ? "active" : ""}`}
-            onClick={() => setIsAnimating(!isAnimating)}
-            title={isAnimating ? "Pause Animation" : "Play Animation"}
-            aria-label={isAnimating ? "Pause Animation" : "Play Animation"}
-          >
-            <i
-              className={`bi ${isAnimating ? "bi-pause-fill" : "bi-play-fill"}`}
-            ></i>
-          </button>
         </div>
       </div>
 
@@ -1450,14 +2427,6 @@ const AdvancedWeatherMap = ({
                   </div>
                 ))}
               </div>
-              {!OWM_API_KEY && (
-                <div className="awm-panel-warning">
-                  <i className="bi bi-exclamation-triangle"></i>
-                  <span>
-                    Add VITE_OPENWEATHER_API_KEY for live weather tiles
-                  </span>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -1475,7 +2444,25 @@ const AdvancedWeatherMap = ({
             aria-label="Toggle map style panel"
             aria-expanded={showStylePanel}
           >
-            <i className={`bi ${MAP_STYLES[mapStyle].icon}`}></i>
+            {mapStyle === "terrain" ? (
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M2 20h20L12 4 2 20z" fill="currentColor" />
+                <path
+                  d="M7 16l3-4 2 3 3-5 4 7H7z"
+                  fill="rgba(255,255,255,0.12)"
+                />
+              </svg>
+            ) : (
+              <i className={`bi ${MAP_STYLES[mapStyle].icon}`}></i>
+            )}
           </button>
 
           {showStylePanel && (
@@ -1508,7 +2495,26 @@ const AdvancedWeatherMap = ({
                     }
                     aria-pressed={mapStyle === style.id}
                   >
-                    <i className={`bi ${style.icon}`}></i>
+                    {/* Render inline mountain SVG for terrain to avoid missing icon fonts */}
+                    {style.id === "terrain" ? (
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path d="M2 20h20L12 4 2 20z" fill="currentColor" />
+                        <path
+                          d="M7 16l3-4 2 3 3-5 4 7H7z"
+                          fill="rgba(255,255,255,0.12)"
+                        />
+                      </svg>
+                    ) : (
+                      <i className={`bi ${style.icon}`}></i>
+                    )}
                     <span>{style.name}</span>
                   </div>
                 ))}
@@ -1522,9 +2528,11 @@ const AdvancedWeatherMap = ({
           <button
             className={`awm-control-btn ${showRoutePanel ? "active" : ""}`}
             onClick={() => {
-              setShowRoutePanel(!showRoutePanel);
-              setShowLayerPanel(false);
-              setShowStylePanel(false);
+              if (showRoutePanel) {
+                handleClosePanelAndReset();
+              } else {
+                openRoutePanel();
+              }
             }}
             title="Route Planner"
             aria-label="Toggle route planner panel"
@@ -1532,110 +2540,275 @@ const AdvancedWeatherMap = ({
           >
             <i className="bi bi-signpost-split"></i>
           </button>
+        </div>
 
-          {showRoutePanel && (
+        {/* Route Panel - positioned as direct child of map wrapper */}
+        {showRoutePanel && (
+          <div
+            ref={routePanelRef}
+            className={`awm-panel awm-route-panel awm-route-panel-expanded ${
+              isDragging ? "dragging" : ""
+            }`}
+            role="dialog"
+            aria-label="Route Planner"
+            style={
+              routePanelPosition.x !== null && routePanelPosition.y !== null
+                ? {
+                    left: `${routePanelPosition.x}px`,
+                    top: `${routePanelPosition.y}px`,
+                    right: "auto",
+                  }
+                : undefined
+            }
+          >
+            {/* Panel Header with Back Button - Draggable Handle */}
             <div
-              className="awm-panel awm-route-panel"
-              role="dialog"
-              aria-label="Route Planner"
+              className="awm-panel-header awm-panel-draggable"
+              onMouseDown={handlePanelMouseDown}
+              style={{ cursor: isDragging ? "grabbing" : "grab" }}
             >
-              <div className="awm-panel-header">
-                <h4>Route Planner</h4>
+              {routePanelView !== "main" && routePanelView !== "findNearby" && (
                 <button
-                  onClick={() => setShowRoutePanel(false)}
-                  aria-label="Close panel"
+                  className="awm-back-btn"
+                  onClick={() => {
+                    if (routePanelView === "editPlace") {
+                      setEditingPlaceType(null);
+                    }
+                    setRoutePanelView("main");
+                  }}
+                  aria-label="Go back"
                 >
-                  <i className="bi bi-x"></i>
+                  <i className="bi bi-chevron-left"></i>
                 </button>
-              </div>
-              <div className="awm-panel-content">
-                {/* Origin Input with Suggestions */}
-                <div className="awm-route-input-wrapper" ref={originInputRef}>
-                  <div className="awm-route-input">
-                    <i className="bi bi-geo-alt"></i>
-                    <input
-                      type="text"
-                      placeholder="Starting point..."
-                      value={routeOrigin}
-                      onChange={(e) =>
-                        handleLocationInput(e.target.value, "origin")
-                      }
-                      onFocus={() =>
-                        originSuggestions.length > 0 &&
-                        setShowOriginSuggestions(true)
-                      }
-                    />
-                    {isLoadingOrigin && (
-                      <i className="bi bi-arrow-repeat spinning awm-input-loader"></i>
-                    )}
+              )}
+              {routePanelView === "findNearby" && (
+                <button
+                  className="awm-back-btn"
+                  onClick={() => {
+                    setRoutePanelView("main");
+                    setSelectedNearbyCategory(null);
+                    setNearbyPlaces([]);
+                  }}
+                  aria-label="Go back"
+                >
+                  <i className="bi bi-chevron-left"></i>
+                </button>
+              )}
+              <h4>
+                {routePanelView === "main" && "Directions"}
+                {routePanelView === "directions" && "Route Details"}
+                {routePanelView === "editPlace" &&
+                  `Set ${editingPlaceType === "home" ? "Home" : "Work"}`}
+                {routePanelView === "findNearby" &&
+                  (selectedNearbyCategory
+                    ? NEARBY_CATEGORIES.find(
+                        (c) => c.id === selectedNearbyCategory
+                      )?.name || "Nearby"
+                    : "Find Nearby")}
+              </h4>
+              <button
+                onClick={handleClosePanelAndReset}
+                aria-label="Close panel"
+              >
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+
+            <div className="awm-panel-content awm-route-content">
+              {/* Main View */}
+              {routePanelView === "main" && (
+                <>
+                  {/* Route Mode Selector - Apple Maps Style */}
+                  <div className="awm-route-mode-selector">
+                    <button
+                      className={`awm-mode-btn ${
+                        routeMode === "driving" ? "active" : ""
+                      }`}
+                      onClick={() => setRouteMode("driving")}
+                      title="Driving"
+                    >
+                      <i className="bi bi-car-front"></i>
+                      <span>Drive</span>
+                    </button>
+                    <button
+                      className={`awm-mode-btn ${
+                        routeMode === "walking" ? "active" : ""
+                      }`}
+                      onClick={() => setRouteMode("walking")}
+                      title="Walking"
+                    >
+                      <i className="bi bi-person-walking"></i>
+                      <span>Walk</span>
+                    </button>
+                    <button
+                      className={`awm-mode-btn ${
+                        routeMode === "transit" ? "active" : ""
+                      }`}
+                      onClick={() => setRouteMode("transit")}
+                      title="Transit"
+                    >
+                      <i className="bi bi-bus-front"></i>
+                      <span>Transit</span>
+                    </button>
                   </div>
-                  {showOriginSuggestions && originSuggestions.length > 0 && (
-                    <div className="awm-suggestions-dropdown">
-                      {originSuggestions.map((suggestion) => (
-                        <div
-                          key={suggestion.id}
-                          className="awm-suggestion-item"
-                          onClick={() => selectSuggestion(suggestion, "origin")}
-                        >
-                          <i className="bi bi-geo-alt-fill"></i>
-                          <div className="awm-suggestion-text">
-                            <span className="awm-suggestion-name">
-                              {suggestion.name}
-                            </span>
-                            <span className="awm-suggestion-full">
-                              {suggestion.fullName}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+
+                  {/* Route Options - Apple Maps Style Toggles (only show for driving) */}
+                  {routeMode === "driving" && (
+                    <div className="awm-route-options">
+                      <div className="awm-route-option-toggle">
+                        <label className="awm-toggle-label">
+                          <input
+                            type="checkbox"
+                            checked={avoidTolls}
+                            onChange={(e) => setAvoidTolls(e.target.checked)}
+                          />
+                          <span className="awm-toggle-switch"></span>
+                          <span className="awm-toggle-text">
+                            <i className="bi bi-cash-coin"></i>
+                            Avoid Tolls
+                          </span>
+                        </label>
+                      </div>
+                      <div className="awm-route-option-toggle">
+                        <label className="awm-toggle-label">
+                          <input
+                            type="checkbox"
+                            checked={avoidHighways}
+                            onChange={(e) => setAvoidHighways(e.target.checked)}
+                          />
+                          <span className="awm-toggle-switch"></span>
+                          <span className="awm-toggle-text">
+                            <i className="bi bi-signpost-split"></i>
+                            Avoid Highways
+                          </span>
+                        </label>
+                      </div>
                     </div>
                   )}
-                </div>
 
-                {/* Destination Input with Suggestions */}
-                <div className="awm-route-input-wrapper" ref={destInputRef}>
-                  <div className="awm-route-input">
-                    <i className="bi bi-geo-alt-fill"></i>
-                    <input
-                      type="text"
-                      placeholder="Destination..."
-                      value={routeDestination}
-                      onChange={(e) =>
-                        handleLocationInput(e.target.value, "dest")
-                      }
-                      onFocus={() =>
-                        destSuggestions.length > 0 &&
-                        setShowDestSuggestions(true)
-                      }
-                    />
-                    {isLoadingDest && (
-                      <i className="bi bi-arrow-repeat spinning awm-input-loader"></i>
+                  {/* Origin Input */}
+                  <div className="awm-route-input-wrapper" ref={originInputRef}>
+                    <div className="awm-route-input">
+                      <div className="awm-input-marker awm-marker-origin"></div>
+                      <input
+                        type="text"
+                        placeholder="Current location or starting point..."
+                        value={routeOrigin}
+                        onChange={(e) =>
+                          handleLocationInput(e.target.value, "origin")
+                        }
+                        onFocus={() =>
+                          originSuggestions.length > 0 &&
+                          setShowOriginSuggestions(true)
+                        }
+                      />
+                      {routeOrigin && (
+                        <button
+                          className="awm-input-clear"
+                          onClick={() => setRouteOrigin("")}
+                        >
+                          <i className="bi bi-x-circle-fill"></i>
+                        </button>
+                      )}
+                      {isLoadingOrigin && (
+                        <i className="bi bi-arrow-repeat spinning awm-input-loader"></i>
+                      )}
+                    </div>
+                    {showOriginSuggestions && originSuggestions.length > 0 && (
+                      <div className="awm-suggestions-dropdown">
+                        {originSuggestions.map((suggestion) => (
+                          <div
+                            key={suggestion.id}
+                            className="awm-suggestion-item"
+                            onClick={() =>
+                              selectSuggestion(suggestion, "origin")
+                            }
+                          >
+                            <i className="bi bi-geo-alt"></i>
+                            <div className="awm-suggestion-text">
+                              <span className="awm-suggestion-name">
+                                {suggestion.name}
+                              </span>
+                              <span className="awm-suggestion-full">
+                                {suggestion.secondaryText ||
+                                  suggestion.fullName}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  {showDestSuggestions && destSuggestions.length > 0 && (
-                    <div className="awm-suggestions-dropdown">
-                      {destSuggestions.map((suggestion) => (
-                        <div
-                          key={suggestion.id}
-                          className="awm-suggestion-item"
-                          onClick={() => selectSuggestion(suggestion, "dest")}
-                        >
-                          <i className="bi bi-geo-alt-fill"></i>
-                          <div className="awm-suggestion-text">
-                            <span className="awm-suggestion-name">
-                              {suggestion.name}
-                            </span>
-                            <span className="awm-suggestion-full">
-                              {suggestion.fullName}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
-                <div className="awm-route-actions">
+                  {/* Route Line Connector */}
+                  <div className="awm-route-connector">
+                    <div className="awm-connector-line"></div>
+                    <button
+                      className="awm-swap-btn"
+                      onClick={() => {
+                        const temp = routeOrigin;
+                        setRouteOrigin(routeDestination);
+                        setRouteDestination(temp);
+                      }}
+                      title="Swap locations"
+                    >
+                      <i className="bi bi-arrow-down-up"></i>
+                    </button>
+                  </div>
+
+                  {/* Destination Input */}
+                  <div className="awm-route-input-wrapper" ref={destInputRef}>
+                    <div className="awm-route-input">
+                      <div className="awm-input-marker awm-marker-dest"></div>
+                      <input
+                        type="text"
+                        placeholder="Where to?"
+                        value={routeDestination}
+                        onChange={(e) =>
+                          handleLocationInput(e.target.value, "dest")
+                        }
+                        onFocus={() =>
+                          destSuggestions.length > 0 &&
+                          setShowDestSuggestions(true)
+                        }
+                      />
+                      {routeDestination && (
+                        <button
+                          className="awm-input-clear"
+                          onClick={() => setRouteDestination("")}
+                        >
+                          <i className="bi bi-x-circle-fill"></i>
+                        </button>
+                      )}
+                      {isLoadingDest && (
+                        <i className="bi bi-arrow-repeat spinning awm-input-loader"></i>
+                      )}
+                    </div>
+                    {showDestSuggestions && destSuggestions.length > 0 && (
+                      <div className="awm-suggestions-dropdown">
+                        {destSuggestions.map((suggestion) => (
+                          <div
+                            key={suggestion.id}
+                            className="awm-suggestion-item"
+                            onClick={() => selectSuggestion(suggestion, "dest")}
+                          >
+                            <i className="bi bi-geo-alt-fill"></i>
+                            <div className="awm-suggestion-text">
+                              <span className="awm-suggestion-name">
+                                {suggestion.name}
+                              </span>
+                              <span className="awm-suggestion-full">
+                                {suggestion.secondaryText ||
+                                  suggestion.fullName}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Calculate Route Button */}
                   <button
                     className="awm-route-calc-btn"
                     onClick={calculateRoute}
@@ -1646,41 +2819,536 @@ const AdvancedWeatherMap = ({
                     {isCalculatingRoute ? (
                       <>
                         <i className="bi bi-arrow-repeat spinning"></i>
-                        Calculating...
+                        <span>Finding routes...</span>
                       </>
                     ) : (
                       <>
-                        <i className="bi bi-arrow-right-circle"></i>
-                        Calculate Route
+                        <i className="bi bi-arrow-right-circle-fill"></i>
+                        <span>Get Directions</span>
                       </>
                     )}
                   </button>
-                  {routeInfo && (
-                    <button
-                      className="awm-route-clear-btn"
-                      onClick={clearRoute}
-                    >
-                      <i className="bi bi-x-circle"></i>
-                      Clear
-                    </button>
-                  )}
-                </div>
-                {routeInfo && (
-                  <div className="awm-route-info">
-                    <div className="awm-route-stat">
-                      <i className="bi bi-clock"></i>
-                      <span>{routeInfo.duration} min</span>
+
+                  {/* Quick Actions - Saved Places */}
+                  <div className="awm-saved-places">
+                    <div className="awm-section-title">
+                      <span>Saved Places</span>
                     </div>
-                    <div className="awm-route-stat">
-                      <i className="bi bi-speedometer2"></i>
-                      <span>{routeInfo.distance} mi</span>
+                    <div className="awm-places-grid">
+                      <div
+                        className={`awm-place-card ${
+                          savedPlaces.home ? "has-place" : ""
+                        }`}
+                        onClick={() => {
+                          if (savedPlaces.home) {
+                            applySavedPlace(savedPlaces.home);
+                          } else {
+                            setEditingPlaceType("home");
+                            setRoutePanelView("editPlace");
+                          }
+                        }}
+                      >
+                        <div className="awm-place-icon home">
+                          <i className="bi bi-house-fill"></i>
+                        </div>
+                        <div className="awm-place-info">
+                          <span className="awm-place-label">Home</span>
+                          <span className="awm-place-address">
+                            {savedPlaces.home ? savedPlaces.home.name : "Add"}
+                          </span>
+                        </div>
+                        {savedPlaces.home && (
+                          <button
+                            className="awm-place-edit"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingPlaceType("home");
+                              setRoutePanelView("editPlace");
+                            }}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                        )}
+                      </div>
+                      <div
+                        className={`awm-place-card ${
+                          savedPlaces.work ? "has-place" : ""
+                        }`}
+                        onClick={() => {
+                          if (savedPlaces.work) {
+                            applySavedPlace(savedPlaces.work);
+                          } else {
+                            setEditingPlaceType("work");
+                            setRoutePanelView("editPlace");
+                          }
+                        }}
+                      >
+                        <div className="awm-place-icon work">
+                          <i className="bi bi-briefcase-fill"></i>
+                        </div>
+                        <div className="awm-place-info">
+                          <span className="awm-place-label">Work</span>
+                          <span className="awm-place-address">
+                            {savedPlaces.work ? savedPlaces.work.name : "Add"}
+                          </span>
+                        </div>
+                        {savedPlaces.work && (
+                          <button
+                            className="awm-place-edit"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingPlaceType("work");
+                              setRoutePanelView("editPlace");
+                            }}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Recent Searches */}
+                  {recentSearches.length > 0 && (
+                    <div className="awm-recents">
+                      <div className="awm-section-title">
+                        <span>Recents</span>
+                        <button
+                          className="awm-clear-btn"
+                          onClick={clearRecentSearches}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <div className="awm-recents-list">
+                        {recentSearches.slice(0, 5).map((search, idx) => (
+                          <div
+                            key={idx}
+                            className="awm-recent-item"
+                            onClick={() => applyRecentSearch(search)}
+                          >
+                            <i className="bi bi-clock-history"></i>
+                            <div className="awm-recent-text">
+                              <span className="awm-recent-name">
+                                {search.name}
+                              </span>
+                              <span className="awm-recent-full">
+                                {search.fullName}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Find Nearby - Apple Maps Style Categories */}
+                  <div className="awm-find-nearby">
+                    <button
+                      className="awm-find-nearby-btn"
+                      onClick={() => {
+                        setRoutePanelView("findNearby");
+                        fetchNearbyPlaces();
+                      }}
+                    >
+                      <i className="bi bi-search"></i>
+                      <span>Find Nearby</span>
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Find Nearby View - Category Grid */}
+              {routePanelView === "findNearby" && (
+                <>
+                  {!selectedNearbyCategory ? (
+                    <>
+                      <div className="awm-nearby-categories">
+                        {NEARBY_CATEGORIES.map((category) => (
+                          <button
+                            key={category.id}
+                            className="awm-nearby-category-btn"
+                            onClick={() => {
+                              setSelectedNearbyCategory(category.id);
+                              fetchNearbyPlaces(category.id);
+                            }}
+                            style={{ "--category-color": category.color }}
+                          >
+                            <div className="awm-category-icon">
+                              <i className={`bi ${category.icon}`}></i>
+                            </div>
+                            <span>{category.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="awm-nearby-results">
+                        {isLoadingNearby ? (
+                          <div className="awm-nearby-loading">
+                            <i className="bi bi-arrow-repeat spinning"></i>
+                            <span>Finding places...</span>
+                          </div>
+                        ) : nearbyPlaces.length > 0 ? (
+                          <>
+                            <div className="awm-nearby-results-header">
+                              <span className="awm-results-count">
+                                {nearbyPlaces.length}{" "}
+                                {nearbyPlaces.length === 1 ? "place" : "places"}{" "}
+                                found
+                              </span>
+                              {nearbySearchRadius && (
+                                <span className="awm-search-radius">
+                                  within{" "}
+                                  {nearbySearchRadius < 1
+                                    ? `${nearbySearchRadius * 5280} ft`
+                                    : `${nearbySearchRadius} mi`}
+                                </span>
+                              )}
+                            </div>
+                            <div className="awm-zoom-hint">
+                              <i className="bi bi-info-circle"></i>
+                              <span>Zoom out to see more places</span>
+                            </div>
+                            <div className="awm-nearby-results-list">
+                              {nearbyPlaces.map((place, idx) => (
+                                <div
+                                  key={idx}
+                                  className="awm-nearby-result-item"
+                                  onClick={() => {
+                                    applySavedPlace(place);
+                                    setRoutePanelView("main");
+                                    setSelectedNearbyCategory(null);
+                                  }}
+                                >
+                                  <div
+                                    className="awm-nearby-result-icon"
+                                    style={{
+                                      "--category-color":
+                                        NEARBY_CATEGORIES.find(
+                                          (c) => c.id === selectedNearbyCategory
+                                        )?.color || "#d4a853",
+                                    }}
+                                  >
+                                    <i
+                                      className={`bi ${
+                                        NEARBY_CATEGORIES.find(
+                                          (c) => c.id === selectedNearbyCategory
+                                        )?.icon || "bi-geo-alt"
+                                      }`}
+                                    ></i>
+                                  </div>
+                                  <div className="awm-nearby-result-info">
+                                    <div className="awm-nearby-result-name-row">
+                                      <span className="awm-nearby-result-name">
+                                        {place.name}
+                                      </span>
+                                      <span className="awm-nearby-result-distance">
+                                        {place.distanceMiles} mi
+                                      </span>
+                                    </div>
+                                    {place.address && (
+                                      <span className="awm-nearby-result-address">
+                                        {place.address}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button
+                                    className="awm-nearby-directions-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRouteDestination(place.fullName);
+                                      setRoutePanelView("main");
+                                      setSelectedNearbyCategory(null);
+                                    }}
+                                    title="Get directions"
+                                  >
+                                    <i className="bi bi-arrow-right-circle"></i>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="awm-nearby-no-results">
+                            <i className="bi bi-geo-alt"></i>
+                            <span>No places found nearby</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Directions View - Turn by Turn or Error */}
+              {routePanelView === "directions" && (
+                <>
+                  {/* Route Error State (Walk/Transit Unavailable) */}
+                  {routeError ? (
+                    <div className="awm-route-error">
+                      <div className="awm-route-error-icon">
+                        {routeError.type === "walking" && (
+                          <i className="bi bi-person-walking"></i>
+                        )}
+                        {routeError.type === "transit" && (
+                          <i className="bi bi-bus-front"></i>
+                        )}
+                        {routeError.type === "general" && (
+                          <i className="bi bi-exclamation-triangle"></i>
+                        )}
+                      </div>
+                      <h5 className="awm-route-error-title">
+                        {routeError.message}
+                      </h5>
+                      <p className="awm-route-error-reason">
+                        {routeError.reason}
+                      </p>
+                      <div className="awm-route-error-actions">
+                        {routeError.type === "walking" && (
+                          <button
+                            className="awm-error-action-btn"
+                            onClick={() => {
+                              setRouteMode("driving");
+                              setRouteError(null);
+                              calculateRoute();
+                            }}
+                          >
+                            <i className="bi bi-car-front"></i>
+                            <span>Try Driving Instead</span>
+                          </button>
+                        )}
+                        {routeError.type === "transit" && (
+                          <>
+                            <button
+                              className="awm-error-action-btn"
+                              onClick={() => {
+                                setRouteMode("driving");
+                                setRouteError(null);
+                                calculateRoute();
+                              }}
+                            >
+                              <i className="bi bi-car-front"></i>
+                              <span>Get Driving Directions</span>
+                            </button>
+                            <a
+                              href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(
+                                routeOrigin
+                              )}&destination=${encodeURIComponent(
+                                routeDestination
+                              )}&travelmode=transit`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="awm-error-action-btn secondary"
+                            >
+                              <i className="bi bi-box-arrow-up-right"></i>
+                              <span>Open in Google Maps</span>
+                            </a>
+                          </>
+                        )}
+                        <button
+                          className="awm-error-back-btn"
+                          onClick={() => {
+                            setRouteError(null);
+                            setRoutePanelView("main");
+                          }}
+                        >
+                          <i className="bi bi-arrow-left"></i>
+                          <span>Back to Directions</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : routeInfo ? (
+                    <>
+                      {/* Route Summary Card */}
+                      <div className="awm-route-summary">
+                        <div className="awm-route-main-info">
+                          <div className="awm-route-time">
+                            <span className="awm-time-value">
+                              {routeInfo.durationFormatted ||
+                                formatDuration(routeInfo.duration)}
+                            </span>
+                          </div>
+                          <div className="awm-route-details">
+                            <span className="awm-route-distance">
+                              {routeInfo.distance} mi
+                            </span>
+                            <span className="awm-route-arrival">
+                              Arrive at {routeInfo.arrivalTime}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Route Preferences Badges */}
+                        {(routeInfo.avoidTolls || routeInfo.avoidHighways) && (
+                          <div className="awm-route-preferences">
+                            {routeInfo.avoidTolls && (
+                              <span className="awm-pref-badge toll-free">
+                                <i className="bi bi-cash-coin"></i>
+                                Toll-free
+                              </span>
+                            )}
+                            {routeInfo.avoidHighways && (
+                              <span className="awm-pref-badge no-highways">
+                                <i className="bi bi-signpost-split"></i>
+                                No highways
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {trafficInfo && trafficInfo.condition !== "unknown" && (
+                          <div
+                            className={`awm-traffic-badge ${trafficInfo.condition}`}
+                          >
+                            <i className="bi bi-car-front"></i>
+                            <span>
+                              {trafficInfo.condition === "light"
+                                ? "Light traffic"
+                                : trafficInfo.condition === "moderate"
+                                ? "Moderate traffic"
+                                : `${trafficInfo.delay} min delay`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Alternate Routes */}
+                      {alternateRoutes.length > 0 && (
+                        <div className="awm-alternate-routes">
+                          <div className="awm-section-title">
+                            <span>Alternative Routes</span>
+                          </div>
+                          {alternateRoutes.map((alt) => (
+                            <div key={alt.id} className="awm-alt-route">
+                              <span className="awm-alt-time">
+                                {formatDuration(alt.duration)}
+                              </span>
+                              <span className="awm-alt-distance">
+                                {alt.distance} mi
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Turn-by-Turn Directions */}
+                      <div className="awm-directions-list">
+                        <div className="awm-section-title">
+                          <span>Directions</span>
+                          <span className="awm-steps-count">
+                            {routeSteps.length} steps
+                          </span>
+                        </div>
+                        {/* eslint-disable-next-line no-unused-vars */}
+                        {routeSteps.map((step, idx) => (
+                          <div key={step.id} className="awm-direction-step">
+                            <div className="awm-step-icon">
+                              <i
+                                className={`bi ${
+                                  step.type === "turn" &&
+                                  step.modifier === "left"
+                                    ? "bi-arrow-left"
+                                    : step.type === "turn" &&
+                                      step.modifier === "right"
+                                    ? "bi-arrow-right"
+                                    : step.type === "merge"
+                                    ? "bi-arrow-up-right"
+                                    : step.type === "arrive"
+                                    ? "bi-geo-alt-fill"
+                                    : step.type === "depart"
+                                    ? "bi-circle-fill"
+                                    : "bi-arrow-up"
+                                }`}
+                              ></i>
+                            </div>
+                            <div className="awm-step-content">
+                              <span className="awm-step-instruction">
+                                {step.instruction}
+                              </span>
+                              {step.name && (
+                                <span className="awm-step-road">
+                                  {step.name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="awm-step-meta">
+                              <span>{step.distance} mi</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* End Route Button */}
+                      <button
+                        className="awm-end-route-btn"
+                        onClick={clearRoute}
+                      >
+                        <i className="bi bi-x-circle"></i>
+                        <span>End Route</span>
+                      </button>
+                    </>
+                  ) : null}
+                </>
+              )}
+
+              {/* Edit Place View */}
+              {routePanelView === "editPlace" && (
+                <div className="awm-edit-place">
+                  <div className="awm-edit-place-icon">
+                    <i
+                      className={`bi ${
+                        editingPlaceType === "home"
+                          ? "bi-house-fill"
+                          : "bi-briefcase-fill"
+                      }`}
+                    ></i>
+                  </div>
+                  <p className="awm-edit-place-desc">
+                    Search for your {editingPlaceType} address below
+                  </p>
+                  <div className="awm-route-input-wrapper">
+                    <div className="awm-route-input">
+                      <i className="bi bi-search"></i>
+                      <input
+                        type="text"
+                        placeholder={`Enter ${editingPlaceType} address...`}
+                        onChange={(e) =>
+                          handleLocationInput(e.target.value, "dest")
+                        }
+                        autoFocus
+                      />
+                    </div>
+                    {destSuggestions.length > 0 && (
+                      <div className="awm-suggestions-dropdown">
+                        {destSuggestions.map((suggestion) => (
+                          <div
+                            key={suggestion.id}
+                            className="awm-suggestion-item"
+                            onClick={() =>
+                              savePlace(editingPlaceType, suggestion)
+                            }
+                          >
+                            <i className="bi bi-geo-alt-fill"></i>
+                            <div className="awm-suggestion-text">
+                              <span className="awm-suggestion-name">
+                                {suggestion.name}
+                              </span>
+                              <span className="awm-suggestion-full">
+                                {suggestion.secondaryText ||
+                                  suggestion.fullName}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Legend (show for active layers) */}
         {activeLayers.length > 0 && (
@@ -1737,7 +3405,7 @@ const AdvancedWeatherMap = ({
           {weatherProps.precip !== undefined && weatherProps.precip > 0 && (
             <div className="awm-weather-item precip">
               <i className="bi bi-droplet-fill"></i>
-              <span>{weatherProps.precip.toFixed(2)}"</span>
+              <span>{weatherProps.precip.toFixed(2)}&quot;</span>
             </div>
           )}
         </div>
@@ -1751,15 +3419,15 @@ const AdvancedWeatherMap = ({
       >
         <button
           className={`awm-action-btn ${
-            activeLayers.includes("radar") ? "active" : ""
+            activeLayers.includes("precipitation") ? "active" : ""
           }`}
-          onClick={() => toggleLayer("radar")}
-          title="Toggle Radar"
-          aria-label="Toggle precipitation radar layer"
-          aria-pressed={activeLayers.includes("radar")}
+          onClick={() => toggleLayer("precipitation")}
+          title="Toggle Precipitation"
+          aria-label="Toggle precipitation layer"
+          aria-pressed={activeLayers.includes("precipitation")}
         >
           <i className="bi bi-cloud-rain-heavy"></i>
-          <span>Radar</span>
+          <span>Precip</span>
         </button>
         <button
           className={`awm-action-btn ${
@@ -1810,11 +3478,13 @@ const AdvancedWeatherMap = ({
           <span>AQI</span>
         </button>
         <button
-          className="awm-action-btn"
+          className={`awm-action-btn ${showRoutePanel ? "active" : ""}`}
           onClick={() => {
-            setShowRoutePanel(true);
-            setShowLayerPanel(false);
-            setShowStylePanel(false);
+            if (showRoutePanel) {
+              handleClosePanelAndReset();
+            } else {
+              openRoutePanel();
+            }
           }}
           title="Route Planner"
           aria-label="Open route planner"

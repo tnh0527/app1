@@ -65,6 +65,9 @@ const Sidebar = () => {
           </span>
         </div>
 
+        {/* Themed divider below the logo/header */}
+        <div className="divider" />
+
         <Tooltip id="sidebar-tooltip" style={{ zIndex: "999" }} />
         <Tooltip id="profile-tooltip" style={{ zIndex: "999" }} />
 
@@ -131,6 +134,25 @@ const Sidebar = () => {
             </ul>
           </div>
         </nav>
+
+        {/* AI Assistant Section at Bottom */}
+        <div className="guide-section">
+          <ul className="nav-list">
+            <li className="nav-item">
+              <div
+                className="nav-link disabled ai-link"
+                aria-disabled="true"
+                tabIndex={-1}
+                data-tooltip-id="sidebar-tooltip"
+                data-tooltip-content="AI Assistant (coming soon)"
+                data-tooltip-place="right"
+              >
+                <Icon icon="mdi:robot" className="nav-link-icon" />
+                <span className="nav-link-text">AI Assistant</span>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
     </>
   );

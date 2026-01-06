@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -19,6 +19,7 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+// eslint-disable-next-line no-unused-vars
 export const AssetLiabilityBreakdown = ({ summary, accounts }) => {
   const chartRef = useRef(null);
 

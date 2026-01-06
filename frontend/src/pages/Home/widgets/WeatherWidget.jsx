@@ -1,9 +1,25 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { iconMap, videoMap } from "../../../utils/weatherMapping";
 import { Icon } from "@iconify/react";
 import { iconsImgs } from "../../../utils/images";
 import "./WeatherWidget.css";
-import { Colors } from "chart.js";
+
+// All available weather info cards
+const ALL_CARD_OPTIONS = [
+  { value: "humidity", label: "Humidity", icon: "bi-droplet-fill" },
+  { value: "wind", label: "Wind", icon: "bi-wind" },
+  { value: "uv", label: "UV Index", icon: "bi-sun-fill" },
+  { value: "air_quality", label: "Air Quality", icon: "bi-lungs-fill" },
+  { value: "feels_like", label: "Feels Like", icon: "bi-thermometer-half" },
+  { value: "visibility", label: "Visibility", icon: "bi-eye" },
+  { value: "pressure", label: "Pressure", icon: "bi-speedometer2" },
+  { value: "cloud_cover", label: "Cloud Cover", icon: "bi-clouds" },
+  { value: "sunrise", label: "Sunrise & Sunset", icon: "bi-sunrise" },
+];
+
+// Default cards to display
+const DEFAULT_CARDS = ["humidity", "wind", "uv", "air_quality"];
 
 export const WeatherWidget = ({
   initialWeather = null,
@@ -16,7 +32,32 @@ export const WeatherWidget = ({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [tempUnit, setTempUnit] = useState("F"); // "F" or "C"
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [selectedCards, setSelectedCards] = useState(() => {
+    // Load from localStorage or use defaults
+    const saved = localStorage.getItem("weatherWidgetSelectedCards");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Validate that all cards are valid options
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === 4 &&
+          parsed.every((card) =>
+            ALL_CARD_OPTIONS.some((opt) => opt.value === card)
+          )
+        ) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to parse saved cards:", e);
+      }
+    }
+    return DEFAULT_CARDS;
+  });
+  const [dropdownOpen, setDropdownOpen] = useState(null); // track which card slot has dropdown open
   const videoRef = useRef(null);
+  const dropdownRefs = useRef({});
+  const [menuPositions, setMenuPositions] = useState({});
 
   // Fetch weather based on browser geolocation
   useEffect(() => {
@@ -140,6 +181,30 @@ export const WeatherWidget = ({
     return () => clearInterval(timer);
   }, []);
 
+  // Save selected cards to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      "weatherWidgetSelectedCards",
+      JSON.stringify(selectedCards)
+    );
+  }, [selectedCards]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const target = event.target;
+      // If click is inside any open dropdown menu or the dropdown button, ignore
+      const clickedInsideMenu =
+        !!target.closest(".card-dropdown-menu") ||
+        !!target.closest(".card-dropdown-btn");
+      if (!clickedInsideMenu && dropdownOpen !== null) {
+        setDropdownOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
+
   // Toggle video play/pause
   const toggleVideo = () => {
     if (videoRef.current) {
@@ -242,6 +307,7 @@ export const WeatherWidget = ({
     return ((f - 32) * 5) / 9;
   };
 
+  // eslint-disable-next-line no-unused-vars
   const celsiusToFahrenheit = (c) => {
     return (c * 9) / 5 + 32;
   };
@@ -357,6 +423,124 @@ export const WeatherWidget = ({
     } else {
       return "#7e0023";
     }
+  };
+
+  // Handle card selection from dropdown
+  const handleCardSelect = (slotIndex, cardValue) => {
+    const newCards = [...selectedCards];
+    newCards[slotIndex] = cardValue;
+    setSelectedCards(newCards);
+    setDropdownOpen(null);
+  };
+
+  // Get data for each card type
+  const getCardData = (cardType) => {
+    switch (cardType) {
+      case "humidity":
+        return {
+          value: Math.round(
+            current?.humidity || current?.relative_humidity || 0
+          ),
+          unit: "%",
+          label: "Humidity",
+          icon: "bi-droplet-fill",
+        };
+      case "wind":
+        return {
+          value: (current?.wind_speed || current?.wind || 0).toFixed(1),
+          unit: "mph",
+          label: "Wind",
+          icon: "bi-wind",
+          iconColor: "cyan",
+        };
+      case "uv":
+        return {
+          value: Number(getCurrentUV()).toFixed(1),
+          unit: "",
+          label: "UV Index",
+          icon: "bi-sun-fill",
+        };
+      case "air_quality": {
+        const aqiValue = Math.round(getCurrentAQI());
+        return {
+          value: aqiValue,
+          unit: "",
+          label: "Air Quality",
+          icon: "bi-lungs-fill",
+          iconColor: getAQIColor(aqiValue),
+        };
+      }
+      case "feels_like":
+        return {
+          value: roundTemp(feelsLikeTemp || current?.temperature || 0),
+          unit: `°${tempUnit}`,
+          label: "Feels Like",
+          icon: "bi-thermometer-half",
+        };
+      case "visibility": {
+        const vis = current?.visibility || 0;
+        return {
+          value: vis >= 10 ? "10+" : vis.toFixed(1),
+          unit: "mi",
+          label: "Visibility",
+          icon: "bi-eye",
+        };
+      }
+      case "pressure":
+        return {
+          value: Math.round(current?.pressure || 0),
+          unit: "hPa",
+          label: "Pressure",
+          icon: "bi-speedometer2",
+        };
+      case "cloud_cover":
+        return {
+          value: Math.round(current?.cloud_cover || 0),
+          unit: "%",
+          label: "Cloud Cover",
+          icon: "bi-clouds",
+        };
+      case "sunrise": {
+        const sunData = todayDaily;
+        const sunrise = sunData?.sunrise
+          ? new Date(sunData.sunrise).toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })
+          : "N/A";
+        const sunset = sunData?.sunset
+          ? new Date(sunData.sunset).toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })
+          : "N/A";
+        return {
+          value: sunrise,
+          secondaryValue: sunset,
+          unit: "",
+          label: "Sunrise",
+          secondaryLabel: "Sunset",
+          icon: "bi-sunrise",
+          isSunrise: true,
+        };
+      }
+      default:
+        return { value: "N/A", unit: "", label: "Unknown", icon: "bi-circle" };
+    }
+  };
+
+  // Get available options for a dropdown (excluding already selected cards)
+  const getAvailableOptions = (currentSlotIndex) => {
+    // Exclude cards that are already selected in other slots,
+    // but allow the option that is currently assigned to this slot so it remains selectable.
+    const selected = [...selectedCards];
+    return ALL_CARD_OPTIONS.filter(
+      (option) =>
+        option.value === selected[currentSlotIndex] ||
+        !selected.includes(option.value)
+    );
   };
 
   return (
@@ -562,50 +746,131 @@ export const WeatherWidget = ({
 
             {/* Right: Stats + Forecast */}
             <div className="weather-details-card">
-              {/* Weather Stats Grid */}
+              {/* Weather Stats Grid - Dynamic Cards with Dropdown */}
               <div className="weather-stats-grid">
-                <div className="weather-stat-item">
-                  <i className="bi bi-droplet-fill"></i>
-                  <div className="stat-info">
-                    <span className="stat-value">
-                      {Math.round(
-                        current?.humidity || current?.relative_humidity || 0
-                      )}
-                      %
-                    </span>
-                    <span className="stat-label">Humidity</span>
-                  </div>
-                </div>
-                <div className="weather-stat-item">
-                  {<i className="bi bi-wind" style={{ color: "cyan" }}></i>}
-                  <div className="stat-info">
-                    <span className="stat-value">
-                      {(current?.wind_speed || current?.wind || 0).toFixed(1)}
-                    </span>
-                    <span className="stat-label">mph Wind</span>
-                  </div>
-                </div>
-                <div className="weather-stat-item">
-                  <i className="bi bi-sun-fill"></i>
-                  <div className="stat-info">
-                    <span className="stat-value">
-                      {Number(getCurrentUV()).toFixed(1)}
-                    </span>
-                    <span className="stat-label">UV Index</span>
-                  </div>
-                </div>
-                <div className="weather-stat-item">
-                  <i
-                    className="bi bi-lungs-fill"
-                    style={{ color: getAQIColor(Math.round(getCurrentAQI())) }}
-                  ></i>
-                  <div className="stat-info">
-                    <span className="stat-value">
-                      {Math.round(getCurrentAQI())}
-                    </span>
-                    <span className="stat-label">Air Quality</span>
-                  </div>
-                </div>
+                {selectedCards.map((cardType, index) => {
+                  const cardData = getCardData(cardType);
+                  const availableOptions = getAvailableOptions(index);
+                  const isDropdownOpen = dropdownOpen === index;
+
+                  return (
+                    <div
+                      key={`${cardType}-${index}`}
+                      className="weather-stat-item-wrapper"
+                    >
+                      {/* Dropdown button */}
+                      <button
+                        ref={(el) => (dropdownRefs.current[index] = el)}
+                        className="card-dropdown-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // compute menu position relative to viewport
+                          const btn = dropdownRefs.current[index];
+                          if (btn) {
+                            const rect = btn.getBoundingClientRect();
+                            const left = rect.right - 6; // align to right edge of button area
+                            const top = rect.bottom + 6; // small gap
+                            setMenuPositions((p) => ({
+                              ...p,
+                              [index]: { top, left, right: "auto" },
+                            }));
+                          }
+                          setDropdownOpen(isDropdownOpen ? null : index);
+                        }}
+                        title="Select card"
+                        aria-haspopup="true"
+                        aria-expanded={isDropdownOpen}
+                      >
+                        <i className="bi bi-chevron-down"></i>
+                      </button>
+
+                      {/* Dropdown menu */}
+                      {isDropdownOpen &&
+                        (() => {
+                          const pos = menuPositions[index] || {
+                            top: 0,
+                            left: 0,
+                          };
+                          return createPortal(
+                            <div
+                              className="card-dropdown-menu"
+                              style={{
+                                position: "fixed",
+                                top: pos.top,
+                                right: `${window.innerWidth - pos.left}px`,
+                                left: "auto",
+                              }}
+                            >
+                              {availableOptions.map((option) => (
+                                <button
+                                  key={option.value}
+                                  className={`card-dropdown-option ${
+                                    option.value === cardType ? "selected" : ""
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCardSelect(index, option.value);
+                                  }}
+                                >
+                                  <i className={`bi ${option.icon}`}></i>
+                                  <span>{option.label}</span>
+                                </button>
+                              ))}
+                            </div>,
+                            document.body
+                          );
+                        })()}
+
+                      {/* Card content */}
+                      <div className="weather-stat-item">
+                        {cardData.isSunrise ? (
+                          <>
+                            <i className={`bi ${cardData.icon}`}></i>
+                            <div className="stat-info stat-info-sunrise">
+                              <div className="sunrise-time">
+                                <span className="sunrise-label">
+                                  ☀️ {cardData.value}
+                                </span>
+                              </div>
+                              <div className="sunset-time">
+                                <span className="sunset-label">
+                                  🌙 {cardData.secondaryValue}
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <i
+                              className={`bi ${cardData.icon}`}
+                              style={
+                                cardData.iconColor
+                                  ? { color: cardData.iconColor }
+                                  : {}
+                              }
+                            ></i>
+                            <div className="stat-info">
+                              <span className="stat-value">
+                                <span className="stat-value-main">
+                                  {cardData.value}
+                                </span>
+                                {cardData.unit ? (
+                                  <span className="stat-unit">
+                                    {" "}
+                                    {cardData.unit}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className="stat-label">
+                                {cardData.label}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Mini Forecast */}

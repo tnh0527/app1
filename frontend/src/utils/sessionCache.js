@@ -62,7 +62,7 @@ try {
     Date.now().toString(36) + Math.random().toString(36).slice(2);
   try {
     sessionStorage.setItem(SESSION_ID_KEY, sessionId);
-  } catch (err) {
+  } catch {
     // ignore
   }
 }

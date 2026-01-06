@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useContext } from "react";
 import "./Login.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { useAuth } from "../../contexts/AuthContext";
 import { ProfileContext } from "../../contexts/ProfileContext";
@@ -17,6 +17,9 @@ import {
   getWeatherCacheKey,
 } from "../../utils/sessionCache";
 
+// Google OAuth Client ID - should match backend GOOGLE_OAUTH_CLIENT_ID
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
 const Login = () => {
   const [isActive, setIsActive] = useState(false);
   const [newUsername, setNewUsername] = useState("");
@@ -29,11 +32,21 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ login: {}, register: {} });
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [showLogoutOverlay, setShowLogoutOverlay] = useState(false);
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState({
+    type: "",
+    text: "",
+  });
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
   const { profile } = useContext(ProfileContext);
   const canvasRef = useRef(null);
   const mouseRef = useRef({
@@ -41,6 +54,34 @@ const Login = () => {
     y: window.innerHeight / 2,
   });
   const navTimeoutRef = useRef(null);
+  const googleButtonRef = useRef(null);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      // If we're showing the login success animation, let that flow control navigation.
+      if (loginSuccess || sessionStorage.getItem("justLoggedIn") === "true") {
+        return;
+      }
+
+      const redirectPath =
+        sessionStorage.getItem("redirectAfterLogin") || "/dashboard";
+      sessionStorage.removeItem("redirectAfterLogin");
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthenticated, navigate, loginSuccess]);
+
+  // Check for session expired state
+  useEffect(() => {
+    if (location.state?.sessionExpired) {
+      setSessionExpiredMessage(true);
+      // Clear the state to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+      // Auto-dismiss after 5 seconds
+      const timer = setTimeout(() => setSessionExpiredMessage(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   // Mount animation trigger
   useEffect(() => {
@@ -86,7 +127,9 @@ const Login = () => {
     let animationId;
     let nodes = [];
     let dataStreams = [];
+    // eslint-disable-next-line no-unused-vars
     let holoStructures = [];
+    // eslint-disable-next-line no-unused-vars
     let gridCracks = [];
     let time = 0;
 
@@ -670,9 +713,234 @@ const Login = () => {
   };
 
   const validateUsername = (uname) => {
+    // Username: 3-20 characters, letters, numbers, underscores only
+    // No special characters like ;?{}[]<>|\\
     return (
       uname.length >= 3 && uname.length <= 20 && /^[a-zA-Z0-9_]+$/.test(uname)
     );
+  };
+
+  // Validate name fields - no numbers or special characters like ;?{}[]<>|\\
+  const validateName = (name) => {
+    if (!name || !name.trim()) return false;
+    // Allow letters, spaces, hyphens, apostrophes (for names like O'Brien, Mary-Jane)
+    // Disallow numbers and special characters: ; ? { } [ ] < > | \\ / @ # $ % ^ & * ( ) = + ~ `
+    const invalidChars = /[0-9;?{}[\]<>|\\/@#$%^&*()=+~`!]/;
+    if (invalidChars.test(name)) return false;
+    // Must contain at least one letter
+    return (
+      /[a-zA-Z]/.test(name) &&
+      name.trim().length >= 1 &&
+      name.trim().length <= 50
+    );
+  };
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) {
+      console.warn("Google OAuth Client ID not configured");
+      return;
+    }
+
+    // Load Google Identity Services script
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCallback,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            use_fedcm_for_prompt: false, // Disable FedCM to avoid browser blocking
+          });
+        } catch (error) {
+          console.error("Google Sign-In initialization error:", error);
+        }
+      }
+    };
+    script.onerror = () => {
+      console.error("Failed to load Google Identity Services script");
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup script on unmount
+      const existingScript = document.querySelector(
+        'script[src="https://accounts.google.com/gsi/client"]'
+      );
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
+
+  // Handle Google Sign-In callback
+  const handleGoogleCallback = async (response) => {
+    if (!response.credential) {
+      setErrors((prev) => ({
+        ...prev,
+        login: { non_field_errors: "Google sign-in failed. Please try again." },
+      }));
+      return;
+    }
+
+    setGoogleLoading(true);
+    setErrors({ login: {}, register: {} });
+
+    try {
+      const { data } = await authApi.googleAuth(response.credential);
+
+      if (!data) {
+        throw new Error("Google sign-in failed");
+      }
+
+      login(true); // Remember Google users by default
+      setLoginSuccess(true); // ensure the success animation plays for Google flows
+      sessionStorage.setItem("justLoggedIn", "true");
+
+      // Preload dashboard data
+      const weatherLocation = profile?.location || "Houston, Texas, USA";
+      const preloadPromises = [
+        financialsDashboardApi.getFullDashboard("1y").catch(() => null),
+        subscriptionsDashboardApi.getFullDashboard().catch(() => null),
+        travelDashboardApi.getDashboard().catch(() => null),
+        tripsApi.getUpcoming().catch(() => []),
+        fetch(
+          `http://localhost:8000/api/weather/?location=${encodeURIComponent(
+            weatherLocation
+          )}`
+        )
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+      ];
+
+      Promise.all(preloadPromises)
+        .then(([financials, subscriptions, travel, trips, weather]) => {
+          if (financials) setCache(CACHE_KEYS.HOME_FINANCIALS, financials);
+          if (subscriptions)
+            setCache(CACHE_KEYS.HOME_SUBSCRIPTIONS, subscriptions);
+          if (travel)
+            setCache(CACHE_KEYS.HOME_TRAVEL, {
+              ...travel,
+              upcomingTrips: trips,
+            });
+          if (weather) setCache(getWeatherCacheKey(weatherLocation), weather);
+        })
+        .catch(() => {});
+
+      const redirectPath =
+        sessionStorage.getItem("redirectAfterLogin") || "/dashboard";
+      sessionStorage.removeItem("redirectAfterLogin");
+
+      navTimeoutRef.current = setTimeout(() => {
+        sessionStorage.removeItem("justLoggedIn");
+        navigate(redirectPath);
+      }, 2000);
+    } catch (error) {
+      console.error("Google auth error:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        error.response?.data?.credential?.[0] ||
+        "Google sign-in failed. Please try again.";
+      setErrors((prev) => ({
+        ...prev,
+        login: { non_field_errors: errorMessage },
+      }));
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  // Trigger Google Sign-In popup
+  const handleGoogleSignIn = () => {
+    if (window.google && GOOGLE_CLIENT_ID) {
+      try {
+        // Directly trigger the One Tap prompt with error handling
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            const reason =
+              notification.getNotDisplayedReason() ||
+              notification.getSkippedReason();
+
+            // Handle specific blocking scenarios
+            if (
+              reason === "browser_not_supported" ||
+              reason === "opt_out_or_no_session"
+            ) {
+              setErrors((prev) => ({
+                ...prev,
+                login: {
+                  non_field_errors:
+                    "Google Sign-In was blocked. Please disable your adblocker or privacy extensions for this site, or check your browser settings to allow third-party sign-in.",
+                },
+              }));
+            } else if (reason === "suppressed_by_user") {
+              // User dismissed - don't show error
+              console.log("Google Sign-In dismissed by user");
+            } else {
+              setErrors((prev) => ({
+                ...prev,
+                login: {
+                  non_field_errors:
+                    "Google Sign-In unavailable. Try allowing third-party cookies or disabling privacy blockers.",
+                },
+              }));
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Google Sign-In error:", error);
+        setErrors((prev) => ({
+          ...prev,
+          login: {
+            non_field_errors:
+              "Google Sign-In blocked by browser or extension. Please disable adblockers/privacy tools for this site and try again.",
+          },
+        }));
+      }
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        login: { non_field_errors: "Google Sign-In is not available." },
+      }));
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotPasswordMessage({ type: "", text: "" });
+
+    if (!forgotPasswordEmail || !validateEmail(forgotPasswordEmail)) {
+      setForgotPasswordMessage({
+        type: "error",
+        text: "Please enter a valid email address.",
+      });
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    try {
+      await authApi.forgotPassword(forgotPasswordEmail);
+      setForgotPasswordMessage({
+        type: "success",
+        text: "If an account with this email exists, you will receive a password reset link.",
+      });
+      // Clear email after success
+      setForgotPasswordEmail("");
+    } catch (error) {
+      setForgotPasswordMessage({
+        type: "error",
+        text:
+          error.response?.data?.error ||
+          "Failed to send reset email. Please try again.",
+      });
+    } finally {
+      setForgotPasswordLoading(false);
+    }
   };
 
   const handleSubmit = async (e, type) => {
@@ -693,11 +961,11 @@ const Login = () => {
       if (!validatePassword(newPassword)) {
         validationErrors.password = "Password must be at least 8 characters";
       }
-      if (!newFirstName.trim()) {
-        validationErrors.first_name = "First name is required";
+      if (!validateName(newFirstName)) {
+        validationErrors.first_name = "Valid first name is required";
       }
-      if (!newLastName.trim()) {
-        validationErrors.last_name = "Last name is required";
+      if (!validateName(newLastName)) {
+        validationErrors.last_name = "Valid last name is required";
       }
 
       if (Object.keys(validationErrors).length > 0) {
@@ -793,13 +1061,29 @@ const Login = () => {
         // then navigate. Keep a short delay so animations can begin.
         const LOGIN_SUCCESS_DELAY_MS = 2000; // match the success animation duration
         navTimeoutRef.current = setTimeout(() => {
+          sessionStorage.removeItem("justLoggedIn");
           navigate("/dashboard");
         }, LOGIN_SUCCESS_DELAY_MS);
       }
     } catch (error) {
       console.error("Error:", error);
       if (error.response && error.response.data) {
-        setErrors((prev) => ({ ...prev, [type]: error.response.data }));
+        const errorData = error.response.data;
+
+        // Check if this is a Google-only account trying to use password login
+        if (errorData.google_account) {
+          setErrors((prev) => ({
+            ...prev,
+            [type]: {
+              google_account: true,
+              non_field_errors:
+                errorData.message ||
+                "This account uses Google sign-in. Please continue with Google.",
+            },
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, [type]: errorData }));
+        }
       } else {
         setErrors((prev) => ({
           ...prev,
@@ -814,16 +1098,14 @@ const Login = () => {
     }
   };
 
-  const switchToLogin = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const switchToLogin = () => {
+    console.log("Switching to login panel");
     setIsActive(false);
     setErrors({ login: {}, register: {} });
   };
 
-  const switchToRegister = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const switchToRegister = () => {
+    console.log("Switching to register panel");
     setIsActive(true);
     setErrors({ login: {}, register: {} });
   };
@@ -989,13 +1271,20 @@ const Login = () => {
                 <span className="checkmark"></span>
                 Remember me
               </label>
+              <button
+                type="button"
+                className="forgot-password-link"
+                onClick={() => setShowForgotPassword(true)}
+              >
+                Forgot Password?
+              </button>
             </div>
 
             <button
               type="submit"
               className="button animation"
               style={{ "--i": 6, "--j": 6 }}
-              disabled={loading}
+              disabled={loading || googleLoading}
             >
               <span className="btn-content">
                 {loading ? (
@@ -1009,17 +1298,137 @@ const Login = () => {
               <div className="btn-glow"></div>
             </button>
 
+            {/* Divider */}
             <div
-              className="logreg-link animation"
+              className="auth-divider animation"
               style={{ "--i": 7, "--j": 7 }}
             >
-              <p>
-                Don&apos;t have an account?
-                <a className="register-link" onClick={switchToRegister}>
-                  Create Account
-                </a>
-              </p>
+              <span>or</span>
             </div>
+
+            {/* Google Sign-In Button */}
+            {GOOGLE_CLIENT_ID && (
+              <button
+                type="button"
+                className="google-btn animation"
+                style={{ "--i": 8, "--j": 8 }}
+                onClick={handleGoogleSignIn}
+                disabled={loading || googleLoading}
+              >
+                <span className="btn-content">
+                  {googleLoading ? (
+                    <ClipLoader
+                      loading={googleLoading}
+                      size={22}
+                      color={"#fff"}
+                    />
+                  ) : (
+                    <>
+                      <svg
+                        className="google-icon"
+                        viewBox="0 0 24 24"
+                        width="20"
+                        height="20"
+                      >
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        />
+                      </svg>
+                      <span>Continue with Google</span>
+                    </>
+                  )}
+                </span>
+              </button>
+            )}
+            {/* Hidden container for Google button fallback */}
+            <div ref={googleButtonRef} style={{ display: "none" }}></div>
+
+            {/* Session expired message */}
+            {sessionExpiredMessage && (
+              <div
+                className="session-expired-message animation"
+                style={{ "--i": 9, "--j": 9 }}
+              >
+                <i className="bx bx-info-circle"></i>
+                <span>Your session has expired. Please sign in again.</span>
+              </div>
+            )}
+
+            {/* Google account error - special handling */}
+            {errors.login.google_account && (
+              <div
+                className="google-account-notice animation"
+                style={{ "--i": 9, "--j": 9 }}
+              >
+                <i className="bx bxl-google"></i>
+                <div className="notice-content">
+                  <span>{errors.login.non_field_errors}</span>
+                  <button
+                    type="button"
+                    className="google-continue-btn"
+                    onClick={handleGoogleSignIn}
+                    disabled={googleLoading}
+                  >
+                    Continue with Google
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* General error message */}
+            {errors.login.non_field_errors && !errors.login.google_account && (
+              <div
+                className="general-error animation"
+                style={{ "--i": 9, "--j": 9 }}
+              >
+                <i
+                  className="fas fa-exclamation-circle"
+                  style={{ marginRight: "8px" }}
+                ></i>
+                {errors.login.non_field_errors}
+                {errors.login.non_field_errors.includes("blocked") && (
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      paddingTop: "12px",
+                      borderTop: "1px solid rgba(239, 68, 68, 0.2)",
+                      textAlign: "left",
+                      fontSize: "11px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    <strong>Quick fixes:</strong>
+                    <ul style={{ margin: "6px 0 0 20px", padding: 0 }}>
+                      <li>
+                        Disable browser extensions (uBlock, AdGuard, Privacy
+                        Badger)
+                      </li>
+                      <li>Allow third-party cookies in browser settings</li>
+                      <li>
+                        Click the lock icon → Site settings → Allow third-party
+                        sign-in
+                      </li>
+                      <li>
+                        Try incognito/private mode with extensions disabled
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </form>
         </div>
 
@@ -1222,18 +1631,6 @@ const Login = () => {
               </span>
               <div className="btn-glow"></div>
             </button>
-
-            <div
-              className="logreg-link animation"
-              style={{ "--i": 25, "--j": 8 }}
-            >
-              <p>
-                Already have an account?
-                <a className="login-link" onClick={switchToLogin}>
-                  Sign In
-                </a>
-              </p>
-            </div>
           </form>
         </div>
 
@@ -1243,7 +1640,7 @@ const Login = () => {
             <div className="panel-icon">
               <i className="bx bx-log-in-circle"></i>
             </div>
-            <h3>Already a Member?</h3>
+            <h3>Already registered?</h3>
             <p>
               Sign in to access your personalized dashboard and continue where
               you left off.
@@ -1267,6 +1664,83 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div
+          className="forgot-password-overlay"
+          onClick={() => setShowForgotPassword(false)}
+        >
+          <div
+            className="forgot-password-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close-btn"
+              onClick={() => {
+                setShowForgotPassword(false);
+                setForgotPasswordEmail("");
+                setForgotPasswordMessage({ type: "", text: "" });
+              }}
+            >
+              <i className="bx bx-x"></i>
+            </button>
+            <div className="modal-icon">
+              <i className="bx bx-lock-open-alt"></i>
+            </div>
+            <h3>Reset Your Password</h3>
+            <p>
+              Enter your email address and we&apos;ll send you a link to reset your
+              password.
+            </p>
+
+            <form onSubmit={handleForgotPassword}>
+              <div className="modal-input-group">
+                <i className="bx bx-envelope"></i>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={forgotPasswordEmail}
+                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                  disabled={forgotPasswordLoading}
+                />
+              </div>
+
+              {forgotPasswordMessage.text && (
+                <div className={`modal-message ${forgotPasswordMessage.type}`}>
+                  <i
+                    className={`bx ${
+                      forgotPasswordMessage.type === "success"
+                        ? "bx-check-circle"
+                        : "bx-error-circle"
+                    }`}
+                  ></i>
+                  {forgotPasswordMessage.text}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="modal-submit-btn"
+                disabled={forgotPasswordLoading}
+              >
+                {forgotPasswordLoading ? (
+                  <ClipLoader
+                    loading={forgotPasswordLoading}
+                    size={18}
+                    color={"#1a1a2e"}
+                  />
+                ) : (
+                  <>
+                    <i className="bx bx-send"></i>
+                    Send Reset Link
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Floating decorative elements */}
       <div className="floating-shapes">

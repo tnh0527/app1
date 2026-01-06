@@ -131,6 +131,7 @@ class OccurrenceSerializer(serializers.ModelSerializer):
     all_day = serializers.BooleanField(source="event.all_day", read_only=True)
     location = serializers.CharField(source="event.location", read_only=True)
     is_recurring = serializers.SerializerMethodField()
+    is_immutable = serializers.BooleanField(source="event.is_immutable", read_only=True)
     rrule = serializers.CharField(source="event.rrule", read_only=True)
 
     class Meta:
@@ -148,6 +149,7 @@ class OccurrenceSerializer(serializers.ModelSerializer):
             "all_day",
             "location",
             "is_recurring",
+            "is_immutable",
             "rrule",
         ]
 

@@ -195,12 +195,12 @@
 
 .mini-cal-day-indicator {
   position: absolute;
-  bottom: 4px;
-  width: 4px;
-  height: 4px;
+  top: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--clr-pumpkin);
-  box-shadow: 0 0 6px var(--clr-pumpkin);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
 }
 
 .mini-cal-day--today .mini-cal-day-indicator {

@@ -163,14 +163,6 @@ export const RetirementPanel = ({ accounts }) => {
 
   const animatedTotal = useCountUp(totalRetirement, 1500, mounted);
 
-  // 2024 Contribution limits
-  const contributionLimits = {
-    "401k": 23000,
-    ira: 7000,
-    roth_ira: 7000,
-    hsa: 4150,
-  };
-
   // Calculate projected growth (7% annual return)
   const projectedGrowth = totalRetirement * 0.07;
 

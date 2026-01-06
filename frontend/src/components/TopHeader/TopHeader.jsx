@@ -4,7 +4,7 @@ import { useLocation, Link } from "react-router-dom";
 import { ProfileContext } from "../../contexts/ProfileContext";
 import { SidebarContext } from "../../contexts/SidebarContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { defaultUserIcon } from "../../utils/images";
+import { iconsImgs, defaultUserIcon } from "../../utils/images";
 import { Icon } from "@iconify/react";
 import { Tooltip } from "react-tooltip";
 import authApi from "../../api/authApi";
@@ -13,43 +13,43 @@ import authApi from "../../api/authApi";
 const PAGE_META = {
   "/dashboard": {
     title: "Dashboard",
-    subtitle: "Welcome back! Here's your overview.",
-    icon: "solar:home-2-bold-duotone",
+    subtitle: (currentDate) => currentDate, // Dynamic date for dashboard
+    icon: iconsImgs.home,
   },
   "/calendar": {
     title: "Calendar",
     subtitle: "Manage your schedule and events.",
-    icon: "solar:calendar-bold-duotone",
+    icon: iconsImgs.calendar,
   },
   "/weather": {
     title: "Weather",
     subtitle: "Current conditions and forecasts.",
-    icon: "solar:cloud-sun-2-bold-duotone",
+    icon: iconsImgs.weather,
   },
   "/financials": {
     title: "Financials",
     subtitle: "Track your wealth and investments.",
-    icon: "solar:wallet-money-bold-duotone",
+    icon: iconsImgs.wallet,
   },
   "/subscriptions": {
     title: "Subscriptions",
     subtitle: "Manage your recurring payments.",
-    icon: "solar:bill-list-bold-duotone",
+    icon: iconsImgs.bills,
   },
   "/travel": {
     title: "Travel",
     subtitle: "Plan and track your trips.",
-    icon: "solar:airplane-bold-duotone",
+    icon: iconsImgs.plane,
   },
   "/ai-foundry": {
     title: "AI Foundry",
     subtitle: "Craft your own personalized AI models.",
-    icon: "solar:cpu-bolt-bold-duotone",
+    icon: iconsImgs.report,
   },
   "/profile": {
     title: "Profile",
     subtitle: "Manage your account settings.",
-    icon: "solar:user-circle-bold-duotone",
+    icon: iconsImgs.user,
   },
 };
 
@@ -59,7 +59,8 @@ const TopHeader = () => {
   const { logout } = useAuth();
   const location = useLocation();
   const [notificationCount] = useState(3); // Placeholder count
-  const [showNotifications, setShowNotifications] = useState(false);
+  // eslint-disable-next-line no-unused-vars
+  const [showNotifications, _setShowNotifications] = useState(false);
 
   // Get page metadata based on current path
   const getPageMeta = () => {
@@ -69,9 +70,43 @@ const TopHeader = () => {
 
   const pageMeta = getPageMeta();
 
+  // Format current date for dashboard
+  const formatDate = () => {
+    const currentTime = new Date();
+    return currentTime.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // Get subtitle - if it's a function (dashboard), call it with the date
+  const getSubtitle = () => {
+    if (typeof pageMeta.subtitle === "function") {
+      return pageMeta.subtitle(formatDate());
+    }
+    return pageMeta.subtitle;
+  };
+
   const handleLogout = async () => {
     try {
+      // Clear routing history and navigation state
+      sessionStorage.removeItem("redirectAfterLogin");
       sessionStorage.setItem("justLoggedOut", "true");
+
+      // Clear any page-specific session data
+      Object.keys(sessionStorage).forEach((key) => {
+        if (
+          key.startsWith("weather_") ||
+          key.startsWith("calendar_") ||
+          key.startsWith("travel_") ||
+          key.startsWith("subscription_")
+        ) {
+          sessionStorage.removeItem(key);
+        }
+      });
+
       logout();
       authApi.logout().catch((err) => {
         console.error("Background logout failed:", err);
@@ -119,7 +154,7 @@ const TopHeader = () => {
           </div>
           <div className="page-text">
             <h1 className="page-title">{pageMeta.title}</h1>
-            <p className="page-subtitle">{pageMeta.subtitle}</p>
+            <p className="page-subtitle">{getSubtitle()}</p>
           </div>
         </div>
       </div>
@@ -135,15 +170,14 @@ const TopHeader = () => {
         <div className="notification-wrapper">
           <button
             className="notification-btn"
-            onClick={() => setShowNotifications(!showNotifications)}
+            disabled
+            aria-disabled="true"
             data-tooltip-id="header-tooltip"
             data-tooltip-content="Notifications"
             data-tooltip-place="bottom"
+            title="Notifications are disabled"
           >
-            <Icon
-              icon="solar:bell-bold-duotone"
-              className="notification-icon"
-            />
+            <Icon icon={iconsImgs.bell} className="notification-icon" />
             {notificationCount > 0 && (
               <span className="notification-badge">{notificationCount}</span>
             )}
@@ -158,10 +192,7 @@ const TopHeader = () => {
               </div>
               <div className="notification-list">
                 <div className="notification-item unread">
-                  <Icon
-                    icon="solar:info-circle-bold"
-                    className="notif-icon info"
-                  />
+                  <Icon icon={iconsImgs.alert} className="notif-icon info" />
                   <div className="notif-content">
                     <p className="notif-text">System update available</p>
                     <span className="notif-time">2 hours ago</span>
@@ -169,7 +200,7 @@ const TopHeader = () => {
                 </div>
                 <div className="notification-item unread">
                   <Icon
-                    icon="solar:wallet-bold"
+                    icon={iconsImgs.wallet}
                     className="notif-icon success"
                   />
                   <div className="notif-content">
@@ -179,7 +210,7 @@ const TopHeader = () => {
                 </div>
                 <div className="notification-item">
                   <Icon
-                    icon="solar:calendar-bold"
+                    icon={iconsImgs.calendar}
                     className="notif-icon warning"
                   />
                   <div className="notif-content">
@@ -230,7 +261,7 @@ const TopHeader = () => {
             data-tooltip-content="Log out"
             data-tooltip-place="bottom"
           >
-            <Icon icon="solar:logout-2-bold-duotone" />
+            <Icon icon={iconsImgs.exit} />
           </button>
         </div>
       </div>

@@ -34,7 +34,15 @@ const ICON_MAP = {
   cloud_cover: "bi-clouds",
 };
 
-const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
+const CardSlot = ({
+  slotId,
+  type,
+  data,
+  onChange,
+  onCardClick,
+  options,
+  isLoading = false,
+}) => {
   const Component = COMPONENT_MAP[type];
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -99,7 +107,7 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
   };
 
   return (
-    <div className="card-slot-container">
+    <div className={`card-slot-container ${isLoading ? "skeleton" : ""}`}>
       {options && options.length > 0 && (
         <div className="card-selector-wrapper" ref={dropdownRef}>
           <button
@@ -146,7 +154,26 @@ const CardSlot = ({ slotId, type, data, onChange, onCardClick, options }) => {
         data-type={type}
         onClick={() => onCardClick && onCardClick(type, props)}
       >
-        {Component ? <Component {...props} /> : <div>Select a card</div>}
+        {isLoading ? (
+          <div style={{ width: "100%", height: "100%", padding: "20px" }}>
+            <div
+              className="skeleton-element skeleton-title"
+              style={{ width: "60%", marginBottom: "16px" }}
+            />
+            <div
+              className="skeleton-element skeleton-text"
+              style={{ width: "80%", marginBottom: "12px" }}
+            />
+            <div
+              className="skeleton-element skeleton-text"
+              style={{ width: "40%" }}
+            />
+          </div>
+        ) : Component ? (
+          <Component {...props} />
+        ) : (
+          <div>Select a card</div>
+        )}
       </div>
     </div>
   );

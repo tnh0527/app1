@@ -1,7 +1,8 @@
 /* Accounts Panel Styles */
 
 .accounts-panel {
-  height: 100%;
+  /* allow the panel to size to its content; inner list handles scrolling */
+  height: auto;
   display: flex;
   flex-direction: column;
 }

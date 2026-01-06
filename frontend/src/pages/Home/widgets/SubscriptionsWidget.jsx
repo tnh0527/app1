@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { iconsImgs } from "../../../utils/images";
+import BlurOverlay from "../../../components/shared/BlurOverlay";
 import "./SubscriptionsWidget.css";
 
 /**
@@ -97,97 +98,102 @@ export const SubscriptionsWidget = ({ data, onNavigate }) => {
 
   return (
     <div className="home-widget subscriptions-widget">
-      <div className="widget-header">
-        <div className="widget-title-section">
-          <div className="widget-icon subscriptions">
-            <Icon icon={iconsImgs.bills} />
+      <BlurOverlay
+        isActive={true}
+        message="Subscriptions features coming soon!"
+      >
+        <div className="widget-header">
+          <div className="widget-title-section">
+            <div className="widget-icon subscriptions">
+              <Icon icon={iconsImgs.bills} />
+            </div>
+            <div>
+              <h3 className="widget-title">Subscriptions</h3>
+              <p className="widget-subtitle">Monthly overview</p>
+            </div>
           </div>
-          <div>
-            <h3 className="widget-title">Subscriptions</h3>
-            <p className="widget-subtitle">Monthly overview</p>
+          <div className="widget-arrow" onClick={onNavigate}>
+            <i className="bi bi-chevron-right"></i>
           </div>
         </div>
-        <div className="widget-arrow" onClick={onNavigate}>
-          <i className="bi bi-chevron-right"></i>
-        </div>
-      </div>
 
-      <div className="widget-content">
-        {!data ? (
-          <div className="widget-loading"></div>
-        ) : (
-          <div className="subs-grid-layout">
-            {/* Main Card - Monthly Spend */}
-            <div className="subs-main-card">
-              <div className="subs-main-header">
-                <i className="bi bi-currency-dollar"></i>
-                <span>Monthly Spend</span>
+        <div className="widget-content">
+          {!data ? (
+            <div className="widget-loading"></div>
+          ) : (
+            <div className="subs-grid-layout">
+              {/* Main Card - Monthly Spend */}
+              <div className="subs-main-card">
+                <div className="subs-main-header">
+                  <i className="bi bi-currency-dollar"></i>
+                  <span>Monthly Spend</span>
+                </div>
+                <div className="subs-main-value">
+                  {formatCurrency(animatedMonthly)}
+                </div>
+                <div className="subs-per-period">/month</div>
               </div>
-              <div className="subs-main-value">
-                {formatCurrency(animatedMonthly)}
-              </div>
-              <div className="subs-per-period">/month</div>
-            </div>
 
-            {/* Stats Grid */}
-            <div className="subs-stats-grid">
-              <div className="subs-stat-card active">
-                <span className="subs-stat-number">
-                  {summary.active_count || 0}
-                </span>
-                <span className="subs-stat-label">Active</span>
+              {/* Stats Grid */}
+              <div className="subs-stats-grid">
+                <div className="subs-stat-card active">
+                  <span className="subs-stat-number">
+                    {summary.active_count || 0}
+                  </span>
+                  <span className="subs-stat-label">Active</span>
+                </div>
+                <div className="subs-stat-card trial">
+                  <span className="subs-stat-number">
+                    {summary.trial_count || 0}
+                  </span>
+                  <span className="subs-stat-label">Trial</span>
+                </div>
+                <div className="subs-stat-card unused">
+                  <span className="subs-stat-number">
+                    {summary.unused_count || 0}
+                  </span>
+                  <span className="subs-stat-label">Unused</span>
+                </div>
               </div>
-              <div className="subs-stat-card trial">
-                <span className="subs-stat-number">
-                  {summary.trial_count || 0}
-                </span>
-                <span className="subs-stat-label">Trial</span>
-              </div>
-              <div className="subs-stat-card unused">
-                <span className="subs-stat-number">
-                  {summary.unused_count || 0}
-                </span>
-                <span className="subs-stat-label">Unused</span>
-              </div>
-            </div>
 
-            {/* Upcoming Charges Card */}
-            <div className="subs-upcoming-card">
-              <div className="subs-upcoming-header">
-                <i className="bi bi-calendar-event"></i>
-                <span>Upcoming</span>
-              </div>
-              {upcomingCharges.length > 0 ? (
-                <div className="subs-charges-list">
-                  {upcomingCharges.map((charge, index) => (
-                    <div key={index} className="subs-charge-item">
-                      <div className="charge-icon">
-                        <i
-                          className={`bi ${getCategoryIcon(charge.category)}`}
-                        ></i>
-                      </div>
-                      <div className="charge-info">
-                        <span className="charge-name">{charge.name}</span>
-                        <span className="charge-date">
-                          {formatDate(charge.next_billing_date)}
+              {/* Upcoming Charges Card */}
+              <div className="subs-upcoming-card">
+                <div className="subs-upcoming-header">
+                  <i className="bi bi-calendar-event"></i>
+                  <span>Upcoming</span>
+                </div>
+                {upcomingCharges.length > 0 ? (
+                  <div className="subs-charges-list">
+                    {upcomingCharges.map((charge, index) => (
+                      <div key={index} className="subs-charge-item">
+                        <div className="charge-icon">
+                          <i
+                            className={`bi ${getCategoryIcon(charge.category)}`}
+                          ></i>
+                        </div>
+                        <div className="charge-info">
+                          <span className="charge-name">{charge.name}</span>
+                          <span className="charge-date">
+                            {formatDate(charge.next_billing_date)}
+                          </span>
+                        </div>
+                        <span className="charge-amount">
+                          {formatCurrency(charge.cost)}
                         </span>
                       </div>
-                      <span className="charge-amount">
-                        {formatCurrency(charge.cost)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="no-upcoming">
-                  <i className="bi bi-check-circle"></i>
-                  <span>No charges this week</span>
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-upcoming">
+                    <i className="bi bi-check-circle"></i>
+                    <span>No charges this week</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </BlurOverlay>
     </div>
   );
 };

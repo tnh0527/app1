@@ -19,11 +19,14 @@ const CurrentWeather = ({
   isLocationSaved,
   isSavingLocation,
   onSearchClick,
+  onHomeClick,
+  hasHomeAddress,
 }) => {
   // State to track the current 15-minute interval index
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isDay, setIsDay] = useState(null);
+  const [showHomePopup, setShowHomePopup] = useState(false);
   // console.log("time:", timezone);
 
   // Reset loading when parent signals loading or when location changes
@@ -58,6 +61,8 @@ const CurrentWeather = ({
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [showLeftButton, setShowLeftButton] = useState(false);
+  const [showRightButton, setShowRightButton] = useState(false);
 
   // Drag to scroll handlers
   const handleMouseDown = (e) => {
@@ -104,24 +109,59 @@ const CurrentWeather = ({
       const el = scrollRef.current;
       const container = containerRef.current;
       if (!el || !container) return;
+
+      // Use layout values to determine if scrollable content exists
       const { scrollLeft, scrollWidth, clientWidth } = el;
+      const canScroll = scrollWidth > clientWidth + 2; // small tolerance
       const atLeft = scrollLeft <= 5;
       const atRight = scrollLeft + clientWidth >= scrollWidth - 5;
 
-      container.classList.toggle("no-left", atLeft);
-      container.classList.toggle("no-right", atRight);
+      container.classList.toggle("no-left", atLeft || !canScroll);
+      container.classList.toggle("no-right", atRight || !canScroll);
+
+      // Update button visibility state so we can conditionally render
+      setShowLeftButton(canScroll && !atLeft);
+      setShowRightButton(canScroll && !atRight);
     };
 
-    updateHints();
+    // Run after layout to ensure children sizes are known
+    const runUpdate = () => requestAnimationFrame(updateHints);
+
+    // Initial run
+    runUpdate();
+
     const el = scrollRef.current;
     if (!el) return;
 
     el.addEventListener("scroll", updateHints, { passive: true });
-    window.addEventListener("resize", updateHints);
+    window.addEventListener("resize", runUpdate);
+
+    // Observe for content changes (items added/removed) so hints update
+    const mo = new MutationObserver(runUpdate);
+    mo.observe(el, { childList: true, subtree: true });
 
     return () => {
       el.removeEventListener("scroll", updateHints);
-      window.removeEventListener("resize", updateHints);
+      window.removeEventListener("resize", runUpdate);
+      mo.disconnect();
+    };
+  }, [hourlyForecast]);
+
+  // Handle wheel scroll isolation - prevent page scroll when inside hourly section
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+
+    // Use non-passive listener to allow preventDefault
+    el.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
     };
   }, [hourlyForecast]);
 
@@ -266,30 +306,62 @@ const CurrentWeather = ({
           </div>
 
           <div className="temp-toggle">
-            <div className="temp-unit-toggle">
-              <button
-                className={`unit-btn ${
-                  currentWeather.unit !== "C" ? "active" : ""
-                }`}
-                onClick={currentWeather.unit === "C" ? handleToggle : undefined}
-              >
-                F
-              </button>
-              <button
-                className={`unit-btn ${
-                  currentWeather.unit === "C" ? "active" : ""
-                }`}
-                onClick={currentWeather.unit !== "C" ? handleToggle : undefined}
-              >
-                C
-              </button>
-            </div>
             <button
               className="search-icon-btn"
               onClick={onSearchClick}
               title="Search location"
             >
               <i className="bi bi-search"></i>
+            </button>
+            <div className="home-btn-wrapper">
+              <button
+                className="home-icon-btn"
+                onClick={() => {
+                  if (hasHomeAddress) {
+                    onHomeClick?.();
+                  } else {
+                    setShowHomePopup(true);
+                  }
+                }}
+                title="Go to home location"
+              >
+                <i className="bi bi-house-door"></i>
+              </button>
+              {showHomePopup && !hasHomeAddress && (
+                <div className="home-popup">
+                  <div className="home-popup-content">
+                    <i className="bi bi-exclamation-circle"></i>
+                    <p>No home address set</p>
+                    <span>Add your address in your profile settings</span>
+                    <button
+                      className="home-popup-close"
+                      onClick={() => setShowHomePopup(false)}
+                    >
+                      Got it
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Temperature Unit Toggle */}
+          <div className="temp-unit-toggle">
+            <button
+              className={`unit-btn ${
+                currentWeather.unit !== "C" ? "active" : ""
+              }`}
+              onClick={currentWeather.unit === "C" ? handleToggle : undefined}
+            >
+              F
+            </button>
+            <button
+              className={`unit-btn ${
+                currentWeather.unit === "C" ? "active" : ""
+              }`}
+              onClick={currentWeather.unit !== "C" ? handleToggle : undefined}
+            >
+              C
             </button>
           </div>
 
@@ -314,31 +386,28 @@ const CurrentWeather = ({
 
         {/* Hourly Forecast Scrollable Section */}
         <div className="hourly-forecast-container" ref={containerRef}>
-          <button
-            type="button"
-            aria-label="Scroll left"
-            className="hourly-scroll-btn left"
-            onClick={() => {
-              if (!scrollRef.current) return;
-              const el = scrollRef.current;
-              const first = el.firstElementChild;
-              const gap = parseInt(getComputedStyle(el).gap || 18, 10) || 18;
-              const itemW = first ? first.getBoundingClientRect().width : 60;
-              const itemsToScroll = 3;
-              const amount = (itemW + gap) * itemsToScroll;
-              el.scrollBy({ left: -amount, behavior: "smooth" });
-            }}
-          >
-            <i className="bi bi-chevron-left"></i>
-          </button>
+          {showLeftButton && (
+            <button
+              type="button"
+              aria-label="Scroll left"
+              className="hourly-scroll-btn left"
+              onClick={() => {
+                if (!scrollRef.current) return;
+                const el = scrollRef.current;
+                const first = el.firstElementChild;
+                const gap = parseInt(getComputedStyle(el).gap || 18, 10) || 18;
+                const itemW = first ? first.getBoundingClientRect().width : 60;
+                const itemsToScroll = 3;
+                const amount = (itemW + gap) * itemsToScroll;
+                el.scrollBy({ left: -amount, behavior: "smooth" });
+              }}
+            >
+              <i className="bi bi-chevron-left"></i>
+            </button>
+          )}
           <div
             className={`hourly-forecast-scroll ${isDragging ? "dragging" : ""}`}
             ref={scrollRef}
-            onWheel={(e) => {
-              if (scrollRef.current) {
-                scrollRef.current.scrollLeft += e.deltaY;
-              }
-            }}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
@@ -543,23 +612,25 @@ const CurrentWeather = ({
               </div>
             )}
           </div>
-          <button
-            type="button"
-            aria-label="Scroll right"
-            className="hourly-scroll-btn right"
-            onClick={() => {
-              if (!scrollRef.current) return;
-              const el = scrollRef.current;
-              const first = el.firstElementChild;
-              const gap = parseInt(getComputedStyle(el).gap || 18, 10) || 18;
-              const itemW = first ? first.getBoundingClientRect().width : 60;
-              const itemsToScroll = 3;
-              const amount = (itemW + gap) * itemsToScroll;
-              el.scrollBy({ left: amount, behavior: "smooth" });
-            }}
-          >
-            <i className="bi bi-chevron-right"></i>
-          </button>
+          {showRightButton && (
+            <button
+              type="button"
+              aria-label="Scroll right"
+              className="hourly-scroll-btn right"
+              onClick={() => {
+                if (!scrollRef.current) return;
+                const el = scrollRef.current;
+                const first = el.firstElementChild;
+                const gap = parseInt(getComputedStyle(el).gap || 18, 10) || 18;
+                const itemW = first ? first.getBoundingClientRect().width : 60;
+                const itemsToScroll = 3;
+                const amount = (itemW + gap) * itemsToScroll;
+                el.scrollBy({ left: amount, behavior: "smooth" });
+              }}
+            >
+              <i className="bi bi-chevron-right"></i>
+            </button>
+          )}
         </div>
 
         <div className="weather-map">

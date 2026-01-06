@@ -9,6 +9,7 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
+// eslint-disable-next-line no-unused-vars
 const BudgetCategory = ({ category, budgeted, actual, color }) => {
   const percentage = budgeted > 0 ? (actual / budgeted) * 100 : 0;
   const barColor =

@@ -12,10 +12,10 @@ import { RetirementPanel } from "../../components/Financials/RetirementPanel";
 import { AddAccountModal } from "../../components/Financials/AddAccountModal";
 import { UpdateValuesModal } from "../../components/Financials/UpdateValuesModal";
 import { FinancialsSkeleton } from "./FinancialsSkeleton";
+import BlurOverlay from "../../components/shared/BlurOverlay";
 import {
   ErrorState,
   TimeoutState,
-  EmptyState,
 } from "../../components/shared/LoadingStates";
 
 const REQUEST_TIMEOUT = 15000; // 15 seconds timeout
@@ -90,20 +90,28 @@ const Financials = () => {
     fetchDashboardData();
   };
 
-  // Loading state - show skeleton
+  // Loading state - show skeleton with blur
   if (loading && !dashboardData) {
-    return <FinancialsSkeleton />;
+    return (
+      <div className="financials-page">
+        <BlurOverlay isActive={true} message="Financials features coming soon!">
+          <FinancialsSkeleton />
+        </BlurOverlay>
+      </div>
+    );
   }
 
   // Timeout state
   if (isTimedOut && !dashboardData) {
     return (
       <div className="financials-page">
-        <TimeoutState
-          title="Request Timed Out"
-          message="The server took too long to respond. Please check your connection and try again."
-          onRetry={fetchDashboardData}
-        />
+        <BlurOverlay isActive={true} message="Financials features coming soon!">
+          <TimeoutState
+            title="Request Timed Out"
+            message="The server took too long to respond. Please check your connection and try again."
+            onRetry={fetchDashboardData}
+          />
+        </BlurOverlay>
       </div>
     );
   }
@@ -112,11 +120,13 @@ const Financials = () => {
   if (error && !dashboardData) {
     return (
       <div className="financials-page">
-        <ErrorState
-          title="Failed to Load Data"
-          message={error}
-          onRetry={fetchDashboardData}
-        />
+        <BlurOverlay isActive={true} message="Financials features coming soon!">
+          <ErrorState
+            title="Failed to Load Data"
+            message={error}
+            onRetry={fetchDashboardData}
+          />
+        </BlurOverlay>
       </div>
     );
   }
@@ -133,96 +143,98 @@ const Financials = () => {
 
   return (
     <div className="financials-page">
-      {/* Header Section */}
-      <div className="financials-top-section">
-        <div className="financials-header">
-          <div className="header-content">
-            <div className="header-title-group">
-              <h1>Financials Dashboard</h1>
-              <span className="header-subtitle">
-                Your complete financial picture
-              </span>
-            </div>
-            <div className="header-actions">
-              <button
-                className="action-btn secondary"
-                onClick={() => setIsUpdateValuesOpen(true)}
-                title="Update account values"
-              >
-                <i className="bi bi-pencil-square"></i>
-                <span>Update Values</span>
-              </button>
-              <button
-                className="action-btn secondary"
-                onClick={() => setIsAddAccountOpen(true)}
-                title="Add new account"
-              >
-                <i className="bi bi-plus-lg"></i>
-                <span>Add Account</span>
-              </button>
-              <button
-                className="action-btn primary"
-                onClick={handleRefresh}
-                title="Refresh data"
-              >
-                <i className="bi bi-arrow-clockwise"></i>
-                <span>Refresh</span>
-              </button>
+      <BlurOverlay isActive={true} message="Financials features coming soon!">
+        {/* Header Section */}
+        <div className="financials-top-section">
+          <div className="financials-header">
+            <div className="header-content">
+              <div className="header-title-group">
+                <h1>Financials Dashboard</h1>
+                <span className="header-subtitle">
+                  Your complete financial picture
+                </span>
+              </div>
+              <div className="header-actions">
+                <button
+                  className="action-btn secondary"
+                  onClick={() => setIsUpdateValuesOpen(true)}
+                  title="Update account values"
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  <span>Update Values</span>
+                </button>
+                <button
+                  className="action-btn secondary"
+                  onClick={() => setIsAddAccountOpen(true)}
+                  title="Add new account"
+                >
+                  <i className="bi bi-plus-lg"></i>
+                  <span>Add Account</span>
+                </button>
+                <button
+                  className="action-btn primary"
+                  onClick={handleRefresh}
+                  title="Refresh data"
+                >
+                  <i className="bi bi-arrow-clockwise"></i>
+                  <span>Refresh</span>
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Hero Section - Net Worth Summary */}
+          <HeroSection summary={summary} />
         </div>
 
-        {/* Hero Section - Net Worth Summary */}
-        <HeroSection summary={summary} />
-      </div>
+        {/* Main Dashboard Grid */}
+        <div className="financials-grid">
+          {/* Timeline Section */}
+          <div className="grid-item timeline-section">
+            <FinancialsTimeline
+              timeline={timeline}
+              forecast={forecast}
+              showForecast={showForecast}
+              onToggleForecast={() => setShowForecast(!showForecast)}
+              range={timelineRange}
+              onRangeChange={setTimelineRange}
+            />
+          </div>
 
-      {/* Main Dashboard Grid */}
-      <div className="financials-grid">
-        {/* Timeline Section */}
-        <div className="grid-item timeline-section">
-          <FinancialsTimeline
-            timeline={timeline}
-            forecast={forecast}
-            showForecast={showForecast}
-            onToggleForecast={() => setShowForecast(!showForecast)}
-            range={timelineRange}
-            onRangeChange={setTimelineRange}
-          />
-        </div>
+          {/* Asset/Liability Breakdown */}
+          <div className="grid-item breakdown-section">
+            <AssetLiabilityBreakdown summary={summary} accounts={accounts} />
+          </div>
 
-        {/* Asset/Liability Breakdown */}
-        <div className="grid-item breakdown-section">
-          <AssetLiabilityBreakdown summary={summary} accounts={accounts} />
-        </div>
+          {/* Retirement Accounts */}
+          <div className="grid-item retirement-section">
+            <RetirementPanel accounts={accounts} />
+          </div>
 
-        {/* Retirement Accounts */}
-        <div className="grid-item retirement-section">
-          <RetirementPanel accounts={accounts} />
-        </div>
+          {/* What Changed Panel */}
+          <div className="grid-item changes-section">
+            <WhatChanged insights={insights} />
+          </div>
 
-        {/* What Changed Panel */}
-        <div className="grid-item changes-section">
-          <WhatChanged insights={insights} />
-        </div>
+          {/* Accounts Detail */}
+          <div className="grid-item accounts-section">
+            <AccountsPanel accounts={accounts} onRefresh={fetchDashboardData} />
+          </div>
 
-        {/* Accounts Detail */}
-        <div className="grid-item accounts-section">
-          <AccountsPanel accounts={accounts} onRefresh={fetchDashboardData} />
-        </div>
+          {/* Cash Flow */}
+          <div className="grid-item cashflow-section">
+            <CashFlowPanel cashFlow={cash_flow} />
+          </div>
 
-        {/* Cash Flow */}
-        <div className="grid-item cashflow-section">
-          <CashFlowPanel cashFlow={cash_flow} />
+          {/* Milestones */}
+          <div className="grid-item milestones-section">
+            <MilestonesPanel
+              milestones={milestones}
+              onRefresh={fetchDashboardData}
+            />
+          </div>
         </div>
-
-        {/* Milestones */}
-        <div className="grid-item milestones-section">
-          <MilestonesPanel
-            milestones={milestones}
-            onRefresh={fetchDashboardData}
-          />
-        </div>
-      </div>
+      </BlurOverlay>
 
       {/* Modals */}
       {isAddAccountOpen && (

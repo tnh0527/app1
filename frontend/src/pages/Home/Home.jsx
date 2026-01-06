@@ -13,7 +13,6 @@ import { ProfileContext } from "../../contexts/ProfileContext";
 import {
   getCache,
   setCache,
-  hasCache,
   CACHE_KEYS,
   getWeatherCacheKey,
 } from "../../utils/sessionCache";
@@ -32,7 +31,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { profile } = useContext(ProfileContext);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [error, _setError] = useState(null);
   const timeoutRef = useRef(null);
 
   // Data states for each module
@@ -53,6 +53,7 @@ const Dashboard = () => {
   }, [profile?.location]);
 
   // Get greeting based on time of day
+  // eslint-disable-next-line no-unused-vars
   const getGreeting = () => {
     const hour = currentTime.getHours();
     if (hour < 12) return "Good Morning";
@@ -89,13 +90,13 @@ const Dashboard = () => {
           setTravelData(cachedTravel);
           setWeatherData(cachedWeather);
           setLoading(false);
-          setError(null);
+          _setError(null);
           return;
         }
       }
 
       setLoading(true);
-      setError(null);
+      _setError(null);
 
       timeoutRef.current = setTimeout(() => {
         setLoading(false);
@@ -135,11 +136,11 @@ const Dashboard = () => {
         setTravelData(travelWithTrips);
         setWeatherData(weather);
 
-        setError(null);
+        _setError(null);
       } catch (err) {
         clearTimeout(timeoutRef.current);
         console.error("Failed to fetch dashboard data:", err);
-        setError("Some data couldn't be loaded. Pull to refresh.");
+        _setError("Some data couldn't be loaded. Pull to refresh.");
       } finally {
         clearTimeout(timeoutRef.current);
         setLoading(false);
@@ -163,6 +164,7 @@ const Dashboard = () => {
   };
 
   // Format date
+  // eslint-disable-next-line no-unused-vars
   const formatDate = () => {
     return currentTime.toLocaleDateString("en-US", {
       weekday: "long",
@@ -178,32 +180,6 @@ const Dashboard = () => {
 
   return (
     <div className="home-page">
-      {/* Header Section */}
-      <header className="home-header">
-        <div className="header-content">
-          <div className="greeting-section">
-            <h1 className="greeting-text">
-              {getGreeting()},{" "}
-              <span className="user-name">
-                {profile?.display_name || "User"}
-              </span>
-            </h1>
-            <p className="date-text">{formatDate()}</p>
-          </div>
-          <div className="header-actions">
-            <button
-              className="refresh-btn"
-              onClick={() => fetchAllData(true)}
-              disabled={loading}
-            >
-              <i
-                className={`bi bi-arrow-clockwise ${loading ? "spinning" : ""}`}
-              ></i>
-            </button>
-          </div>
-        </div>
-      </header>
-
       {/* Main Dashboard Grid - New Layout */}
       <main className="home-dashboard-grid">
         {/* Top Row: Financials (left) | Weather (right) */}

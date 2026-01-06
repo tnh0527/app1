@@ -8,6 +8,7 @@ const MiniCalendar = () => {
   const {
     currentDate,
     selectedDate,
+    // eslint-disable-next-line no-unused-vars
     events,
     navigateDate,
     goToDate,

@@ -1,9 +1,10 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { CalendarProvider, useCalendar } from "./context/CalendarContext";
 import CalendarTopBar from "./components/CalendarTopBar";
 import MainCalendar from "./components/MainCalendar";
 import CalendarSidebar from "./components/CalendarSidebar";
 import EventModal from "./components/EventModal";
+import DeleteConfirmModal from "./components/DeleteConfirmModal";
 import ErrorBoundary from "../../components/shared/ErrorBoundary";
 import "./Calendar.css";
 
@@ -12,7 +13,13 @@ import "./Calendar.css";
  * Uses context for modal state management
  */
 const CalendarContent = () => {
-  const { openEventModal } = useCalendar();
+  const {
+    openEventModal,
+    isDeleteModalOpen,
+    deletingEvent,
+    confirmDelete,
+    closeDeleteModal,
+  } = useCalendar();
 
   // Open modal for new event
   const handleNewEvent = useCallback(
@@ -66,6 +73,14 @@ const CalendarContent = () => {
 
       {/* Event Modal - uses context internally for actions */}
       <EventModal />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        eventTitle={deletingEvent?.title}
+        onConfirm={confirmDelete}
+        onCancel={closeDeleteModal}
+      />
     </div>
   );
 };

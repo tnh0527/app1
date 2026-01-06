@@ -6,7 +6,7 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from .weather_codes import weather_code_descriptions
 from .models import SavedLocation
@@ -88,6 +88,7 @@ class SavedLocationSetPrimaryView(APIView):
 
 class PlaceSuggestionsView(APIView):
     """Get location suggestions from Google Places API with input validation."""
+    permission_classes = [AllowAny]
 
     def get(self, request):
         user_input = request.query_params.get("input", "").strip()
@@ -172,6 +173,7 @@ class WeatherView(APIView):
     1. WAQI (Primary) - Detailed station data
     2. Open-Meteo AQI (Fallback)
     """
+    permission_classes = [AllowAny]
 
     # Cache TTLs (in seconds)
     GEOCODE_CACHE_TTL = 86400  # 24 hours - locations don't change
@@ -358,6 +360,8 @@ class WeatherAPIStatusView(APIView):
     Endpoint to check the status of all weather APIs.
     Useful for debugging and monitoring.
     """
+
+    permission_classes = [AllowAny]
 
     def get(self, request):
         api_status = weather_service.get_api_status()

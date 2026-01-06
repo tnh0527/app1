@@ -54,7 +54,7 @@
 }
 
 .current-weather-details h2 {
-  width: 80%;
+  width: calc(100% - 140px);
   /* Prevent very long addresses from expanding the container - clamp to 2 lines */
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -114,13 +114,14 @@
 .temp-info {
   position: absolute;
   left: 12px;
-  bottom: 12px;
+  /* raise the primary temperature block so the toggle can sit below it */
+  bottom: 56px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-end;
   gap: 6px;
-  z-index: 2;
+  z-index: 4;
 }
 
 .temp-info h1 {
@@ -201,12 +202,120 @@
   font-size: 20px;
 }
 
-.temp-unit-toggle {
+/* Home Button */
+.home-btn-wrapper {
+  position: relative;
+}
+
+.home-icon-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.home-icon-btn:hover {
+  background: rgba(0, 229, 255, 0.2);
+  color: #00e5ff;
+  transform: scale(1.1);
+}
+
+.home-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.home-icon-btn i {
+  font-size: 20px;
+}
+
+/* Home Popup */
+.home-popup {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 100;
+  animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-popup-content {
+  background: rgba(20, 20, 30, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-width: 220px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.home-popup-content i {
+  font-size: 28px;
+  color: #ffb347;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.home-popup-content p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.home-popup-content span {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 12px;
+}
+
+.home-popup-close {
+  background: rgba(0, 229, 255, 0.2);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: #00e5ff;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.home-popup-close:hover {
+  background: rgba(0, 229, 255, 0.3);
+}
+
+.temp-unit-toggle {
+  /* Positioned at bottom-left of the video area, below the temperature */
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
   background: rgba(0, 0, 0, 0.6);
   border-radius: 20px;
   border: 2px solid #00e5ff;
   overflow: hidden;
+  width: auto;
 }
 
 .unit-btn {
@@ -314,6 +423,9 @@
     gap: 6px;
     height: 180px;
   }
+  .current-weather-details h2 {
+    width: 100%;
+  }
   .high-low-temp {
     font-size: 14px;
   }
@@ -324,6 +436,15 @@
   .unit-btn {
     padding: 4px 10px;
     font-size: 12px;
+  }
+  .temp-unit-toggle {
+    /* keep toggle accessible on small screens but prefer bottom-left when possible */
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    top: auto;
+    right: auto;
+    min-width: 72px;
   }
 }
 

@@ -45,7 +45,14 @@ const CustomDatePicker = ({
 
   const formatDisplayDate = (dateStr) => {
     if (!dateStr) return "Select date";
-    const date = new Date(dateStr);
+    // Accept either a Date object or an ISO `YYYY-MM-DD` string.
+    let date;
+    if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      date = new Date(y, m - 1, d);
+    } else {
+      date = new Date(dateStr);
+    }
     return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(
       date.getDate()
     ).padStart(2, "0")}/${date.getFullYear()}`;
@@ -130,8 +137,20 @@ const CustomDatePicker = ({
 
   const isSelected = (date) => {
     if (!value) return false;
+    // Normalize both sides to YYYY-MM-DD to avoid timezone parsing issues.
+    const fmt = (d) => {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    // If `value` is already an ISO string (YYYY-MM-DD) compare directly.
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return fmt(date) === value;
+    }
+    // Otherwise attempt to parse the provided value as a Date and compare.
     const selected = new Date(value);
-    return date.toDateString() === selected.toDateString();
+    return fmt(date) === fmt(selected);
   };
 
   const isToday = (date) => {

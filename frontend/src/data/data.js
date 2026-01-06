@@ -5,26 +5,36 @@ export const profileNavLink = [
     id: 1,
     title: "Edit Profile",
     icon: iconsImgs.edit,
-    path: "/profile",
+    path: "/profile/personal",
   },
 ];
 export const navigationLinks = [
   { id: 1, title: "Dashboard", icon: iconsImgs.home, path: "/dashboard" },
 
-  { id: 2, title: "Calendar", icon: iconsImgs.calendar, path: "/calendar" },
-
-  { id: 3, title: "Weather", icon: iconsImgs.weather, path: "/weather" },
-
-  { id: 4, title: "Financials", icon: iconsImgs.wealth, path: "/financials" },
-
   {
-    id: 5,
-    title: "Subscriptions",
-    icon: iconsImgs.bills,
-    path: "/subscriptions",
+    id: 2,
+    title: "Calendar",
+    icon: iconsImgs.calendar,
+    path: "/calendar/month",
   },
 
-  { id: 6, title: "Travel", icon: iconsImgs.plane, path: "/travel" },
+  {
+    id: 3,
+    title: "Weather",
+    icon: iconsImgs.weather,
+    path: "/weather/Richmond-Texas-USA",
+  },
+
+  {
+    id: 4,
+    title: "Subscriptions",
+    icon: iconsImgs.bills,
+    path: "/subscriptions/all",
+  },
+
+  { id: 5, title: "Financials", icon: iconsImgs.wealth, path: "/financials" },
+
+  { id: 6, title: "Travel", icon: iconsImgs.plane, path: "/travel/overview" },
 
   {
     id: 12,
@@ -86,6 +96,49 @@ export const usStates = [
   { name: "West Virginia", abbreviation: "WV" },
   { name: "Wisconsin", abbreviation: "WI" },
   { name: "Wyoming", abbreviation: "WY" },
+];
+
+export const canadaProvinces = [
+  { name: "Alberta", abbreviation: "AB" },
+  { name: "British Columbia", abbreviation: "BC" },
+  { name: "Manitoba", abbreviation: "MB" },
+  { name: "New Brunswick", abbreviation: "NB" },
+  { name: "Newfoundland and Labrador", abbreviation: "NL" },
+  { name: "Northwest Territories", abbreviation: "NT" },
+  { name: "Nova Scotia", abbreviation: "NS" },
+  { name: "Nunavut", abbreviation: "NU" },
+  { name: "Ontario", abbreviation: "ON" },
+  { name: "Prince Edward Island", abbreviation: "PE" },
+  { name: "Quebec", abbreviation: "QC" },
+  { name: "Saskatchewan", abbreviation: "SK" },
+  { name: "Yukon", abbreviation: "YT" },
+];
+
+export const australiaStates = [
+  { name: "Australian Capital Territory", abbreviation: "ACT" },
+  { name: "New South Wales", abbreviation: "NSW" },
+  { name: "Northern Territory", abbreviation: "NT" },
+  { name: "Queensland", abbreviation: "QLD" },
+  { name: "South Australia", abbreviation: "SA" },
+  { name: "Tasmania", abbreviation: "TAS" },
+  { name: "Victoria", abbreviation: "VIC" },
+  { name: "Western Australia", abbreviation: "WA" },
+];
+
+// Countries that have state/province data
+export const countryRegions = {
+  "United States": usStates,
+  Canada: canadaProvinces,
+  Australia: australiaStates,
+};
+
+// Countries without state/province subdivisions (use text input instead)
+export const countriesWithoutRegions = [
+  "United Kingdom",
+  "Germany",
+  "France",
+  "Japan",
+  "Other",
 ];
 
 export const csrfToken = (() => {

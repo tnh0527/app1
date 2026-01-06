@@ -167,15 +167,39 @@ const SunriseSunset = ({ sunData, timeZone }) => {
             </div>
             <div className="time-info">
               <div className="time sunrise-time">
-                <i className="bi bi-sunrise"></i>
-                <p style={{ color: "#aaa", fontSize: "15px" }}>Sunrise</p>
-                <p>{formattedSunrise}</p>
+                <div className="label-row">
+                  <i className="bi bi-sunrise"></i>
+                  <p
+                    className="sunrise-label"
+                    style={{ color: "#aaa", fontSize: "15px", margin: "0" }}
+                  >
+                    Sunrise
+                  </p>
+                </div>
+                <p
+                  className="sunrise-value"
+                  style={{ margin: "0", fontWeight: "500" }}
+                >
+                  {formattedSunrise}
+                </p>
               </div>
 
               <div className="time sunset-time">
-                <i className="bi bi-sunset"></i>
-                <p style={{ color: "#aaa", fontSize: "15px" }}>Sunset</p>
-                <p>{formattedSunset}</p>
+                <div className="label-row">
+                  <i className="bi bi-sunset"></i>
+                  <p
+                    className="sunset-label"
+                    style={{ color: "#aaa", fontSize: "15px", margin: "0" }}
+                  >
+                    Sunset
+                  </p>
+                </div>
+                <p
+                  className="sunset-value"
+                  style={{ margin: "0", fontWeight: "500" }}
+                >
+                  {formattedSunset}
+                </p>
               </div>
             </div>
           </div>

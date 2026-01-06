@@ -10,3 +10,4 @@ export { Travel } from "./Travel";
 export { Weather } from "./Weather";
 export { Financials } from "./Financials";
 export { default as AIFoundry } from "./AIFoundry/AIFoundry";
+export { ResetPassword, VerifyEmail } from "./Auth";

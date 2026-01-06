@@ -61,6 +61,7 @@
   background: rgba(212, 168, 83, 0.15);
   border-color: rgba(212, 168, 83, 0.25);
   color: #d4a853;
+  cursor: pointer;
 }
 
 .mini-cal-grid {
@@ -112,17 +113,20 @@
 
 .mini-cal-day-num {
   line-height: 1;
+  /* add a small top margin so the dot above doesn't touch the number */
+  margin-top: 6px;
 }
 
 .mini-cal-event-dot {
   position: absolute;
-  bottom: 2px;
+  top: 4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--clr-scarlet);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
 }
 
 .mini-cal-day.today .mini-cal-event-dot {
@@ -331,4 +335,22 @@
   .calendar-grid-layout {
     grid-template-columns: 1fr;
   }
+}
+
+/* Scoped override to disable hover effects on the Upcoming card
+   Uses higher-specificity selector so no !important is required. */
+.calendar-small-card.upcoming-card:hover,
+.calendar-small-card.upcoming-card:focus {
+  background: rgba(255, 255, 255, 0.02);
+  transform: none;
+  transition: none;
+  cursor: default;
+}
+
+/* Also ensure child elements don't alter appearance when the parent is hovered */
+.calendar-small-card.upcoming-card:hover .small-event-item,
+.calendar-small-card.upcoming-card:focus .small-event-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
 }

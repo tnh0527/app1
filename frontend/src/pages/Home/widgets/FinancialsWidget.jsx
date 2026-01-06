@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { iconsImgs } from "../../../utils/images";
+import BlurOverlay from "../../../components/shared/BlurOverlay";
 import "./FinancialsWidget.css";
 
 /**
@@ -104,133 +105,137 @@ export const FinancialsWidget = ({ data, onNavigate }) => {
 
   return (
     <div className="home-widget financials-widget">
-      <div className="widget-header">
-        <div className="widget-title-section">
-          <div className="widget-icon financials">
-            <Icon icon={iconsImgs.wealth} />
+      <BlurOverlay isActive={true} message="Financials features coming soon!">
+        <div className="widget-header">
+          <div className="widget-title-section">
+            <div className="widget-icon financials">
+              <Icon icon={iconsImgs.wealth} />
+            </div>
+            <div>
+              <h3 className="widget-title">Financials</h3>
+              <p className="widget-subtitle">Overview</p>
+            </div>
           </div>
-          <div>
-            <h3 className="widget-title">Financials</h3>
-            <p className="widget-subtitle">Overview</p>
+          <div className="widget-arrow" onClick={onNavigate}>
+            <i className="bi bi-chevron-right"></i>
           </div>
         </div>
-        <div className="widget-arrow" onClick={onNavigate}>
-          <i className="bi bi-chevron-right"></i>
+
+        <div className="widget-content">
+          {!data ? (
+            <div className="widget-loading"></div>
+          ) : (
+            <div className="financials-grid-layout">
+              {/* Main Value Card */}
+              <div className="nw-main-card">
+                <div className="nw-value-display">
+                  <span className="nw-currency">$</span>
+                  <span className="nw-amount">
+                    {Math.floor(animatedNetWorth).toLocaleString()}
+                  </span>
+                </div>
+                <div className={`nw-change ${getTrendClass()}`}>
+                  <i className={`bi ${getTrendIcon()}`}></i>
+                  <span>
+                    {changeAmount >= 0 ? "+" : ""}
+                    {formatCurrency(changeAmount, true)}
+                  </span>
+                  <span className="nw-change-percent">
+                    ({changePercentage >= 0 ? "+" : ""}
+                    {changePercentage.toFixed(1)}%)
+                  </span>
+                </div>
+              </div>
+
+              {/* Stats Cards Grid */}
+              <div className="nw-stats-grid">
+                {/* Assets Card */}
+                <div className="nw-stat-card assets">
+                  <div className="nw-stat-icon">
+                    <i className="bi bi-graph-up-arrow"></i>
+                  </div>
+                  <div className="nw-stat-info">
+                    <span className="nw-stat-value">
+                      {formatCurrency(totalAssets, true)}
+                    </span>
+                    <span className="nw-stat-label">Assets</span>
+                  </div>
+                </div>
+
+                {/* Liabilities Card */}
+                <div className="nw-stat-card liabilities">
+                  <div className="nw-stat-icon">
+                    <i className="bi bi-graph-down-arrow"></i>
+                  </div>
+                  <div className="nw-stat-info">
+                    <span className="nw-stat-value">
+                      {formatCurrency(totalLiabilities, true)}
+                    </span>
+                    <span className="nw-stat-label">Liabilities</span>
+                  </div>
+                </div>
+
+                {/* Accounts Card */}
+                <div className="nw-stat-card accounts">
+                  <div className="nw-stat-icon">
+                    <i className="bi bi-bank"></i>
+                  </div>
+                  <div className="nw-stat-info">
+                    <span className="nw-stat-value">
+                      {data?.accounts?.length || 0}
+                    </span>
+                    <span className="nw-stat-label">Accounts</span>
+                  </div>
+                </div>
+
+                {/* Last Updated Card */}
+                <div className="nw-stat-card updated">
+                  <div className="nw-stat-icon">
+                    <i className="bi bi-clock-history"></i>
+                  </div>
+                  <div className="nw-stat-info">
+                    <span className="nw-stat-value">
+                      {summary.last_snapshot_date
+                        ? new Date(
+                            summary.last_snapshot_date
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "N/A"}
+                    </span>
+                    <span className="nw-stat-label">Updated</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Assets vs Liabilities Bar */}
+              <div className="nw-ratio-card">
+                <div className="nw-bar-container">
+                  <div
+                    className="nw-bar-fill assets"
+                    style={{ width: `${assetsPercent}%` }}
+                  ></div>
+                  <div
+                    className="nw-bar-fill liabilities"
+                    style={{ width: `${100 - assetsPercent}%` }}
+                  ></div>
+                </div>
+                <div className="nw-bar-labels">
+                  <div className="nw-bar-label">
+                    <span className="nw-dot assets"></span>
+                    <span>Assets {assetsPercent.toFixed(0)}%</span>
+                  </div>
+                  <div className="nw-bar-label">
+                    <span className="nw-dot liabilities"></span>
+                    <span>Liabilities {(100 - assetsPercent).toFixed(0)}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-
-      <div className="widget-content">
-        {!data ? (
-          <div className="widget-loading"></div>
-        ) : (
-          <div className="financials-grid-layout">
-            {/* Main Value Card */}
-            <div className="nw-main-card">
-              <div className="nw-value-display">
-                <span className="nw-currency">$</span>
-                <span className="nw-amount">
-                  {Math.floor(animatedNetWorth).toLocaleString()}
-                </span>
-              </div>
-              <div className={`nw-change ${getTrendClass()}`}>
-                <i className={`bi ${getTrendIcon()}`}></i>
-                <span>
-                  {changeAmount >= 0 ? "+" : ""}
-                  {formatCurrency(changeAmount, true)}
-                </span>
-                <span className="nw-change-percent">
-                  ({changePercentage >= 0 ? "+" : ""}
-                  {changePercentage.toFixed(1)}%)
-                </span>
-              </div>
-            </div>
-
-            {/* Stats Cards Grid */}
-            <div className="nw-stats-grid">
-              {/* Assets Card */}
-              <div className="nw-stat-card assets">
-                <div className="nw-stat-icon">
-                  <i className="bi bi-graph-up-arrow"></i>
-                </div>
-                <div className="nw-stat-info">
-                  <span className="nw-stat-value">
-                    {formatCurrency(totalAssets, true)}
-                  </span>
-                  <span className="nw-stat-label">Assets</span>
-                </div>
-              </div>
-
-              {/* Liabilities Card */}
-              <div className="nw-stat-card liabilities">
-                <div className="nw-stat-icon">
-                  <i className="bi bi-graph-down-arrow"></i>
-                </div>
-                <div className="nw-stat-info">
-                  <span className="nw-stat-value">
-                    {formatCurrency(totalLiabilities, true)}
-                  </span>
-                  <span className="nw-stat-label">Liabilities</span>
-                </div>
-              </div>
-
-              {/* Accounts Card */}
-              <div className="nw-stat-card accounts">
-                <div className="nw-stat-icon">
-                  <i className="bi bi-bank"></i>
-                </div>
-                <div className="nw-stat-info">
-                  <span className="nw-stat-value">
-                    {data?.accounts?.length || 0}
-                  </span>
-                  <span className="nw-stat-label">Accounts</span>
-                </div>
-              </div>
-
-              {/* Last Updated Card */}
-              <div className="nw-stat-card updated">
-                <div className="nw-stat-icon">
-                  <i className="bi bi-clock-history"></i>
-                </div>
-                <div className="nw-stat-info">
-                  <span className="nw-stat-value">
-                    {summary.last_snapshot_date
-                      ? new Date(summary.last_snapshot_date).toLocaleDateString(
-                          "en-US",
-                          { month: "short", day: "numeric" }
-                        )
-                      : "N/A"}
-                  </span>
-                  <span className="nw-stat-label">Updated</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Assets vs Liabilities Bar */}
-            <div className="nw-ratio-card">
-              <div className="nw-bar-container">
-                <div
-                  className="nw-bar-fill assets"
-                  style={{ width: `${assetsPercent}%` }}
-                ></div>
-                <div
-                  className="nw-bar-fill liabilities"
-                  style={{ width: `${100 - assetsPercent}%` }}
-                ></div>
-              </div>
-              <div className="nw-bar-labels">
-                <div className="nw-bar-label">
-                  <span className="nw-dot assets"></span>
-                  <span>Assets {assetsPercent.toFixed(0)}%</span>
-                </div>
-                <div className="nw-bar-label">
-                  <span className="nw-dot liabilities"></span>
-                  <span>Liabilities {(100 - assetsPercent).toFixed(0)}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      </BlurOverlay>
     </div>
   );
 };

@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* allow dropdowns to escape widget bounds */
 }
 
 .weather-widget-bg {
@@ -368,6 +368,11 @@
   min-height: 0;
 }
 
+/* Card wrapper with dropdown */
+.weather-stat-item-wrapper {
+  position: relative;
+}
+
 .weather-stat-item {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 10px;
@@ -379,6 +384,12 @@
   gap: 12px;
   min-height: 0;
   text-align: left;
+  transition: all 0.2s ease;
+}
+
+.weather-stat-item-wrapper:hover .weather-stat-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .weather-stat-item i {
@@ -404,11 +415,157 @@
   line-height: 1.2;
 }
 
+.stat-value .stat-value-main {
+  color: var(--clr-white);
+}
+
+.stat-unit {
+  color: var(--clr-silver);
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .stat-info .stat-label {
   font-size: 11px;
   color: var(--clr-silver);
   text-transform: uppercase;
   letter-spacing: 0.3px;
+}
+
+/* Sunrise card special layout */
+.stat-info-sunrise {
+  gap: 4px;
+}
+
+.sunrise-time,
+.sunset-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sunrise-label,
+.sunset-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--clr-white);
+}
+
+/* Card dropdown button */
+.card-dropdown-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1; /* always visible */
+  transition: transform 0.12s ease, background 0.12s ease;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.card-dropdown-btn:hover {
+  background: rgba(0, 0, 0, 0.46);
+  color: var(--clr-white);
+  transform: translateY(-1px);
+}
+
+.card-dropdown-btn i {
+  font-size: 14px;
+  color: inherit;
+  margin: 0;
+}
+
+/* Card dropdown menu */
+.card-dropdown-menu {
+  position: absolute;
+  top: 32px;
+  right: 6px;
+  background: rgba(30, 41, 59, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px;
+  width: max-content;
+  min-width: fit-content;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 3000; /* ensure dropdown sits above other elements */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-dropdown-option {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--clr-white);
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.card-dropdown-option i {
+  font-size: 16px;
+  color: #0ea5e9;
+  margin: 0;
+}
+
+.card-dropdown-option:hover {
+  background: rgba(14, 165, 233, 0.15);
+}
+
+.card-dropdown-option.selected {
+  background: rgba(14, 165, 233, 0.2);
+  color: #0ea5e9;
+}
+
+.card-dropdown-option.selected i {
+  color: #0ea5e9;
+}
+
+/* Scrollbar for dropdown */
+.card-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.card-dropdown-menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.card-dropdown-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.card-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Mini Forecast */

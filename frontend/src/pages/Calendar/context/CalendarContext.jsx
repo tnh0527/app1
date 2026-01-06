@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
 } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../../api/axios";
 import { getHolidaysInRange } from "../../../data/usHolidays";
 import { getCache, setCache, CACHE_KEYS } from "../../../utils/sessionCache";
@@ -46,10 +47,20 @@ export const EVENT_COLORS = [
 ];
 
 export const CalendarProvider = ({ children }) => {
+  const { view: urlView } = useParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Validate and get view from URL, default to month
+  const getValidView = useCallback((viewParam) => {
+    const validViews = Object.values(CALENDAR_VIEWS);
+    return validViews.includes(viewParam) ? viewParam : CALENDAR_VIEWS.MONTH;
+  }, []);
+
   // Core state
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState(CALENDAR_VIEWS.MONTH);
+  const [currentView, setCurrentView] = useState(getValidView(urlView));
   const [events, setEvents] = useState([]);
   const [dueReminders, setDueReminders] = useState([]);
 
@@ -61,13 +72,18 @@ export const CalendarProvider = ({ children }) => {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [modalInitialDate, setModalInitialDate] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingEvent, setDeletingEvent] = useState(null);
 
-  // UI states
-  const [showHolidays, setShowHolidays] = useState(true);
+  // UI states - initialize from URL
+  const [showHolidays, setShowHolidays] = useState(
+    searchParams.get("holidays") !== "false" // default to true
+  );
   const [activeFilters, setActiveFilters] = useState({
-    tags: [],
-    priorities: [],
-    showRecurring: true,
+    tags: searchParams.get("tags")?.split(",").filter(Boolean) || [],
+    priorities:
+      searchParams.get("priorities")?.split(",").filter(Boolean) || [],
+    showRecurring: searchParams.get("recurring") !== "false", // default to true
   });
 
   // Track if we've initialized from cache
@@ -125,18 +141,19 @@ export const CalendarProvider = ({ children }) => {
       const { start, end } = getDateRange(currentDate, currentView);
       const rangeKey = `${start.toISOString()}_${end.toISOString()}`;
 
-      // Create a cache key based on the date range
+      // Create a cache key based on the date range (include day to avoid
+      // returning a cached set for a different start date in the same month)
       const cacheKey = `${
         CACHE_KEYS.CALENDAR_EVENTS
-      }_${currentView}_${start.getFullYear()}_${start.getMonth()}`;
+      }_${currentView}_${start.getFullYear()}_${start.getMonth()}_${start.getDate()}_${end.getDate()}`;
 
       // Skip if same range was just fetched (prevents double fetches)
       if (!forceRefresh && lastFetchedRangeRef.current === rangeKey) {
         return;
       }
 
-      // Check session cache on initial load
-      if (!forceRefresh && !initialLoadDoneRef.current) {
+      // Check session cache for any navigation (not just initial load)
+      if (!forceRefresh) {
         const cachedEvents = getCache(cacheKey);
         if (cachedEvents) {
           setEvents(parseOccurrences(cachedEvents));
@@ -234,20 +251,81 @@ export const CalendarProvider = ({ children }) => {
   );
 
   // Delete event/occurrence
-  const deleteEvent = useCallback(async (occurrenceId, deleteAll = false) => {
+  const deleteEvent = useCallback(
+    async (occurrenceId, deleteAll = false) => {
+      // Defensive: prevent deletion of immutable events (e.g., birthday masters)
+      const evt = events.find((e) => e.id === occurrenceId);
+      if (evt && (evt.is_immutable || evt.event?.is_immutable)) {
+        alert("This event cannot be deleted.");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        await api.delete("/events/schedule/", {
+          data: { occurrence_id: occurrenceId, delete_all: deleteAll },
+        });
+        setEvents((prev) => prev.filter((event) => event.id !== occurrenceId));
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [events]
+  );
+
+  // Delete modal functions
+  const openDeleteModal = useCallback((event) => {
+    setDeletingEvent(event);
+    setIsDeleteModalOpen(true);
+  }, []);
+
+  const closeDeleteModal = useCallback(() => {
+    setIsDeleteModalOpen(false);
+    setDeletingEvent(null);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deletingEvent) return;
+    const occurrenceId = deletingEvent.id;
+    const eventId = deletingEvent.event_id || deletingEvent.event?.id;
+    const isRecurring = Boolean(deletingEvent.rrule);
+
+    if (deletingEvent.is_immutable || deletingEvent.event?.is_immutable) {
+      alert("This event cannot be deleted.");
+      closeDeleteModal();
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await api.delete("/events/schedule/", {
-        data: { occurrence_id: occurrenceId, delete_all: deleteAll },
-      });
-      setEvents((prev) => prev.filter((event) => event.id !== occurrenceId));
+      if (isRecurring && eventId) {
+        // Delete the master event (removes all occurrences)
+        await api.delete("/events/schedule/", { data: { event_id: eventId } });
+        setEvents((prev) =>
+          prev.filter(
+            (e) =>
+              e.event_id !== eventId &&
+              e.event?.id !== eventId &&
+              e.id !== eventId
+          )
+        );
+      } else {
+        // Delete single occurrence
+        await api.delete("/events/schedule/", {
+          data: { occurrence_id: occurrenceId },
+        });
+        setEvents((prev) => prev.filter((e) => e.id !== occurrenceId));
+      }
+      closeDeleteModal();
     } catch (error) {
-      console.error("Error deleting event:", error);
-      throw error;
+      console.error("Failed to delete event:", error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [deletingEvent, closeDeleteModal]);
 
   // Dismiss reminder
   const dismissReminder = useCallback(async (reminderId) => {
@@ -387,6 +465,49 @@ export const CalendarProvider = ({ children }) => {
   );
 
   // Effects
+  // Sync view with URL parameter
+  useEffect(() => {
+    const validView = getValidView(urlView);
+    if (currentView !== validView) {
+      setCurrentView(validView);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlView]);
+
+  // Sync URL when view changes (only if it differs from URL)
+  useEffect(() => {
+    const validUrlView = getValidView(urlView);
+    if (currentView && currentView !== validUrlView) {
+      navigate(`/calendar/${currentView}`, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentView]);
+
+  // Sync URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (activeFilters.tags.length > 0) {
+      params.set("tags", activeFilters.tags.join(","));
+    }
+    if (activeFilters.priorities.length > 0) {
+      params.set("priorities", activeFilters.priorities.join(","));
+    }
+    if (!activeFilters.showRecurring) {
+      params.set("recurring", "false");
+    }
+    if (!showHolidays) {
+      params.set("holidays", "false");
+    }
+
+    // Only update if params changed
+    const newParamsStr = params.toString();
+    const currentParamsStr = searchParams.toString();
+    if (newParamsStr !== currentParamsStr) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [activeFilters, showHolidays, searchParams, setSearchParams]);
+
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
@@ -413,6 +534,8 @@ export const CalendarProvider = ({ children }) => {
     isEventModalOpen,
     editingEvent,
     modalInitialDate,
+    isDeleteModalOpen,
+    deletingEvent,
     activeFilters,
 
     // Setters
@@ -428,6 +551,9 @@ export const CalendarProvider = ({ children }) => {
     createEvent,
     updateEvent,
     deleteEvent,
+    openDeleteModal,
+    closeDeleteModal,
+    confirmDelete,
     dismissReminder,
     goToToday,
     navigateDate,

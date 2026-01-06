@@ -9,11 +9,13 @@ const MonthView = () => {
   const {
     currentDate,
     selectedDate,
+    // eslint-disable-next-line no-unused-vars
     events,
     openEventModal,
-    deleteEvent,
+    openDeleteModal,
     getEventsForDate,
     getHolidaysForDate,
+    // eslint-disable-next-line no-unused-vars
     getEventCountForDate,
     goToDate,
     setCurrentView,
@@ -87,13 +89,11 @@ const MonthView = () => {
   );
 
   const handleEventDelete = useCallback(
-    (e, eventId) => {
+    (e, event) => {
       e.stopPropagation();
-      if (confirm("Delete this event?")) {
-        deleteEvent(eventId);
-      }
+      openDeleteModal(event);
     },
-    [deleteEvent]
+    [openDeleteModal]
   );
 
   const handleShowMore = useCallback(
@@ -120,17 +120,45 @@ const MonthView = () => {
       const eventColor = event.color || "#22D6D6";
       const isRecurring = event.event?.rrule || event.is_recurring;
 
+      // Calculate event duration
+      const startDate = new Date(event.start_at);
+      const endDate = new Date(event.end_at);
+      const durationMs = endDate - startDate;
+      const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+      const isMultiDay = durationDays > 1 || event.all_day;
+
+      // Convert hex color to RGB for CSS variable
+      const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+          ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(
+              result[3],
+              16
+            )}`
+          : "34, 214, 214";
+      };
+
+      const eventColorRgb = eventColor.startsWith("#")
+        ? hexToRgb(eventColor)
+        : "34, 214, 214";
+
       return (
         <div
           key={event.id}
           className={`month-event-card ${
             isCompact ? "month-event-card--compact" : ""
-          }`}
-          style={{ "--event-color": eventColor }}
+          } ${isMultiDay ? "multi-day-event" : ""}`}
+          style={{
+            "--event-color": eventColor,
+            "--event-color-rgb": eventColorRgb,
+          }}
+          data-duration={isMultiDay ? `${durationDays}d` : ""}
           onClick={(e) => handleEventClick(e, event)}
           role="button"
           tabIndex={0}
-          aria-label={`Event: ${event.title}`}
+          aria-label={`Event: ${event.title}${
+            isMultiDay ? ` (${durationDays} days)` : ""
+          }`}
         >
           {priorityColor && (
             <span
@@ -145,14 +173,16 @@ const MonthView = () => {
               title="Recurring event"
             />
           )}
-          <button
-            type="button"
-            className="event-delete-btn"
-            onClick={(e) => handleEventDelete(e, event.id)}
-            aria-label="Delete event"
-          >
-            <i className="bi bi-x"></i>
-          </button>
+          {!(event.is_immutable || event.event?.is_immutable) && (
+            <button
+              type="button"
+              className="event-delete-btn"
+              onClick={(e) => handleEventDelete(e, event)}
+              aria-label="Delete event"
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          )}
         </div>
       );
     },

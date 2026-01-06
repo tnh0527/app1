@@ -265,6 +265,16 @@
   padding-top: 16px;
 }
 
+/* For the two-column recurrence row, remove the added top padding so labels line up */
+.tab-content--recurrence .form-row {
+  align-items: start;
+  margin-top: 12px; /* spacing so labels don't butt up against the control above */
+}
+
+.tab-content--recurrence .form-row > .form-group .form-label {
+  padding-top: 0;
+}
+
 .required {
   color: var(--clr-scarlet);
 }
@@ -306,6 +316,36 @@
 .form-input--number {
   width: 80px;
   text-align: center;
+}
+
+/* Narrower numeric input specifically for the recurrence interval */
+.event-modal .interval-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-modal .interval-input .form-input--number {
+  width: 56px; /* fit up to 2 digits comfortably */
+  padding: 0 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Remove native spinner controls for a cleaner compact input */
+.event-modal .interval-input .form-input--number::-webkit-outer-spin-button,
+.event-modal .interval-input .form-input--number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.event-modal .interval-input .form-input--number {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+@media (max-width: 420px) {
+  .event-modal .interval-input .form-input--number {
+    width: 48px;
+  }
 }
 
 .form-textarea {

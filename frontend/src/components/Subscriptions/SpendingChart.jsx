@@ -35,6 +35,7 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+// eslint-disable-next-line no-unused-vars
 export const SpendingChart = ({ history, summary }) => {
   const chartData = useMemo(() => {
     if (!history || history.length === 0) {

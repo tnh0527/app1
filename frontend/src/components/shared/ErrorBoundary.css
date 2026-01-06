@@ -5,7 +5,8 @@
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   text-align: left;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
+    monospace;
   font-size: 14px;
   color: var(--text-color-dark);
   max-height: 200px;
@@ -17,12 +18,12 @@
 .error-details summary {
   font-weight: bold;
   cursor: pointer;
-  color: var(--brand-primary);
+  color: red;
   margin-bottom: 10px;
 }
 
 .error-text {
-  color: var(--color-danger);
+  color: red;
   margin-top: 10px;
   white-space: pre-wrap;
   word-break: break-all;

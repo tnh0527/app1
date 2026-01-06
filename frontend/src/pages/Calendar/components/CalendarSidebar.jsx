@@ -7,8 +7,10 @@ const CalendarSidebar = () => {
   const {
     events,
     dueReminders,
+    // eslint-disable-next-line no-unused-vars
     isRemindersLoading,
     dismissReminder,
+    // eslint-disable-next-line no-unused-vars
     openEventModal,
     goToDate,
     setCurrentView,

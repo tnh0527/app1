@@ -9,6 +9,7 @@ import SavedLocations from "../../components/Weather/SavedLocations";
 import AdvancedWeatherMap from "../../components/Weather/AdvancedWeatherMap";
 import ErrorBoundary from "../../components/shared/ErrorBoundary";
 import { useState, useEffect, useRef, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { ProfileContext } from "../../contexts/ProfileContext";
 import { transformLocationInput } from "../../utils/capitalCities";
 import api from "../../api/axios";
@@ -38,7 +39,20 @@ const BOTTOM_CARD_OPTIONS = [
 ];
 
 const WeatherContent = () => {
-  const DEFAULT_LOCATION = "Richmond, Texas, USA";
+  const DEFAULT_LOCATION = "Houston, Texas, USA";
+  const { location: urlLocation } = useParams();
+  const navigate = useNavigate();
+
+  // Decode URL location parameter (replace hyphens with spaces, commas, etc.)
+  const decodeLocation = (encoded) => {
+    if (!encoded) return null;
+    return decodeURIComponent(encoded).replace(/-/g, " ");
+  };
+
+  const encodeLocation = (location) => {
+    if (!location) return null;
+    return encodeURIComponent(location).replace(/%20/g, "-");
+  };
 
   const [currentWeather, setCurrentWeather] = useState({});
   const [dailyTemps, setDailyTemps] = useState({});
@@ -56,13 +70,17 @@ const WeatherContent = () => {
   const [mapData, setMapData] = useState([]);
   const [hourlyForecast, setHourlyForecast] = useState([]);
   const [locationSuggestions, setLocationSuggestions] = useState("");
-  const [currentLocation, setCurrentLocation] = useState("");
+  const [currentLocation, setCurrentLocation] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [weatherCondition, setWeatherCondition] = useState(null);
-  const [currentTemp, setCurrentTemp] = useState(null);
-  const [currentWindSpeed, setCurrentWindSpeed] = useState(null);
-  const [currentFeelsLike, setCurrentFeelsLike] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [_weatherCondition, setWeatherCondition] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [_currentTemp, setCurrentTemp] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [_currentWindSpeed, setCurrentWindSpeed] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [_currentFeelsLike, setCurrentFeelsLike] = useState(null);
   const { profile } = useContext(ProfileContext);
 
   // State for saved locations
@@ -90,6 +108,11 @@ const WeatherContent = () => {
     pressure: null,
     cloud_cover: null,
   });
+
+  // Refs to prevent infinite loops
+  const isInitialMount = useRef(true);
+  const isNavigatingRef = useRef(false);
+  const hasUrlLocationRef = useRef(false); // Track if URL had a location on mount
 
   const handleCardChange = (slotId, newType) => {
     setCardSlots((prev) => ({
@@ -168,7 +191,8 @@ const WeatherContent = () => {
     setCurrentLocation(transformedLocation);
     setSuggestions([]);
   };
-  const handleBlur = () => {
+  // eslint-disable-next-line no-unused-vars
+  const _handleBlur = () => {
     setTimeout(() => {
       setSuggestions([]);
       setLocationSuggestions("");
@@ -331,11 +355,43 @@ const WeatherContent = () => {
     setCurrentLocation(transformedLocation);
   };
 
+  // Check if user has home address in profile
+  const hasHomeAddress = !!(
+    profile?.street_address ||
+    profile?.city ||
+    profile?.state ||
+    profile?.zip_code
+  );
+
+  // Handle Home button click - navigate to profile address
+  const handleHomeClick = () => {
+    if (!hasHomeAddress) return;
+
+    const street = profile?.street_address;
+    const city = profile?.city;
+    const state = profile?.state;
+    const zip = profile?.zip_code;
+
+    const locationParts = [street, city, state, zip].filter(Boolean);
+    if (locationParts.length > 0) {
+      const profileLocation = locationParts.join(", ");
+      setCurrentLocation(profileLocation);
+    }
+  };
+
   // Helper
   const convertTemperature = (value, unit) => {
-    return unit === "C"
-      ? ((value * 9) / 5 + 32).toFixed(1)
-      : (((value - 32) * 5) / 9).toFixed(1);
+    // Ensure we return a Number (not a string) so callers can reliably
+    // compare numeric values and avoid visual flicker when toggling units.
+    if (value === null || value === undefined || value === "") return value;
+    const num = Number(value);
+    if (Number.isNaN(num)) return value;
+    const result =
+      unit === "C"
+        ? (num * 9) / 5 + 32 // C -> F
+        : ((num - 32) * 5) / 9; // F -> C
+    // Keep one decimal of precision but return a Number
+    return parseFloat(result.toFixed(1));
   };
 
   // Fahrenheit / Celsius toggle
@@ -730,7 +786,82 @@ const WeatherContent = () => {
     }
   };
 
+  // Initialize from URL on mount
   useEffect(() => {
+    if (!isInitialMount.current) return;
+
+    const decodedUrlLoc = decodeLocation(urlLocation);
+
+    if (decodedUrlLoc) {
+      // URL has location - use it (e.g., browser reload or direct navigation)
+      hasUrlLocationRef.current = true; // Mark that we have a URL location
+      setCurrentLocation(decodedUrlLoc);
+    } else {
+      // No URL location - navigate to default (profile will override if available)
+      hasUrlLocationRef.current = false;
+      const defaultLoc = DEFAULT_LOCATION;
+      setCurrentLocation(defaultLoc);
+      const encodedLoc = encodeLocation(defaultLoc);
+      isNavigatingRef.current = true;
+      navigate(`/weather/${encodedLoc}`, { replace: true });
+    }
+    isInitialMount.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Listen to URL changes for browser back/forward navigation
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    if (isNavigatingRef.current) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
+    const decodedUrlLoc = decodeLocation(urlLocation);
+    const normalize = (s) =>
+      (s || "").toString().trim().toLowerCase().replace(/\s+/g, " ");
+
+    if (
+      decodedUrlLoc &&
+      normalize(decodedUrlLoc) !== normalize(currentLocation)
+    ) {
+      setCurrentLocation(decodedUrlLoc);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlLocation]);
+
+  // Sync to URL when location state changes (user clicks saved location, searches, etc.)
+  useEffect(() => {
+    if (isInitialMount.current || !currentLocation) return;
+
+    const encodedLoc = encodeLocation(currentLocation);
+    const decodedUrlLoc = decodeLocation(urlLocation);
+    const encodedUrlLoc = encodeLocation(decodedUrlLoc || "");
+
+    // Only navigate if encoded locations differ
+    if (encodedLoc && encodedLoc !== encodedUrlLoc) {
+      isNavigatingRef.current = true;
+      navigate(`/weather/${encodedLoc}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLocation]);
+
+  // Fetch weather data when location changes
+  useEffect(() => {
+    if (currentLocation && !isInitialMount.current) {
+      fetchWeatherData(currentLocation);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLocation]);
+
+  // Update from profile (only if NO URL location was provided on mount)
+  // This allows profile to set default location, but won't override user navigation
+  useEffect(() => {
+    if (isInitialMount.current) return;
+
+    // Don't override if user navigated to a specific location via URL
+    if (hasUrlLocationRef.current) return;
+
     const street = profile?.street_address;
     const city = profile?.city;
     const state = profile?.state;
@@ -739,19 +870,16 @@ const WeatherContent = () => {
     const locationParts = [street, city, state, zip].filter(Boolean);
 
     if (locationParts.length > 0) {
-      setCurrentLocation(locationParts.join(", "));
-      return;
-    }
+      const profileLocation = locationParts.join(", ");
+      const normalize = (s) =>
+        (s || "").toString().trim().toLowerCase().replace(/\s+/g, " ");
 
-    // If user hasn't provided a location yet, default to Richmond, TX.
-    setCurrentLocation((prev) => prev || DEFAULT_LOCATION);
+      if (normalize(profileLocation) !== normalize(currentLocation)) {
+        setCurrentLocation(profileLocation);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
-
-  useEffect(() => {
-    if (currentLocation) {
-      fetchWeatherData(currentLocation);
-    }
-  }, [currentLocation]);
 
   const allWeatherData = {
     windData,
@@ -812,7 +940,7 @@ const WeatherContent = () => {
             dailyTemps={dailyTemps}
             handleToggle={handleToggle}
             mapData={mapData}
-            timezone={timeZone.time_zone}
+            timezone={timeZone?.time_zone || "UTC"}
             sunData={sunriseSunset}
             hourlyForecast={hourlyForecast}
             isLoadingWeather={isLoading}
@@ -820,12 +948,12 @@ const WeatherContent = () => {
             isLocationSaved={isLocationSaved}
             isSavingLocation={isSavingLocation}
             onSearchClick={handleSearchClick}
+            onHomeClick={handleHomeClick}
+            hasHomeAddress={hasHomeAddress}
           />
           {/* Today's Highlights */}
-          <div
-            className={`highlights-container ${isLoading ? "skeleton" : ""}`}
-          >
-            <h3>Today's Highlights</h3>
+          <div className="highlights-container">
+            <h3>Today&apos;s Highlights</h3>
             <div className="highlights">
               <CardSlot
                 slotId="slot1"
@@ -833,6 +961,7 @@ const WeatherContent = () => {
                 data={allWeatherData}
                 onChange={handleCardChange}
                 onCardClick={handleCardClick}
+                isLoading={isLoading}
                 options={[]}
               />
               <CardSlot
@@ -841,6 +970,7 @@ const WeatherContent = () => {
                 data={allWeatherData}
                 onChange={handleCardChange}
                 onCardClick={handleCardClick}
+                isLoading={isLoading}
                 options={[]}
               />
               <CardSlot
@@ -849,6 +979,7 @@ const WeatherContent = () => {
                 data={allWeatherData}
                 onChange={handleCardChange}
                 onCardClick={handleCardClick}
+                isLoading={isLoading}
                 options={[]}
               />
               <CardSlot
@@ -857,6 +988,7 @@ const WeatherContent = () => {
                 data={allWeatherData}
                 onChange={handleCardChange}
                 onCardClick={handleCardClick}
+                isLoading={isLoading}
                 options={getAvailableOptions("slot4", false)}
               />
               <CardSlot
@@ -865,6 +997,7 @@ const WeatherContent = () => {
                 data={allWeatherData}
                 onChange={handleCardChange}
                 onCardClick={handleCardClick}
+                isLoading={isLoading}
                 options={getAvailableOptions("slot5", false)}
               />
               <CardSlot
@@ -873,14 +1006,15 @@ const WeatherContent = () => {
                 data={allWeatherData}
                 onChange={handleCardChange}
                 onCardClick={handleCardClick}
+                isLoading={isLoading}
                 options={getAvailableOptions("slot6", false)}
               />
             </div>
           </div>
           {/* 10 Day Forecast */}
-          <div className={`forecast ${isLoading ? "skeleton" : ""}`}>
+          <div className="forecast">
             <h3>10-Day Forecast</h3>
-            <Forecast forecast={forecastData} />
+            <Forecast forecast={forecastData} isLoading={isLoading} />
           </div>
           {/* Advanced Weather Map - Radar & Analysis */}
           <div className="advanced-map-section">

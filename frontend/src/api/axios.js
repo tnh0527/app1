@@ -39,4 +39,49 @@ api.interceptors.request.use(
   }
 );
 
+// Response interceptor to handle authentication errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 Unauthorized responses
+    if (error.response?.status === 401) {
+      // Don't redirect for auth endpoints (login, register, etc.)
+      const authEndpoints = [
+        "/auth/login/",
+        "/auth/register/",
+        "/auth/google/",
+        "/auth/session/",
+      ];
+      const isAuthEndpoint = authEndpoints.some((endpoint) =>
+        error.config?.url?.includes(endpoint)
+      );
+
+      if (!isAuthEndpoint) {
+        // Clear auth state and redirect to login
+        const AUTH_KEY = "isAuthenticated";
+        localStorage.removeItem(AUTH_KEY);
+        sessionStorage.removeItem(AUTH_KEY);
+
+        // Store current location for redirect after login
+        if (window.location.pathname !== "/") {
+          sessionStorage.setItem(
+            "redirectAfterLogin",
+            window.location.pathname + window.location.search
+          );
+        }
+
+        // Redirect to login page
+        window.location.href = "/";
+      }
+    }
+
+    // Handle 403 Forbidden (CSRF or permission errors)
+    if (error.response?.status === 403) {
+      console.error("Forbidden: CSRF token may be invalid or missing");
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;

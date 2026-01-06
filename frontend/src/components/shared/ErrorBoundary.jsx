@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import { Component } from "react";
 import { ErrorState } from "./LoadingStates/LoadingStates";
 import "./ErrorBoundary.css";
 
@@ -55,7 +55,7 @@ class ErrorBoundary extends Component {
           onRetry={this.handleReset}
           onReload={() => window.location.reload()}
         >
-          {process.env.NODE_ENV === "development" && error && (
+          {import.meta.env.DEV && error && (
             <details className="error-details">
               <summary>Error Details</summary>
               <pre className="error-text">{error.toString()}</pre>

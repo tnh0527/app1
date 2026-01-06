@@ -1,9 +1,11 @@
 import "./WindStatus.css";
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
+import PropTypes from "prop-types";
 
 const WindStatus = ({ windstatusData = [] }) => {
   // console.log("Wind", windstatusData);
 
+  const chartContainerRef = useRef(null);
   const [tooltip, setTooltip] = useState({
     visible: false,
     value: 0,
@@ -11,11 +13,7 @@ const WindStatus = ({ windstatusData = [] }) => {
     y: 0,
   });
 
-  useEffect(() => {
-    // Check if windstatusData has enough data (48 points for two days)
-    if (windstatusData.length >= 48) {
-    }
-  }, [windstatusData]);
+  // No-op effect removed; keep file lean and lint-clean
 
   const currentHour = new Date().getHours();
   const currentIndex = 5; // Middle index for the current wind speed
@@ -90,10 +88,13 @@ const WindStatus = ({ windstatusData = [] }) => {
     }, "");
 
   const formatToAmPm = (timeString) => {
+    if (!timeString) return "";
     const date = new Date();
-    const [hours, minutes] = timeString.split(":");
-    date.setHours(parseInt(hours));
-    date.setMinutes(parseInt(minutes));
+    const parts = timeString.split(":");
+    const hours = parseInt(parts[0] || "0", 10);
+    const minutes = parseInt(parts[1] || "0", 10);
+    date.setHours(Number.isFinite(hours) ? hours : 0);
+    date.setMinutes(Number.isFinite(minutes) ? minutes : 0);
     return date.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
@@ -102,13 +103,18 @@ const WindStatus = ({ windstatusData = [] }) => {
   };
 
   const handleMouseEnter = (e, value) => {
-    const { clientX, clientY } = e;
-    setTooltip({
-      visible: true,
-      value,
-      x: clientX,
-      y: clientY,
-    });
+    const rect = e.target.getBoundingClientRect();
+    const containerRect = chartContainerRef.current?.getBoundingClientRect();
+
+    if (containerRect) {
+      // Position tooltip above the bar, relative to the container
+      setTooltip({
+        visible: true,
+        value,
+        x: rect.left - containerRect.left + rect.width / 2,
+        y: rect.top - containerRect.top - 8,
+      });
+    }
   };
 
   const handleMouseLeave = () => {
@@ -124,7 +130,7 @@ const WindStatus = ({ windstatusData = [] }) => {
         </div>
       </div>
       <div className="card wind-status">
-        <div className="wind-visual">
+        <div className="wind-visual" ref={chartContainerRef}>
           <div className="wind-chart">
             <svg viewBox="-2 0 111 20" className="wind-line-chart">
               <defs>
@@ -223,19 +229,18 @@ const WindStatus = ({ windstatusData = [] }) => {
               ))}
             </svg>
           </div>
+          {tooltip.visible && (
+            <div
+              className="wind-tooltip"
+              style={{
+                top: tooltip.y + "px",
+                left: tooltip.x + "px",
+              }}
+            >
+              {tooltip.value} km/h
+            </div>
+          )}
         </div>
-        {tooltip.visible && (
-          <div
-            className="tooltip"
-            style={{
-              top: tooltip.y + "px",
-              left: tooltip.x + "px",
-              transform: "translate(-50%, -100%)",
-            }}
-          >
-            {tooltip.value}
-          </div>
-        )}
         <div className="wind-speed-info">
           <div className="wind-data-unit">
             <span className="wind-speed">
@@ -251,6 +256,16 @@ const WindStatus = ({ windstatusData = [] }) => {
       </div>
     </div>
   );
+};
+
+WindStatus.propTypes = {
+  windstatusData: PropTypes.arrayOf(
+    PropTypes.shape({
+      windspeed: PropTypes.number,
+      height: PropTypes.number,
+      time: PropTypes.string,
+    })
+  ),
 };
 
 export default WindStatus;

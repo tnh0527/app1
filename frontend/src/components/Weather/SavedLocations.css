@@ -160,6 +160,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: wheat;
 }
 
 .weather-icon {
@@ -279,7 +280,7 @@
   position: absolute;
   bottom: 8px;
   left: 12px;
-  color: #c0c0c0; /* silver */
+  color: silver;
   font-size: 12px;
   font-weight: 500;
   z-index: 6;

@@ -74,6 +74,7 @@ const AccountCard = ({ account }) => {
   );
 };
 
+// eslint-disable-next-line no-unused-vars
 export const AccountsPanel = ({ accounts, onRefresh }) => {
   const [activeTab, setActiveTab] = useState("all");
 

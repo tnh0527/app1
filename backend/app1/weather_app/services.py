@@ -589,6 +589,17 @@ class WeatherAPIService:
         # Get UV data from Open-Meteo since WAQI doesn't provide it
         uv_data = self._get_uv_from_open_meteo(lat, lng)
 
+        # Supplement WAQI with Open-Meteo hourly AQI so the frontend has 24 points
+        try:
+            open_meteo = self.fetch_open_meteo_aqi(lat, lng)
+            if open_meteo and open_meteo.get("aqi_data"):
+                # Prefer higher-resolution hourly series (keep WAQI station metadata)
+                aqi_data = open_meteo["aqi_data"][:24] or aqi_data
+                # Prefer Open-Meteo UV series if available; otherwise fall back to the ad-hoc fetch
+                uv_data = open_meteo.get("uv_data") or uv_data
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning(f"Open-Meteo AQI supplement failed: {e}")
+
         return {
             "aqi_data": aqi_data,
             "uv_data": uv_data,

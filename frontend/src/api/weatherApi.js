@@ -2,17 +2,22 @@
  * Weather API Service for Frontend
  * Handles caching and provides fallback support for map components
  *
- * APIs used:
- * - Backend: Primary weather data (with fallbacks to Tomorrow.io, VisualCrossing, OpenWeather)
+ * All external API calls are now proxied through the backend for security.
+ * API keys are NOT exposed in the frontend.
+ *
+ * APIs used (via backend proxy):
  * - OpenWeatherMap: Map tiles (precipitation, temperature, clouds, pressure)
  * - OpenWeatherMap: Wind grid for particle animation
  * - WAQI: Air quality index with station data (preferred over OpenWeatherMap AQI)
  * - OpenWeatherMap: Air pollution overlay (fallback)
  */
 
-// API Keys
-const OWM_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY || "";
-const WAQI_API_KEY = import.meta.env.VITE_REACT_APP_WAQI_KEY || "";
+import {
+  fetchOpenWeather,
+  fetchOpenWeatherAirPollution,
+  fetchWAQI as fetchWAQIProxy,
+  fetchTileConfig,
+} from "./mapProxyApi";
 
 // Cache TTLs (in milliseconds)
 const CACHE_TTL = {
@@ -74,6 +79,7 @@ export const clearWeatherCache = (keyOrPrefix) => {
 
 /**
  * Fetch Air Quality data using WAQI API (preferred) with OWM fallback
+ * All API calls go through backend proxy for security
  * @param {number} lat - Latitude
  * @param {number} lng - Longitude
  * @returns {Promise<Object>} AQI data
@@ -82,26 +88,22 @@ export const fetchAirQuality = async (lat, lng) => {
   const cacheKey = `aqi:${lat.toFixed(2)}:${lng.toFixed(2)}`;
 
   return getCachedOrFetch(cacheKey, CACHE_TTL.aqi, async () => {
-    // Try WAQI first (more detailed, station-based)
-    if (WAQI_API_KEY) {
-      try {
-        const waqiData = await fetchWAQI(lat, lng);
-        if (waqiData) {
-          return { ...waqiData, source: "WAQI" };
-        }
-      } catch (error) {
-        console.warn("WAQI fetch failed, trying OpenWeatherMap:", error);
+    // Try WAQI first (more detailed, station-based) via backend proxy
+    try {
+      const waqiData = await fetchWAQIFromProxy(lat, lng);
+      if (waqiData) {
+        return { ...waqiData, source: "WAQI" };
       }
+    } catch (error) {
+      console.warn("WAQI fetch failed, trying OpenWeatherMap:", error);
     }
 
-    // Fallback to OpenWeatherMap Air Pollution
-    if (OWM_API_KEY) {
-      try {
-        const owmData = await fetchOWMAirPollution(lat, lng);
-        return { ...owmData, source: "OpenWeatherMap" };
-      } catch (error) {
-        console.warn("OpenWeatherMap AQI failed, using estimated data:", error);
-      }
+    // Fallback to OpenWeatherMap Air Pollution via backend proxy
+    try {
+      const owmData = await fetchOWMAirPollution(lat, lng);
+      return { ...owmData, source: "OpenWeatherMap" };
+    } catch (error) {
+      console.warn("OpenWeatherMap AQI failed, using estimated data:", error);
     }
 
     // Final fallback: use mock data based on location
@@ -115,16 +117,12 @@ export const fetchAirQuality = async (lat, lng) => {
 };
 
 /**
- * Fetch from World Air Quality Index API
+ * Fetch from World Air Quality Index API via backend proxy
  * @param {number} lat - Latitude
  * @param {number} lng - Longitude
  */
-const fetchWAQI = async (lat, lng) => {
-  const response = await fetch(
-    `https://api.waqi.info/feed/geo:${lat};${lng}/?token=${WAQI_API_KEY}`
-  );
-
-  const data = await response.json();
+const fetchWAQIFromProxy = async (lat, lng) => {
+  const data = await fetchWAQIProxy(lat, lng);
 
   if (data.status !== "ok" || !data.data) {
     return null;
@@ -155,16 +153,12 @@ const fetchWAQI = async (lat, lng) => {
 };
 
 /**
- * Fetch from OpenWeatherMap Air Pollution API
+ * Fetch from OpenWeatherMap Air Pollution API via backend proxy
  * @param {number} lat - Latitude
  * @param {number} lng - Longitude
  */
 const fetchOWMAirPollution = async (lat, lng) => {
-  const response = await fetch(
-    `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${OWM_API_KEY}`
-  );
-
-  const data = await response.json();
+  const data = await fetchOpenWeatherAirPollution(lat, lng);
   const current = data.list?.[0];
 
   if (!current) {
@@ -243,9 +237,39 @@ const getAQILevel = (aqi) => {
   return { level: 6, label: "Hazardous", color: "#7f1d1d" };
 };
 
+// Client-side AQI cache to reduce backend requests
+const aqiCache = new Map();
+const AQI_CACHE_DURATION = 120000; // 2 minutes
+const AQI_CACHE_MAX_SIZE = 500; // Prevent memory leaks
+
+// Cleanup old cache entries periodically
+const cleanupAQICache = () => {
+  const now = Date.now();
+  const entries = Array.from(aqiCache.entries());
+
+  // Remove expired entries
+  for (const [key, value] of entries) {
+    if (now - value.timestamp > AQI_CACHE_DURATION) {
+      aqiCache.delete(key);
+    }
+  }
+
+  // If still too large, remove oldest entries
+  if (aqiCache.size > AQI_CACHE_MAX_SIZE) {
+    const sorted = Array.from(aqiCache.entries()).sort(
+      (a, b) => a[1].timestamp - b[1].timestamp
+    );
+    const toRemove = sorted.slice(0, aqiCache.size - AQI_CACHE_MAX_SIZE);
+    toRemove.forEach(([key]) => aqiCache.delete(key));
+  }
+};
+
+// Run cleanup every 5 minutes
+setInterval(cleanupAQICache, 300000);
+
 /**
- * Fetch AQI grid for heatmap overlay
- * Uses WAQI for individual points, OWM for grid efficiency
+ * Fetch AQI grid for heatmap overlay via backend proxy with client-side caching
+ * Uses OWM Air Pollution API for grid efficiency
  * @param {Object} bounds - Map bounds { north, south, east, west }
  * @param {number} gridPoints - Number of grid points per axis
  */
@@ -254,34 +278,46 @@ export const fetchAQIGrid = async (bounds, gridPoints = 5) => {
   const latStep = (north - south) / (gridPoints - 1);
   const lngStep = (east - west) / (gridPoints - 1);
 
-  // For grid data, use OWM (more API calls but still under free tier)
-  // WAQI is better for single point detailed data
+  // For grid data, use OWM via backend proxy
   const fetchPromises = [];
-  let apiFailureCount = 0;
+  const now = Date.now();
 
   for (let i = 0; i < gridPoints; i++) {
     for (let j = 0; j < gridPoints; j++) {
       const lat = south + latStep * i;
       const lng = west + lngStep * j;
 
+      // Round to 1 decimal for cache consistency (matches backend rounding)
+      const latKey = lat.toFixed(1);
+      const lngKey = lng.toFixed(1);
+      const cacheKey = `${latKey},${lngKey}`;
+
+      // Check client cache first
+      const cached = aqiCache.get(cacheKey);
+      if (cached && now - cached.timestamp < AQI_CACHE_DURATION) {
+        fetchPromises.push(Promise.resolve({ ...cached.data, lat, lng }));
+        continue;
+      }
+
       fetchPromises.push(
-        fetch(
-          `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${OWM_API_KEY}`
-        )
-          .then((res) => {
-            if (!res.ok) {
-              apiFailureCount++;
-              throw new Error(`API returned ${res.status}`);
-            }
-            return res.json();
+        fetchOpenWeatherAirPollution(lat, lng)
+          .then((data) => {
+            const result = {
+              lat,
+              lng,
+              aqi: data.list?.[0]?.main?.aqi || 1,
+              components: data.list?.[0]?.components,
+            };
+            // Cache successful result
+            aqiCache.set(cacheKey, { data: result, timestamp: now });
+            return result;
           })
-          .then((data) => ({
-            lat,
-            lng,
-            aqi: data.list?.[0]?.main?.aqi || 1,
-            components: data.list?.[0]?.components,
-          }))
           .catch(() => {
+            // If rate limited, use last cached value if available
+            if (cached) {
+              console.warn(`Using stale AQI cache for ${cacheKey}`);
+              return { ...cached.data, lat, lng };
+            }
             // Use mock data for this grid point
             const mockData = generateMockAQI(lat, lng);
             return {
@@ -311,7 +347,7 @@ export const fetchAQIGrid = async (bounds, gridPoints = 5) => {
 // ==================== WIND DATA METHODS ====================
 
 /**
- * Fetch wind grid for particle animation
+ * Fetch wind grid for particle animation via backend proxy
  * @param {Object} bounds - Map bounds { north, south, east, west }
  * @param {number} gridPoints - Number of grid points per axis
  */
@@ -331,10 +367,7 @@ export const fetchWindGrid = async (bounds, gridPoints = 5) => {
         const lng = west + lngStep * j;
 
         fetchPromises.push(
-          fetch(
-            `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${OWM_API_KEY}&units=imperial`
-          )
-            .then((res) => res.json())
+          fetchOpenWeather(lat, lng, "imperial")
             .then((data) => ({
               lat,
               lng,
@@ -357,38 +390,83 @@ export const fetchWindGrid = async (bounds, gridPoints = 5) => {
 
 // ==================== MAP TILE URLS ====================
 
+// Cache for tile config from backend
+let tileConfigCache = null;
+let tileConfigFetchPromise = null;
+
 /**
- * Get OpenWeatherMap tile URL for a specific layer
- * @param {string} layer - Layer type (precipitation_new, temp_new, clouds_new, pressure_new)
- * @param {number} z - Zoom level
- * @param {number} x - Tile X
- * @param {number} y - Tile Y
+ * Get tile configuration from backend (cached)
+ * This returns the tile URLs with API keys already included
  */
-export const getOWMTileUrl = (layer, z, x, y) => {
-  return `https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`;
+const getTileConfigFromBackend = async () => {
+  if (tileConfigCache) {
+    return tileConfigCache;
+  }
+
+  // Avoid multiple simultaneous requests
+  if (tileConfigFetchPromise) {
+    return tileConfigFetchPromise;
+  }
+
+  tileConfigFetchPromise = fetchTileConfig()
+    .then((config) => {
+      tileConfigCache = config;
+      return config;
+    })
+    .catch((error) => {
+      console.error("Failed to fetch tile config:", error);
+      // Return empty config on failure
+      return {};
+    })
+    .finally(() => {
+      tileConfigFetchPromise = null;
+    });
+
+  return tileConfigFetchPromise;
 };
 
 /**
- * Get tile layer configurations for Mapbox
+ * Get OpenWeatherMap tile URL for a specific layer
+ * Note: This is now async and fetches the URL pattern from backend
+ * @param {string} layer - Layer type (precipitation_new, temp_new, clouds_new, pressure_new)
  */
-export const getTileLayerConfigs = () => ({
-  radar: {
-    url: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-    opacity: 0.7,
-  },
-  temperature: {
-    url: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-    opacity: 0.6,
-  },
-  clouds: {
-    url: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-    opacity: 0.5,
-  },
-  pressure: {
-    url: `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-    opacity: 0.5,
-  },
-});
+export const getOWMTileUrl = async (layer) => {
+  const config = await getTileConfigFromBackend();
+  const layerMapping = {
+    precipitation_new: "radar",
+    temp_new: "temperature",
+    clouds_new: "clouds",
+    pressure_new: "pressure",
+  };
+  const configKey = layerMapping[layer] || layer;
+  return config[configKey]?.url || "";
+};
+
+/**
+ * Get tile layer configurations for Mapbox (async)
+ * Fetches URLs from backend to avoid exposing API keys
+ */
+export const getTileLayerConfigs = async () => {
+  const config = await getTileConfigFromBackend();
+  return {
+    radar: {
+      url: config.radar?.url || "",
+      opacity: 0.7,
+    },
+    temperature: {
+      url: config.temperature?.url || "",
+      opacity: 0.6,
+    },
+    clouds: {
+      url: config.clouds?.url || "",
+      opacity: 0.5,
+    },
+    pressure: {
+      url: config.pressure?.url || "",
+      opacity: 0.5,
+    },
+  };
+};
 
 // ==================== CACHE UTILITIES ====================
 
@@ -412,15 +490,15 @@ export const getCacheStats = () => {
 };
 
 /**
- * Check if we have valid API keys
+ * Check API status - now uses backend proxy so always available
  */
 export const getAPIStatus = () => ({
   openWeatherMap: {
-    available: !!OWM_API_KEY,
+    available: true, // API keys are on backend
     uses: ["Map tiles", "Wind grid", "AQI fallback"],
   },
   waqi: {
-    available: !!WAQI_API_KEY,
+    available: true, // API keys are on backend
     uses: ["Air Quality (primary)"],
   },
 });

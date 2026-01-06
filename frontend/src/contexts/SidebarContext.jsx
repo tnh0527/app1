@@ -14,8 +14,9 @@ const sidebarReducer = (state, action) => {
   }
 };
 
+// Default to expanded sidebar on first visit
 const initialState = {
-  isSidebarOpen: false,
+  isSidebarOpen: true,
 };
 
 // Load the initial state from localStorage, if available
