@@ -3,11 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "^18 || ^20"
+  },
   "scripts": {
     "dev": "vite",
     "dev:fullstack": "node scripts/dev-fullstack.mjs",
     "prebuild": "node -e \"const fs = require('fs'); const path = './dist'; if (fs.existsSync(path)) { fs.rmSync(path, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }\"",
     "build": "vite build",
+    "vercel-build": "npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
     "capture:ui": "playwright test",
@@ -40,7 +44,7 @@
     "react-tooltip": "^5.28.0"
   },
   "overrides": {
-    "@modelcontextprotocol/sdk": "^1.25.1"
+    "@modelcontextprotocol/sdk": "^1.25.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
