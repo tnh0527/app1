@@ -47,7 +47,6 @@ test-results/
 mcp.json
 .roo
 .vscode/
-frontend/public/
 .shared/
 .github/prompts/
 .vscode/
