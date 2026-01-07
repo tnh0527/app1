@@ -49,5 +49,5 @@ mcp.json
 .vscode/
 frontend/public/
 .shared/
-.github/
+.github/prompts/
 .vscode/

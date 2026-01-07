@@ -1,0 +1,175 @@
+name: Sync Env Vars to Render
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync-env-vars:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Sync Environment Variables to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          # App Secrets
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DEBUG: ${{ secrets.DEBUG }}
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_CLOUD_API_KEY: ${{ secrets.GOOGLE_CLOUD_API_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          TOMORROWIO_API_KEY: ${{ secrets.TOMORROWIO_API_KEY }}
+          VISUALCROSSING_API_KEY: ${{ secrets.VISUALCROSSING_API_KEY }}
+          WAQI_KEY: ${{ secrets.WAQI_KEY }}
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+          MAPTILER_API_KEY: ${{ secrets.MAPTILER_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+          IEX_CLOUD_API_KEY: ${{ secrets.IEX_CLOUD_API_KEY }}
+          IEX_CLOUD_BASE_URL: ${{ secrets.IEX_CLOUD_BASE_URL }}
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+          DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          SECURE_SSL_REDIRECT: ${{ secrets.SECURE_SSL_REDIRECT }}
+          SESSION_COOKIE_SECURE: ${{ secrets.SESSION_COOKIE_SECURE }}
+          CSRF_COOKIE_SECURE: ${{ secrets.CSRF_COOKIE_SECURE }}
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+
+        run: |
+          set -e
+
+          if [ -z "$RENDER_API_KEY" ]; then
+            echo "Error: RENDER_API_KEY is not set."
+            exit 1
+          fi
+
+          if [ -z "$RENDER_SERVICE_ID" ]; then
+            echo "Error: RENDER_SERVICE_ID is not set."
+            exit 1
+          fi
+
+          # Show a masked snippet of the service id so it's visible in logs for validation
+          echo "RENDER_SERVICE_ID present — using: ${RENDER_SERVICE_ID:0:8}***"
+
+          echo "Constructing JSON payload..."
+
+          # Create a JSON array of objects {key: "...", value: "..."}
+          # filtering out any secrets that are empty
+          jq -n \
+            --arg secret_key "$SECRET_KEY" \
+            --arg debug "$DEBUG" \
+            --arg allowed_hosts "$ALLOWED_HOSTS" \
+            --arg cors_allowed_origins "$CORS_ALLOWED_ORIGINS" \
+            --arg csrf_trusted_origins "$CSRF_TRUSTED_ORIGINS" \
+            --arg db_name "$DB_NAME" \
+            --arg db_user "$DB_USER" \
+            --arg db_password "$DB_PASSWORD" \
+            --arg db_host "$DB_HOST" \
+            --arg db_port "$DB_PORT" \
+            --arg google_api_key "$GOOGLE_API_KEY" \
+            --arg google_cloud_api_key "$GOOGLE_CLOUD_API_KEY" \
+            --arg google_oauth_client_id "$GOOGLE_OAUTH_CLIENT_ID" \
+            --arg google_oauth_client_secret "$GOOGLE_OAUTH_CLIENT_SECRET" \
+            --arg openweather_api_key "$OPENWEATHER_API_KEY" \
+            --arg tomorrowio_api_key "$TOMORROWIO_API_KEY" \
+            --arg visualcrossing_api_key "$VISUALCROSSING_API_KEY" \
+            --arg waqi_key "$WAQI_KEY" \
+            --arg geoapify_api_key "$GEOAPIFY_API_KEY" \
+            --arg supabase_service_role_key "$SUPABASE_SERVICE_ROLE_KEY" \
+            --arg mapbox_access_token "$MAPBOX_ACCESS_TOKEN" \
+            --arg maptiler_api_key "$MAPTILER_API_KEY" \
+            --arg finnhub_api_key "$FINNHUB_API_KEY" \
+            --arg twelve_data_api_key "$TWELVE_DATA_API_KEY" \
+            --arg iex_cloud_api_key "$IEX_CLOUD_API_KEY" \
+            --arg iex_cloud_base_url "$IEX_CLOUD_BASE_URL" \
+            --arg email_host "$EMAIL_HOST" \
+            --arg email_port "$EMAIL_PORT" \
+            --arg email_host_user "$EMAIL_HOST_USER" \
+            --arg email_host_password "$EMAIL_HOST_PASSWORD" \
+            --arg default_from_email "$DEFAULT_FROM_EMAIL" \
+            --arg frontend_url "$FRONTEND_URL" \
+            --arg vite_api_base_url "$VITE_API_BASE_URL" \
+            --arg secure_ssl_redirect "$SECURE_SSL_REDIRECT" \
+            --arg session_cookie_secure "$SESSION_COOKIE_SECURE" \
+            --arg csrf_cookie_secure "$CSRF_COOKIE_SECURE" \
+            '[
+              {key: "SECRET_KEY", value: $secret_key},
+              {key: "DEBUG", value: $debug},
+              {key: "ALLOWED_HOSTS", value: $allowed_hosts},
+              {key: "CORS_ALLOWED_ORIGINS", value: $cors_allowed_origins},
+              {key: "CSRF_TRUSTED_ORIGINS", value: $csrf_trusted_origins},
+              {key: "DB_NAME", value: $db_name},
+              {key: "DB_USER", value: $db_user},
+              {key: "DB_PASSWORD", value: $db_password},
+              {key: "DB_HOST", value: $db_host},
+              {key: "DB_PORT", value: $db_port},
+              {key: "GOOGLE_API_KEY", value: $google_api_key},
+              {key: "GOOGLE_CLOUD_API_KEY", value: $google_cloud_api_key},
+              {key: "GOOGLE_OAUTH_CLIENT_ID", value: $google_oauth_client_id},
+              {key: "GOOGLE_OAUTH_CLIENT_SECRET", value: $google_oauth_client_secret},
+              {key: "OPENWEATHER_API_KEY", value: $openweather_api_key},
+              {key: "TOMORROWIO_API_KEY", value: $tomorrowio_api_key},
+              {key: "VISUALCROSSING_API_KEY", value: $visualcrossing_api_key},
+              {key: "WAQI_KEY", value: $waqi_key},
+              {key: "GEOAPIFY_API_KEY", value: $geoapify_api_key},
+              {key: "SUPABASE_SERVICE_ROLE_KEY", value: $supabase_service_role_key},
+              {key: "MAPBOX_ACCESS_TOKEN", value: $mapbox_access_token},
+              {key: "MAPTILER_API_KEY", value: $maptiler_api_key},
+              {key: "FINNHUB_API_KEY", value: $finnhub_api_key},
+              {key: "TWELVE_DATA_API_KEY", value: $twelve_data_api_key},
+              {key: "IEX_CLOUD_API_KEY", value: $iex_cloud_api_key},
+              {key: "IEX_CLOUD_BASE_URL", value: $iex_cloud_base_url},
+              {key: "EMAIL_HOST", value: $email_host},
+              {key: "EMAIL_PORT", value: $email_port},
+              {key: "EMAIL_HOST_USER", value: $email_host_user},
+              {key: "EMAIL_HOST_PASSWORD", value: $email_host_password},
+              {key: "DEFAULT_FROM_EMAIL", value: $default_from_email},
+              {key: "FRONTEND_URL", value: $frontend_url},
+              {key: "VITE_API_BASE_URL", value: $vite_api_base_url},
+              {key: "SECURE_SSL_REDIRECT", value: $secure_ssl_redirect},
+              {key: "SESSION_COOKIE_SECURE", value: $session_cookie_secure},
+              {key: "CSRF_COOKIE_SECURE", value: $csrf_cookie_secure}
+            ] | map(select(.value != "" and .value != null))' > env_vars.json
+
+          echo "Payload generated (keys only):"
+          jq 'map(.key)' env_vars.json
+
+          echo "Syncing to Render..."
+          curl --fail --request PUT \
+            --url "https://api.render.com/v1/services/$RENDER_SERVICE_ID/env-vars" \
+            --header "Authorization: Bearer $RENDER_API_KEY" \
+            --header 'Content-Type: application/json' \
+            --data @env_vars.json
+
+          echo "Sync complete."
+
+          # Trigger Render deploy hook if configured (keeps hook URL secret)
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            echo "Triggering Render deploy hook..."
+            curl --fail --request POST "$RENDER_DEPLOY_HOOK" || {
+              echo "Warning: deploy hook trigger failed"
+              exit 1
+            }
+            echo "Deploy hook triggered."
+          else
+            echo "No RENDER_DEPLOY_HOOK configured; skipping deploy trigger."
+          fi
