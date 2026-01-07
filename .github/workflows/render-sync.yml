@@ -11,6 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Sync Environment Variables to Render
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -162,14 +167,43 @@ jobs:
 
           echo "Sync complete."
 
-          # Trigger Render deploy hook if configured (keeps hook URL secret)
-          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
-            echo "Triggering Render deploy hook..."
-            curl --fail --request POST "$RENDER_DEPLOY_HOOK" || {
-              echo "Warning: deploy hook trigger failed"
-              exit 1
-            }
-            echo "Deploy hook triggered."
+          # Decide whether to trigger a backend deploy: only if backend/ files changed
+          SKIP_DEPLOY=0
+          BEFORE_SHA='${{ github.event.before }}'
+          AFTER_SHA='${{ github.sha }}'
+
+          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            echo "Checking changes between $BEFORE_SHA and $AFTER_SHA"
+            git fetch --no-tags --depth=50 origin $BEFORE_SHA $AFTER_SHA || git fetch --no-tags origin
+            if git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" | grep -E '^backend/' >/dev/null; then
+              echo "Backend changes detected; will trigger deploy."
+            else
+              echo "No backend changes detected; skipping deploy trigger."
+              SKIP_DEPLOY=1
+            fi
           else
-            echo "No RENDER_DEPLOY_HOOK configured; skipping deploy trigger."
+            echo "No before-sha available (first push or workflow_dispatch); will trigger deploy."
+          fi
+
+          if [ $SKIP_DEPLOY -eq 0 ]; then
+            # Update Render service config to use the backend root and correct start command
+            echo "Updating Render service configuration (rootDirectory + startCommand)..."
+            curl --silent --fail --request PATCH \
+              --url "https://api.render.com/v1/services/$RENDER_SERVICE_ID" \
+              --header "Authorization: Bearer $RENDER_API_KEY" \
+              --header 'Content-Type: application/json' \
+              --data '{"rootDirectory":"backend","startCommand":"cd app1 && gunicorn app1.wsgi"}' || \
+              echo "Warning: failed to update Render service configuration; continuing"
+
+            # Trigger Render deploy hook if configured (keeps hook URL secret)
+            if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+              echo "Triggering Render deploy hook..."
+              curl --fail --request POST "$RENDER_DEPLOY_HOOK" || {
+                echo "Warning: deploy hook trigger failed"
+                exit 1
+              }
+              echo "Deploy hook triggered."
+            else
+              echo "No RENDER_DEPLOY_HOOK configured; skipping deploy trigger."
+            fi
           fi
