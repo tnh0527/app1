@@ -23,12 +23,15 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-k%md-p*hj1+=qe849@gf#fbo&0exdfvb8#a%tyw_oi9g-7&tpz"
+# For production: Set SECRET_KEY in .env file (no fallback value will be used)
+SECRET_KEY = os.getenv('SECRET_KEY', "django-insecure-k%md-p*hj1+=qe849@gf#fbo&0exdfvb8#a%tyw_oi9g-7&tpz")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# For production: Set DEBUG=False in .env file
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# For production: Set ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com in .env file
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 
 
 # Application definition
@@ -72,8 +75,12 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    # CORS middleware should be placed as high as possible so it can
+    # handle preflight (OPTIONS) requests before other middleware
+    # that might return redirects.
     "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -82,12 +89,14 @@ MIDDLEWARE = [
 ]
 
 # CORS Configuration - specify allowed origins for security
+# Read production origins from environment
+CORS_ALLOWED_ORIGINS_ENV = os.getenv('CORS_ALLOWED_ORIGINS', '')
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
-]
+] + [origin.strip() for origin in CORS_ALLOWED_ORIGINS_ENV.split(',') if origin.strip()]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -102,14 +111,19 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF Configuration
+# Read production trusted origins from environment
+CSRF_TRUSTED_ORIGINS_ENV = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
-]
+] + [origin.strip() for origin in CSRF_TRUSTED_ORIGINS_ENV.split(',') if origin.strip()]
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read for AJAX requests
+
+# Restore slash appending but ensure CORS handles OPTIONS before redirects
+APPEND_SLASH = True
 
 # Session Configuration
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -141,6 +155,7 @@ WSGI_APPLICATION = "app1.wsgi.application"
 
 
 # Database
+# Support DATABASE_URL from hosting providers (Render/Supabase) and individual env vars
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 from decouple import config
@@ -247,6 +262,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# WhiteNoise configuration for serving static files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -264,3 +283,80 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Nexus <noreply@nexus.app>'
 
 # Frontend URL for email links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
+# Logging Configuration
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose" if DEBUG else "simple",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs", "django.log"),
+            "maxBytes": 1024 * 1024 * 10,  # 10 MB
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"] if DEBUG else ["console", "file"],
+        "level": "DEBUG" if DEBUG else "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"] if DEBUG else ["console", "file"],
+            "level": "INFO" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"] if DEBUG else ["console", "file"],
+            "level": "DEBUG" if DEBUG else "ERROR",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console", "file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+    },
+}
+
+# Production Security Settings
+# Make HTTPS redirect behavior explicit.
+# Reason: If DEBUG is set to False locally (common when sharing prod-like .env), forcing HTTPS
+# breaks localhost API calls and CORS preflights because the dev server typically isn't on HTTPS.
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False') == 'True'
+
+if not DEBUG and SECURE_SSL_REDIRECT:
+    # Security Headers (only enable when actually redirecting to HTTPS)
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
+    # HSTS Settings (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Additional Production Settings
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

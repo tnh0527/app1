@@ -1,10 +1,5 @@
 import { useRef } from "react";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import "./AssetLiabilityBreakdown.css";
 
@@ -60,10 +55,16 @@ export const AssetLiabilityBreakdown = ({ summary, accounts }) => {
 
   // Doughnut chart data
   const doughnutData = {
-    labels: [...assetBreakdown.map((a) => a.label), ...liabilityBreakdown.map((l) => l.label)],
+    labels: [
+      ...assetBreakdown.map((a) => a.label),
+      ...liabilityBreakdown.map((l) => l.label),
+    ],
     datasets: [
       {
-        data: [...assetBreakdown.map((a) => a.value), ...liabilityBreakdown.map((l) => l.value)],
+        data: [
+          ...assetBreakdown.map((a) => a.value),
+          ...liabilityBreakdown.map((l) => l.value),
+        ],
         backgroundColor: [
           ...assetBreakdown.map((a) => a.color),
           ...liabilityBreakdown.map((l) => l.color),
@@ -114,7 +115,11 @@ export const AssetLiabilityBreakdown = ({ summary, accounts }) => {
         {/* Doughnut Chart */}
         <div className="chart-container">
           <div className="doughnut-wrapper">
-            <Doughnut ref={chartRef} data={doughnutData} options={doughnutOptions} />
+            <Doughnut
+              ref={chartRef}
+              data={doughnutData}
+              options={doughnutOptions}
+            />
             <div className="chart-center">
               <span className="center-label">Total</span>
               <span className="center-value">{formatCurrency(total)}</span>
@@ -144,7 +149,9 @@ export const AssetLiabilityBreakdown = ({ summary, accounts }) => {
                   <span className="item-label">{item.label}</span>
                 </div>
                 <div className="item-values">
-                  <span className="item-amount">{formatCurrency(item.value)}</span>
+                  <span className="item-amount">
+                    {formatCurrency(item.value)}
+                  </span>
                   <span className="item-percent">
                     {((item.value / total) * 100).toFixed(1)}%
                   </span>
@@ -176,7 +183,9 @@ export const AssetLiabilityBreakdown = ({ summary, accounts }) => {
                   <span className="item-label">{item.label}</span>
                 </div>
                 <div className="item-values">
-                  <span className="item-amount">{formatCurrency(item.value)}</span>
+                  <span className="item-amount">
+                    {formatCurrency(item.value)}
+                  </span>
                   <span className="item-percent">
                     {((item.value / total) * 100).toFixed(1)}%
                   </span>
@@ -209,4 +218,3 @@ export const AssetLiabilityBreakdown = ({ summary, accounts }) => {
 };
 
 export default AssetLiabilityBreakdown;
-

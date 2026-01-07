@@ -73,9 +73,11 @@ const MonthView = () => {
   );
 
   const handleDayClick = useCallback(
-    (date) => {
+    (date, isPast) => {
       goToDate(date);
-      openEventModal(date);
+      if (!isPast) {
+        openEventModal(date);
+      }
     },
     [goToDate, openEventModal]
   );
@@ -244,7 +246,7 @@ const MonthView = () => {
                 ${heatLevel > 0 ? `month-day-cell--heat-${heatLevel}` : ""}
                 ${hasHoliday ? "month-day-cell--holiday" : ""}
               `}
-                onClick={() => isCurrentMonth && handleDayClick(date)}
+                onClick={() => isCurrentMonth && handleDayClick(date, isPast)}
                 role="button"
                 tabIndex={isCurrentMonth ? 0 : -1}
                 aria-label={`${date.toLocaleDateString("en-US", {
@@ -267,12 +269,16 @@ const MonthView = () => {
                   {isCurrentMonth && (
                     <button
                       type="button"
-                      className="day-add-btn"
+                      className={`day-add-btn ${
+                        isPast ? "day-add-btn--disabled" : ""
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation();
+                        if (isPast) return;
                         openEventModal(date);
                       }}
                       aria-label="Add event"
+                      aria-disabled={isPast}
                     >
                       <i className="bi bi-plus"></i>
                     </button>

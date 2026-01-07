@@ -44,6 +44,9 @@ test-results/
 !.env.example
 *.local
 
+# Supabase migrations
+frontend/supabase/migrations/*.sql
+
 mcp.json
 .roo
 .vscode/

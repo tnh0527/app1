@@ -28,6 +28,12 @@ const DayView = () => {
     return current.getTime() === today.getTime();
   }, [currentDate, today]);
 
+  const isPastDay = useMemo(() => {
+    const current = new Date(currentDate);
+    current.setHours(0, 0, 0, 0);
+    return current < today;
+  }, [currentDate, today]);
+
   const dayEvents = useMemo(() => {
     return events.filter((event) => {
       const eventDate = new Date(event.start_at);
@@ -59,11 +65,12 @@ const DayView = () => {
 
   const handleTimeSlotClick = useCallback(
     (hour) => {
+      if (isPastDay) return;
       const clickedDate = new Date(currentDate);
       clickedDate.setHours(hour, 0, 0, 0);
       openEventModal(clickedDate);
     },
-    [currentDate, openEventModal]
+    [currentDate, openEventModal, isPastDay]
   );
 
   const handleEventClick = useCallback(

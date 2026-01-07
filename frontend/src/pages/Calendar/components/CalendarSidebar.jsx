@@ -182,14 +182,7 @@ const CalendarSidebar = () => {
             <i className="bi bi-calendar-event"></i>
             <span>Upcoming</span>
           </div>
-          <button
-            type="button"
-            className="panel-action"
-            onClick={() => setCurrentView(CALENDAR_VIEWS.AGENDA)}
-            title="View all"
-          >
-            <i className="bi bi-arrow-right"></i>
-          </button>
+          {/* removed panel-action button per UX request */}
         </div>
 
         <div className="panel-content">
@@ -208,11 +201,19 @@ const CalendarSidebar = () => {
                     role="button"
                     tabIndex={0}
                   >
-                    <div className="upcoming-date">
+                    <div className="upcoming-date-container">
                       <span className="upcoming-day">{dayLabel}</span>
                       <span className="upcoming-time">{timeLabel}</span>
                     </div>
-                    <h4 className="upcoming-title">{event.title}</h4>
+
+                    <div className="upcoming-meta-right">
+                      <h4 className="upcoming-title">{event.title}</h4>
+                      <div className="upcoming-subinfo">
+                        <span className="upcoming-location">
+                          {event.location || ""}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 );
               })}

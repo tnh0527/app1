@@ -6,3 +6,6 @@ export { ProfileContext, ProfileProvider } from "./ProfileContext";
 
 // Sidebar Context
 export { SidebarContext, SidebarProvider } from "./SidebarContext";
+
+// Connection Context
+export { ConnectionProvider, useConnection } from "./ConnectionContext";

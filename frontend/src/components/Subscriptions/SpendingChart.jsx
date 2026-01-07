@@ -131,7 +131,10 @@ export const SpendingChart = ({ history, summary }) => {
         </h3>
         <div className="chart-legend">
           <span className="legend-item">
-            <span className="legend-dot" style={{ background: "#8b5cf6" }}></span>
+            <span
+              className="legend-dot"
+              style={{ background: "#8b5cf6" }}
+            ></span>
             Monthly Spend
           </span>
         </div>
@@ -151,4 +154,3 @@ export const SpendingChart = ({ history, summary }) => {
 };
 
 export default SpendingChart;
-

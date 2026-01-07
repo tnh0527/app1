@@ -16,6 +16,8 @@ import {
   CACHE_KEYS,
   getWeatherCacheKey,
 } from "../../utils/sessionCache";
+import { useAutoRetry } from "../../utils/connectionHooks";
+import api from "../../api/axios";
 
 // Widget imports
 import { CalendarWidget } from "./widgets/CalendarWidget";
@@ -68,15 +70,19 @@ const Dashboard = () => {
         clearTimeout(timeoutRef.current);
       }
 
-      const weatherLocation = profile?.location || "Richmond, Texas, USA";
-      const weatherCacheKey = getWeatherCacheKey(weatherLocation);
+      const weatherLocation = profile?.location || null;
+      const weatherCacheKey = weatherLocation
+        ? getWeatherCacheKey(weatherLocation)
+        : null;
 
       // Check for cached data from session (unless forcing refresh)
       if (!forceRefresh) {
         const cachedFinancials = getCache(CACHE_KEYS.HOME_FINANCIALS);
         const cachedSubscriptions = getCache(CACHE_KEYS.HOME_SUBSCRIPTIONS);
         const cachedTravel = getCache(CACHE_KEYS.HOME_TRAVEL);
-        const cachedWeather = getCache(weatherCacheKey);
+        const cachedWeather = weatherCacheKey
+          ? getCache(weatherCacheKey)
+          : null;
 
         // If we have any cached data, use it immediately
         if (
@@ -104,18 +110,23 @@ const Dashboard = () => {
 
       try {
         // Fetch all data in parallel
+        const weatherPromise = weatherLocation
+          ? api
+              .get("/api/weather/", {
+                params: { location: weatherLocation },
+                validateStatus: (status) => status < 500,
+              })
+              .then((r) => (r.status === 200 ? r.data : null))
+              .catch(() => null)
+          : Promise.resolve(null);
+
         const [financials, subscriptions, travel, trips, weather] =
           await Promise.all([
             financialsDashboardApi.getFullDashboard("1y").catch(() => null),
             subscriptionsDashboardApi.getFullDashboard().catch(() => null),
             travelDashboardApi.getDashboard().catch(() => null),
             tripsApi.getUpcoming().catch(() => []),
-            fetch(`http://localhost:8000/api/weather/?location=${encodeURIComponent(
-              weatherLocation
-            )}
-        `)
-              .then((r) => (r.ok ? r.json() : null))
-              .catch(() => null),
+            weatherPromise,
           ]);
 
         clearTimeout(timeoutRef.current);
@@ -129,7 +140,7 @@ const Dashboard = () => {
           ? { ...travel, upcomingTrips: trips }
           : null;
         if (travelWithTrips) setCache(CACHE_KEYS.HOME_TRAVEL, travelWithTrips);
-        if (weather) setCache(weatherCacheKey, weather);
+        if (weather && weatherCacheKey) setCache(weatherCacheKey, weather);
 
         setFinancialsData(financials);
         setSubscriptionsData(subscriptions);
@@ -148,6 +159,11 @@ const Dashboard = () => {
     },
     [profile?.location]
   );
+
+  // Auto-retry when connection is restored
+  useAutoRetry(fetchAllData, [profile?.location], {
+    enabled: !loading && error,
+  });
 
   useEffect(() => {
     fetchAllData();

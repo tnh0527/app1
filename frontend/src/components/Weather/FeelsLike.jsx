@@ -3,7 +3,6 @@ import "./FeelsLike.css";
 
 const FeelsLike = ({ feels, windData, humidData }) => {
   const [currentFeels, setCurrentFeels] = useState(null);
-  // console.log("Feels:", feels);
 
   useEffect(() => {
     const updateFeels = () => {

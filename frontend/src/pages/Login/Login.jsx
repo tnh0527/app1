@@ -5,6 +5,7 @@ import { ClipLoader } from "react-spinners";
 import { useAuth } from "../../contexts/AuthContext";
 import { ProfileContext } from "../../contexts/ProfileContext";
 import authApi from "../../api/authApi";
+import api from "../../api/axios";
 import { dashboardApi as financialsDashboardApi } from "../../api/financialsApi";
 import { dashboardApi as subscriptionsDashboardApi } from "../../api/subscriptionsApi";
 import {
@@ -809,12 +810,12 @@ const Login = () => {
         subscriptionsDashboardApi.getFullDashboard().catch(() => null),
         travelDashboardApi.getDashboard().catch(() => null),
         tripsApi.getUpcoming().catch(() => []),
-        fetch(
-          `http://localhost:8000/api/weather/?location=${encodeURIComponent(
-            weatherLocation
-          )}`
-        )
-          .then((r) => (r.ok ? r.json() : null))
+        api
+          .get("/api/weather/", {
+            params: { location: weatherLocation },
+            validateStatus: (status) => status < 500,
+          })
+          .then((r) => (r.status === 200 ? r.data : null))
           .catch(() => null),
       ];
 
@@ -879,8 +880,7 @@ const Login = () => {
                 },
               }));
             } else if (reason === "suppressed_by_user") {
-              // User dismissed - don't show error
-              console.log("Google Sign-In dismissed by user");
+              // User dismissed the prompt - no error needed
             } else {
               setErrors((prev) => ({
                 ...prev,
@@ -977,7 +977,7 @@ const Login = () => {
       if (!username.trim()) {
         setErrors((prev) => ({
           ...prev,
-          login: { username: "Username is required" },
+          login: { username: "Username or email is required" },
         }));
         return;
       }
@@ -1012,11 +1012,17 @@ const Login = () => {
         setNewFirstName("");
         setNewLastName("");
       } else {
-        await authApi.login({
-          username: username.trim(),
+        // Backend LoginSerializer expects `username` field even when users enter an email.
+        // Send the entered identifier as `username` (lowercase email when applicable).
+        const identifier = username.trim();
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+        const loginPayload = {
+          username: isEmail ? identifier.toLowerCase() : identifier,
           password,
           remember_me: rememberMe,
-        });
+        };
+
+        await authApi.login(loginPayload);
         login(rememberMe);
         // Trigger login success animation
         setLoginSuccess(true);
@@ -1030,12 +1036,12 @@ const Login = () => {
           subscriptionsDashboardApi.getFullDashboard().catch(() => null),
           travelDashboardApi.getDashboard().catch(() => null),
           tripsApi.getUpcoming().catch(() => []),
-          fetch(
-            `http://localhost:8000/api/weather/?location=${encodeURIComponent(
-              weatherLocation
-            )}`
-          )
-            .then((r) => (r.ok ? r.json() : null))
+          api
+            .get("/api/weather/", {
+              params: { location: weatherLocation },
+              validateStatus: (status) => status < 500,
+            })
+            .then((r) => (r.status === 200 ? r.data : null))
             .catch(() => null),
         ];
 
@@ -1099,13 +1105,11 @@ const Login = () => {
   };
 
   const switchToLogin = () => {
-    console.log("Switching to login panel");
     setIsActive(false);
     setErrors({ login: {}, register: {} });
   };
 
   const switchToRegister = () => {
-    console.log("Switching to register panel");
     setIsActive(true);
     setErrors({ login: {}, register: {} });
   };
@@ -1220,7 +1224,7 @@ const Login = () => {
                   errors.login.username ? "is-invalid" : ""
                 }`}
               />
-              <label>Username</label>
+              <label>Username or email</label>
               <i className="bx bxs-user"></i>
               <div className="input-glow"></div>
               {errors.login.username && (
@@ -1690,8 +1694,8 @@ const Login = () => {
             </div>
             <h3>Reset Your Password</h3>
             <p>
-              Enter your email address and we&apos;ll send you a link to reset your
-              password.
+              Enter your email address and we&apos;ll send you a link to reset
+              your password.
             </p>
 
             <form onSubmit={handleForgotPassword}>

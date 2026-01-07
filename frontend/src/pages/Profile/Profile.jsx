@@ -10,13 +10,11 @@ import {
   useRef,
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  countryRegions,
-} from "../../data/data";
+import { countryRegions } from "../../data/data";
 import { SyncLoader } from "react-spinners";
 import { ProfilePicModal } from "../../components/Modals";
 import { ProfileContext } from "../../contexts/ProfileContext";
-import { csrfToken } from "../../data/data";
+import api from "../../api/axios";
 import CustomDropdown from "../Calendar/components/CustomDropdown";
 import SettingsTab from "./SettingsTab";
 
@@ -514,24 +512,14 @@ const Profile = () => {
     }
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/profile/edit-profile/",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          credentials: "include",
-          body: JSON.stringify(updatedFields),
-        }
-      );
+      const response = await api.put("/profile/edit-profile/", updatedFields, {
+        validateStatus: (status) => status < 500,
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrors(errorData.errors || {});
+      if (response.status < 200 || response.status >= 300) {
+        setErrors(response.data?.errors || {});
       } else {
-        const updatedProfile = await response.json();
+        const updatedProfile = response.data;
         const birthdate = updatedProfile.birthdate
           ? new Date(
               new Date(updatedProfile.birthdate).getTime() +

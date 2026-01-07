@@ -151,8 +151,7 @@ class PlaceSuggestionsView(APIView):
                 {"error": "Request timed out. Please try again."},
                 status=status.HTTP_504_GATEWAY_TIMEOUT,
             )
-        except requests.exceptions.RequestException as e:
-            print(f"Error in get_place_suggestions: {e}")
+        except requests.exceptions.RequestException:
             return Response(
                 {"error": "Could not retrieve place suggestions"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

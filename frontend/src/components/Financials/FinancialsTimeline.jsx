@@ -275,4 +275,3 @@ export const FinancialsTimeline = ({
 };
 
 export default FinancialsTimeline;
-

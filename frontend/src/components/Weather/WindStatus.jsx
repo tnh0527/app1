@@ -3,8 +3,6 @@ import { useState, useRef } from "react";
 import PropTypes from "prop-types";
 
 const WindStatus = ({ windstatusData = [] }) => {
-  // console.log("Wind", windstatusData);
-
   const chartContainerRef = useRef(null);
   const [tooltip, setTooltip] = useState({
     visible: false,

@@ -64,9 +64,7 @@ export const CategoryBreakdown = ({ breakdown }) => {
     const sortedCategories = categories.sort((a, b) => b[1] - a[1]);
 
     return {
-      labels: sortedCategories.map(
-        ([cat]) => CATEGORY_LABELS[cat] || cat
-      ),
+      labels: sortedCategories.map(([cat]) => CATEGORY_LABELS[cat] || cat),
       datasets: [
         {
           // eslint-disable-next-line no-unused-vars
@@ -87,11 +85,13 @@ export const CategoryBreakdown = ({ breakdown }) => {
   }, [breakdown]);
 
   const topCategories = useMemo(() => {
-    return Object.entries(breakdown || {})
-      // eslint-disable-next-line no-unused-vars
-      .filter(([_key, value]) => value > 0)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    return (
+      Object.entries(breakdown || {})
+        // eslint-disable-next-line no-unused-vars
+        .filter(([_key, value]) => value > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+    );
   }, [breakdown]);
 
   const options = {
@@ -176,4 +176,3 @@ export const CategoryBreakdown = ({ breakdown }) => {
 };
 
 export default CategoryBreakdown;
-

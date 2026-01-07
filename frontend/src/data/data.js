@@ -22,7 +22,7 @@ export const navigationLinks = [
     id: 3,
     title: "Weather",
     icon: iconsImgs.weather,
-    path: "/weather/Richmond-Texas-USA",
+    path: "/weather",
   },
 
   {

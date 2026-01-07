@@ -170,4 +170,3 @@ export const BudgetTracker = ({ activeTrip, budgetAccuracy }) => {
 };
 
 export default BudgetTracker;
-

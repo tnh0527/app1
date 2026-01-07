@@ -11,6 +11,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .calendar-loading-overlay {
@@ -127,6 +128,16 @@
 .calendar-view-container--loading {
   opacity: 0.6;
   pointer-events: none;
+}
+
+@media screen and (max-width: 1024px) {
+  .calendar-view-container {
+    overflow-x: auto;
+  }
+
+  .calendar-view-container > * {
+    min-width: 720px;
+  }
 }
 
 /* View transition animations */

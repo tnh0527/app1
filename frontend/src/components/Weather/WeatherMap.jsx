@@ -13,9 +13,48 @@ const _getWindDirection = (degrees) => {
   const index = Math.round(degrees / 45) % 8;
   return directions[index];
 };
-const DEFAULT_CENTER = [-95.3698, 29.7604];
+// Use a neutral world view when no specific coordinates are provided.
+// The Weather page/widget is responsible for detecting the user's location
+// (IP -> browser geolocation) and will pass coordinates in `mapData` when
+// available. Avoid defaulting to a specific city.
+const DEFAULT_CENTER = [0, 0];
 
 const WeatherMap = ({ mapData }) => {
+  // Ensure accessing `window.caches` won't throw in sandboxed iframes or blocked environments.
+  // Some ad blockers or sandbox contexts cause `window.caches` access to throw, and
+  // Mapbox internals call the Cache API which can surface errors like:
+  // "Failed to execute 'keys' on 'Cache': Entry was not found." — silence by stubbing.
+  const ensureSafeCaches = () => {
+    try {
+      // Accessing window.caches may throw in some restricted environments
+      // (e.g., sandboxed iframes). If it throws, create a safe no-op stub.
+      // If it's defined and usable, leave it alone.
+      if (typeof window === "undefined") return;
+      try {
+        // Try a benign operation to detect throwing behavior
+        void window.caches;
+      } catch {
+        // Replace with a safe stub that implements the methods Mapbox expects
+        // Minimal no-op implementations returning promises.
+        console.warn(
+          "window.caches is inaccessible; installing safe stub for Mapbox."
+        );
+        // @ts-ignore
+        window.caches = {
+          open: async () => ({
+            keys: async () => [],
+            delete: async () => false,
+            put: async () => {},
+            match: async () => undefined,
+          }),
+          delete: async () => false,
+        };
+      }
+    } catch {
+      // Best effort only; do not block map creation.
+    }
+  };
+
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markerRef = useRef(null);
@@ -28,12 +67,12 @@ const WeatherMap = ({ mapData }) => {
   // Home view = where the map should return after pan/zoom.
   const homeViewRef = useRef({
     center: null,
-    zoom: 17,
+    zoom: 14,
     bearing: 0,
     pitch: 0,
   });
 
-  const SELECTION_ZOOM = 17;
+  const SELECTION_ZOOM = 14;
 
   const handleHomeClick = () => {
     if (!map.current || !homeViewRef.current.center) return;
@@ -49,12 +88,14 @@ const WeatherMap = ({ mapData }) => {
 
   // Initialize map only when we have coordinates
   useEffect(() => {
+    // Protect against environments where accessing window.caches throws
+    ensureSafeCaches();
     const rawCoords = mapData?.features?.[0]?.geometry?.coordinates;
-    const centerCoordinates =
-      rawCoords && rawCoords.length >= 2 ? rawCoords : DEFAULT_CENTER;
+    const hasCoords = rawCoords && rawCoords.length >= 2;
+    const centerCoordinates = hasCoords ? rawCoords : DEFAULT_CENTER;
 
-    // If no explicit location provided, we'll show the default Houston center.
-    _setHasLocation(true);
+    // Track whether we actually have a meaningful location to show.
+    _setHasLocation(!!hasCoords);
     setIsMapLoading(true); // show loading while map updates
 
     if (!MAPBOX_ACCESS_TOKEN) {
@@ -80,23 +121,26 @@ const WeatherMap = ({ mapData }) => {
 
     // If map already exists, just update location
     if (map.current) {
-      homeViewRef.current = {
-        center: centerCoordinates,
-        zoom: SELECTION_ZOOM,
-        bearing: 0,
-        pitch: 0,
-      };
+      // Update home view and pan only when we have real coordinates.
+      if (hasCoords) {
+        homeViewRef.current = {
+          center: centerCoordinates,
+          zoom: SELECTION_ZOOM,
+          bearing: 0,
+          pitch: 0,
+        };
 
-      map.current.flyTo({
-        center: centerCoordinates,
-        zoom: SELECTION_ZOOM,
-        bearing: 0,
-        pitch: 0,
-        essential: true,
-      });
+        map.current.flyTo({
+          center: centerCoordinates,
+          zoom: SELECTION_ZOOM,
+          bearing: 0,
+          pitch: 0,
+          essential: true,
+        });
 
-      if (markerRef.current) {
-        markerRef.current.setLngLat(centerCoordinates);
+        if (markerRef.current) {
+          markerRef.current.setLngLat(centerCoordinates);
+        }
       }
 
       // Hide loading after fly completes (on idle)
@@ -129,11 +173,14 @@ const WeatherMap = ({ mapData }) => {
 
     map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-    const markerEl = document.createElement("div");
-    markerEl.className = "current-location-marker";
-    markerRef.current = new mapboxgl.Marker({ element: markerEl })
-      .setLngLat(centerCoordinates)
-      .addTo(map.current);
+    // Only create a marker if we actually have coordinates to show.
+    if (hasCoords) {
+      const markerEl = document.createElement("div");
+      markerEl.className = "current-location-marker";
+      markerRef.current = new mapboxgl.Marker({ element: markerEl })
+        .setLngLat(centerCoordinates)
+        .addTo(map.current);
+    }
 
     map.current.on("load", () => {
       setIsMapLoading(false);

@@ -120,6 +120,7 @@ class GoogleAuthView(views.APIView):
 
 class SessionCheckView(views.APIView):
     """Check if the current session is valid."""
+    permission_classes = [AllowAny]
     
     def get(self, request):
         if request.user.is_authenticated:
@@ -559,7 +560,7 @@ This link will expire in 24 hours.
 If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
 
 Best regards,
-The Nexus Team
+The Nexus Developer
 """
         
         try:
@@ -635,3 +636,46 @@ class ResetPasswordView(views.APIView):
                 {"error": "Reset link has expired or is invalid."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class DeleteAccountView(views.APIView):
+    """
+    Allow authenticated users to delete their own account.
+    
+    This will cascade delete all related data:
+    - Profile
+    - Calendars and Events
+    - Financial Accounts and Snapshots
+    - Subscriptions
+    - Trips
+    - Saved Weather Locations
+    """
+    
+    def delete(self, request):
+        user = request.user
+        
+        if not user.is_authenticated:
+            return Response(
+                {"error": "Authentication required."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Optional: Require password confirmation for extra security
+        password = request.data.get('password')
+        if password and not user.check_password(password):
+            return Response(
+                {"error": "Incorrect password."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Log out before deletion
+        logout(request)
+        
+        # Delete the user (CASCADE will handle all related data)
+        username = user.username
+        user.delete()
+        
+        return Response(
+            {"msg": f"Account '{username}' and all associated data have been permanently deleted."},
+            status=status.HTTP_200_OK
+        )

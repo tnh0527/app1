@@ -679,42 +679,42 @@ const AdvancedWeatherMap = ({
         icon: "bi-cup-hot",
         color: "#ef4444",
       },
-    {
-      id: "fast_food",
-      name: "Fast Food",
-      icon: "bi-box-seam",
-      color: "#f97316",
-    },
-    {
-      id: "gas_station",
-      name: "Gas Stations",
-      icon: "bi-fuel-pump",
-      color: "#10b981",
-    },
-    { id: "coffee", name: "Coffee", icon: "bi-cup-straw", color: "#8b5cf6" },
-    { id: "grocery", name: "Groceries", icon: "bi-cart3", color: "#3b82f6" },
-    { id: "parking", name: "Parking", icon: "bi-p-circle", color: "#06b6d4" },
-    { id: "hotel", name: "Hotels", icon: "bi-building", color: "#ec4899" },
-    {
-      id: "hospital",
-      name: "Hospitals",
-      icon: "bi-hospital",
-      color: "#dc2626",
-    },
-    {
-      id: "pharmacy",
-      name: "Pharmacies",
-      icon: "bi-capsule",
-      color: "#22c55e",
-    },
-    { id: "bank", name: "Banks", icon: "bi-bank", color: "#0891b2" },
-    { id: "atm", name: "ATMs", icon: "bi-cash-stack", color: "#059669" },
-    {
-      id: "ev_charging",
-      name: "EV Charging",
-      icon: "bi-ev-station",
-      color: "#84cc16",
-    },
+      {
+        id: "fast_food",
+        name: "Fast Food",
+        icon: "bi-box-seam",
+        color: "#f97316",
+      },
+      {
+        id: "gas_station",
+        name: "Gas Stations",
+        icon: "bi-fuel-pump",
+        color: "#10b981",
+      },
+      { id: "coffee", name: "Coffee", icon: "bi-cup-straw", color: "#8b5cf6" },
+      { id: "grocery", name: "Groceries", icon: "bi-cart3", color: "#3b82f6" },
+      { id: "parking", name: "Parking", icon: "bi-p-circle", color: "#06b6d4" },
+      { id: "hotel", name: "Hotels", icon: "bi-building", color: "#ec4899" },
+      {
+        id: "hospital",
+        name: "Hospitals",
+        icon: "bi-hospital",
+        color: "#dc2626",
+      },
+      {
+        id: "pharmacy",
+        name: "Pharmacies",
+        icon: "bi-capsule",
+        color: "#22c55e",
+      },
+      { id: "bank", name: "Banks", icon: "bi-bank", color: "#0891b2" },
+      { id: "atm", name: "ATMs", icon: "bi-cash-stack", color: "#059669" },
+      {
+        id: "ev_charging",
+        name: "EV Charging",
+        icon: "bi-ev-station",
+        color: "#84cc16",
+      },
     ],
     []
   );
@@ -1524,15 +1524,6 @@ const AdvancedWeatherMap = ({
             "catering.restaurant,service.vehicle.fuel,catering.cafe";
         }
 
-        console.log("[Nearby Search] Parameters:", {
-          currentZoom,
-          searchRadiusMiles,
-          radiusMeters,
-          category,
-          geoapifyCategories,
-          coordinates,
-        });
-
         // Use backend proxy for Geoapify Places API
         const data = await fetchNearbyPlacesProxy(
           geoapifyCategories,
@@ -1577,22 +1568,11 @@ const AdvancedWeatherMap = ({
         // Sort by distance
         places.sort((a, b) => a.distance - b.distance);
 
-        console.log("[Nearby Search] Results:", {
-          total: data.features.length,
-          places: places.slice(0, 5),
-        });
-
         // If no results found and we have a category, try expanding radius
         if (places.length === 0 && category && searchRadiusMiles < 30) {
           const expandedRadius = Math.min(searchRadiusMiles * 2, 30);
           const expandedRadiusMeters = Math.round(expandedRadius * 1609.34);
           setNearbySearchRadius(expandedRadius);
-
-          console.log(
-            "[Nearby Search] Expanding radius to:",
-            expandedRadius,
-            "miles"
-          );
 
           // Use backend proxy for expanded search
           const expandedData = await fetchNearbyPlacesProxy(
@@ -1650,8 +1630,10 @@ const AdvancedWeatherMap = ({
   const applySavedPlace = useCallback((place, asOrigin = false) => {
     if (asOrigin) {
       setRouteOrigin(place.fullName);
+      setRouteOriginCoords(place.coordinates);
     } else {
       setRouteDestination(place.fullName);
+      setRouteDestCoords(place.coordinates);
     }
   }, []);
 
@@ -2054,27 +2036,36 @@ const AdvancedWeatherMap = ({
     if (!panel) return;
 
     const initialRect = panel.getBoundingClientRect();
-    const mapWrapper = panel.closest(".awm-map-wrapper");
-    if (!mapWrapper) return;
+
+    // Use viewport as the drag container so the panel can be moved outside the map
+    const containerRect = {
+      left: 0,
+      top: 0,
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
 
     const offsetX = e.clientX - initialRect.left;
     const offsetY = e.clientY - initialRect.top;
 
+    // Switch panel to fixed positioning so it can be dragged freely across the viewport
+    panel.style.position = "fixed";
+    panel.style.right = "auto";
+
     setIsDragging(true);
 
     const handleMove = (moveEvent) => {
-      if (!panel || !mapWrapper) return;
+      if (!panel) return;
 
       const currentPanelRect = panel.getBoundingClientRect();
-      const currentContainerRect = mapWrapper.getBoundingClientRect();
 
-      // Calculate new position relative to container
-      let newX = moveEvent.clientX - currentContainerRect.left - offsetX;
-      let newY = moveEvent.clientY - currentContainerRect.top - offsetY;
+      // Calculate new position relative to viewport
+      let newX = moveEvent.clientX - offsetX;
+      let newY = moveEvent.clientY - offsetY;
 
-      // Constrain to container bounds with padding
-      const maxX = currentContainerRect.width - currentPanelRect.width - 10;
-      const maxY = currentContainerRect.height - currentPanelRect.height - 10;
+      // Constrain to viewport bounds with padding
+      const maxX = containerRect.width - currentPanelRect.width - 10;
+      const maxY = containerRect.height - currentPanelRect.height - 10;
 
       newX = Math.max(10, Math.min(newX, maxX));
       newY = Math.max(10, Math.min(newY, maxY));
@@ -2127,8 +2118,8 @@ const AdvancedWeatherMap = ({
     if (!map.current || !showRoutePanel) return;
 
     const handleZoomEnd = () => {
-      // Only refetch if we're in the findNearby view or main view with a category selected
-      if (routePanelView === "findNearby" && selectedNearbyCategory) {
+      // Refetch if we have a selected category (works in both findNearby and main views)
+      if (selectedNearbyCategory) {
         fetchNearbyPlaces(selectedNearbyCategory);
       }
     };
@@ -2139,12 +2130,7 @@ const AdvancedWeatherMap = ({
         map.current.off("zoomend", handleZoomEnd);
       }
     };
-  }, [
-    showRoutePanel,
-    routePanelView,
-    selectedNearbyCategory,
-    fetchNearbyPlaces,
-  ]);
+  }, [showRoutePanel, selectedNearbyCategory, fetchNearbyPlaces]);
 
   // Display nearby places as markers on the map
   useEffect(() => {
@@ -2154,19 +2140,16 @@ const AdvancedWeatherMap = ({
     nearbyMarkersRef.current.forEach((marker) => marker.remove());
     nearbyMarkersRef.current = [];
 
-    // Add markers for nearby places if in findNearby view with a selected category
-    if (
-      routePanelView === "findNearby" &&
-      selectedNearbyCategory &&
-      nearbyPlaces.length > 0
-    ) {
+    // Add markers for nearby places whenever there are places to show
+    // This now works in both main view and findNearby view
+    if (nearbyPlaces.length > 0 && selectedNearbyCategory) {
       nearbyPlaces.forEach((place) => {
         const categoryInfo = NEARBY_CATEGORIES.find(
           (c) => c.id === selectedNearbyCategory
         );
         const color = categoryInfo?.color || "#d4a853";
 
-        // Create marker element
+        // Create marker element (Mapbox handles positioning, we only style the appearance)
         const el = document.createElement("div");
         el.className = "nearby-place-marker";
         el.style.cssText = `
@@ -2192,23 +2175,37 @@ const AdvancedWeatherMap = ({
         `;
         el.appendChild(icon);
 
-        // Create popup
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div style="padding: 4px; min-width: 150px;">
-            <strong style="color: #0f1723; font-size: 13px;">${
+        // Create popup with matching icon style
+        const popup = new mapboxgl.Popup({
+          offset: 25,
+          closeButton: false,
+          className: "nearby-place-popup",
+        }).setHTML(`
+          <div style="padding: 8px; min-width: 160px;">
+            <strong style="color: #0f1723; font-size: 13px; display: block; margin-bottom: 4px;">${
               place.name
             }</strong>
-            <p style="margin: 4px 0 2px 0; font-size: 11px; color: #666;">${
-              place.address || ""
-            }</p>
-            <p style="margin: 2px 0 0 0; font-size: 11px; color: ${color}; font-weight: 600;">${
+            ${
+              place.address
+                ? `<p style="margin: 0 0 4px 0; font-size: 11px; color: #666;">${place.address}</p>`
+                : ""
+            }
+            <p style="margin: 0 0 6px 0; font-size: 11px; color: ${color}; font-weight: 600;">${
           place.distanceMiles
         } mi away</p>
+            <div style="padding: 4px 0; border-top: 1px solid rgba(0,0,0,0.1);">
+              <p style="margin: 0; font-size: 10px; color: #999; font-style: italic;">
+                <i class="bi bi-hand-index" style="margin-right: 4px;"></i>Click to set as destination
+              </p>
+            </div>
           </div>
         `);
 
-        // Add marker to map
-        const marker = new mapboxgl.Marker(el)
+        // Add marker to map with smooth positioning
+        const marker = new mapboxgl.Marker({
+          element: el,
+          anchor: "bottom",
+        })
           .setLngLat(place.coordinates)
           .setPopup(popup)
           .addTo(map.current);
@@ -2216,18 +2213,14 @@ const AdvancedWeatherMap = ({
         // Click handler to use as destination
         el.addEventListener("click", () => {
           applySavedPlace(place);
-          setRoutePanelView("main");
-          setSelectedNearbyCategory(null);
+          // Return to main view but keep markers visible
+          if (routePanelView === "findNearby") {
+            setRoutePanelView("main");
+          }
         });
 
         nearbyMarkersRef.current.push(marker);
       });
-
-      console.log(
-        "[Nearby Markers] Added",
-        nearbyMarkersRef.current.length,
-        "markers to map"
-      );
     }
 
     // Cleanup on unmount
@@ -2586,8 +2579,7 @@ const AdvancedWeatherMap = ({
                   className="awm-back-btn"
                   onClick={() => {
                     setRoutePanelView("main");
-                    setSelectedNearbyCategory(null);
-                    setNearbyPlaces([]);
+                    // Keep selectedNearbyCategory and nearbyPlaces to maintain markers on map
                   }}
                   aria-label="Go back"
                 >
@@ -2944,6 +2936,44 @@ const AdvancedWeatherMap = ({
 
                   {/* Find Nearby - Apple Maps Style Categories */}
                   <div className="awm-find-nearby">
+                    {selectedNearbyCategory && nearbyPlaces.length > 0 && (
+                      <div className="awm-active-category-indicator">
+                        <div
+                          className="awm-active-category-badge"
+                          style={{
+                            "--category-color":
+                              NEARBY_CATEGORIES.find(
+                                (c) => c.id === selectedNearbyCategory
+                              )?.color || "#d4a853",
+                          }}
+                        >
+                          <i
+                            className={`bi ${
+                              NEARBY_CATEGORIES.find(
+                                (c) => c.id === selectedNearbyCategory
+                              )?.icon || "bi-geo-alt"
+                            }`}
+                          ></i>
+                          <span>
+                            {nearbyPlaces.length}{" "}
+                            {NEARBY_CATEGORIES.find(
+                              (c) => c.id === selectedNearbyCategory
+                            )?.name || "places"}{" "}
+                            shown on map
+                          </span>
+                          <button
+                            className="awm-clear-category-btn"
+                            onClick={() => {
+                              setSelectedNearbyCategory(null);
+                              setNearbyPlaces([]);
+                            }}
+                            title="Clear markers"
+                          >
+                            <i className="bi bi-x-circle"></i>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <button
                       className="awm-find-nearby-btn"
                       onClick={() => {
@@ -3020,7 +3050,7 @@ const AdvancedWeatherMap = ({
                                   onClick={() => {
                                     applySavedPlace(place);
                                     setRoutePanelView("main");
-                                    setSelectedNearbyCategory(null);
+                                    // Keep category selected to maintain markers
                                   }}
                                 >
                                   <div
@@ -3060,8 +3090,9 @@ const AdvancedWeatherMap = ({
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setRouteDestination(place.fullName);
+                                      setRouteDestCoords(place.coordinates);
                                       setRoutePanelView("main");
-                                      setSelectedNearbyCategory(null);
+                                      // Keep category selected to maintain markers
                                     }}
                                     title="Get directions"
                                   >

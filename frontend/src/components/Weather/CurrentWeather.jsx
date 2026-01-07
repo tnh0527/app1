@@ -27,7 +27,6 @@ const CurrentWeather = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isDay, setIsDay] = useState(null);
   const [showHomePopup, setShowHomePopup] = useState(false);
-  // console.log("time:", timezone);
 
   // Reset loading when parent signals loading or when location changes
   useEffect(() => {

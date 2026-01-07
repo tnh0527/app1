@@ -11,6 +11,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../../api/axios";
 import { getHolidaysInRange } from "../../../data/usHolidays";
 import { getCache, setCache, CACHE_KEYS } from "../../../utils/sessionCache";
+import { useAutoRetry } from "../../../utils/connectionHooks";
 
 const CalendarContext = createContext(null);
 
@@ -189,6 +190,9 @@ export const CalendarProvider = ({ children }) => {
     [currentDate, currentView, getDateRange, parseOccurrences]
   );
 
+  // Retry fetching events when connection is restored
+  useAutoRetry(fetchEvents, [currentDate, currentView], { enabled: true });
+
   // Fetch due reminders
   const fetchDueReminders = useCallback(async (forceRefresh = false) => {
     // Check session cache on initial load
@@ -214,6 +218,9 @@ export const CalendarProvider = ({ children }) => {
       setIsRemindersLoading(false);
     }
   }, []);
+
+  // Retry fetching reminders when connection is restored
+  useAutoRetry(fetchDueReminders, [], { enabled: true });
 
   // Create event
   const createEvent = useCallback(
@@ -375,11 +382,28 @@ export const CalendarProvider = ({ children }) => {
   }, []);
 
   // Modal functions
-  const openEventModal = useCallback((date = null, event = null) => {
-    setModalInitialDate(date);
-    setEditingEvent(event);
-    setIsEventModalOpen(true);
+  const isPastDate = useCallback((date) => {
+    if (!date) return false;
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return target < today;
   }, []);
+
+  const openEventModal = useCallback(
+    (date = null, event = null) => {
+      // Block creating new events on past dates while still allowing edits for existing events
+      if (!event && date && isPastDate(date)) {
+        return;
+      }
+
+      setModalInitialDate(date);
+      setEditingEvent(event);
+      setIsEventModalOpen(true);
+    },
+    [isPastDate]
+  );
 
   const closeEventModal = useCallback(() => {
     setIsEventModalOpen(false);

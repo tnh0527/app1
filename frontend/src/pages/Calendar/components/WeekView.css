@@ -371,6 +371,21 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+@media screen and (max-width: 1100px) {
+  .week-view {
+    overflow-x: auto;
+  }
+
+  .week-view-header,
+  .week-view-body {
+    min-width: 980px;
+  }
+
+  .week-days-container {
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+  }
+}
+
 /* Responsive */
 @media screen and (max-width: 1200px) {
   .week-view {

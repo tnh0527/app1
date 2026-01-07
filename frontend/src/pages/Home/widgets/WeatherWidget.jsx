@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { iconMap, videoMap } from "../../../utils/weatherMapping";
 import { Icon } from "@iconify/react";
+import api from "../../../api/axios";
 import { iconsImgs } from "../../../utils/images";
 import "./WeatherWidget.css";
 
@@ -81,22 +82,17 @@ export const WeatherWidget = ({
         setLocation(locationName);
 
         // Fetch weather using coordinates
-        const response = await fetch(
-          `http://localhost:8000/api/weather/?lat=${latitude}&lon=${longitude}`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Weather request failed with status ${response.status}`
-          );
-        }
-
-        const data = await response.json();
+        const response = await api.get("/api/weather/", {
+          params: { lat: latitude, lon: longitude },
+        });
+        const data = response.data;
         setWeatherData(data);
         if (onDataUpdate) onDataUpdate(data);
+        return true;
       } catch (error) {
         console.error("Failed to fetch weather:", error);
         setWeatherData(null);
+        return false;
       } finally {
         setLoading(false);
       }
@@ -115,29 +111,24 @@ export const WeatherWidget = ({
               : ipData.city || "Current Location";
           setLocation(locationName);
 
-          const response = await fetch(
-            `http://localhost:8000/api/weather/?lat=${ipData.latitude}&lon=${ipData.longitude}`
-          );
-
-          if (!response.ok) {
-            throw new Error(
-              `Weather request failed with status ${response.status}`
-            );
-          }
-
-          const data = await response.json();
+          const response = await api.get("/api/weather/", {
+            params: { lat: ipData.latitude, lon: ipData.longitude },
+          });
+          const data = response.data;
           setWeatherData(data);
           if (onDataUpdate) onDataUpdate(data);
+          return true;
         }
       } catch (error) {
         console.error("Failed to fetch weather by IP:", error);
         setWeatherData(null);
+        return false;
       } finally {
         setLoading(false);
       }
     };
 
-    const getLocationAndFetchWeather = () => {
+    const getLocationAndFetchWeather = async () => {
       if (initialWeather) {
         setWeatherData(initialWeather);
         setLoading(false);
@@ -147,25 +138,31 @@ export const WeatherWidget = ({
 
       setLoading(true);
 
+      // Try IP-based lookup first
+      const ipSuccess = await fetchWeatherByIP();
+      if (ipSuccess) return;
+
+      // If IP lookup failed, try browser geolocation as a fallback
       if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            fetchWeatherByCoords(
-              position.coords.latitude,
-              position.coords.longitude
-            );
-          },
-          (error) => {
-            console.warn(
-              "Geolocation denied or unavailable, falling back to IP:",
-              error.message
-            );
-            fetchWeatherByIP();
-          },
-          { timeout: 10000, maximumAge: 300000 } // 10s timeout, cache for 5 minutes
-        );
+        // wrap geolocation in a promise so we can await it
+        try {
+          setLoading(true);
+          const pos = await new Promise((resolve, reject) => {
+            const opts = { timeout: 10000, maximumAge: 300000 };
+            navigator.geolocation.getCurrentPosition(resolve, reject, opts);
+          });
+          await fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+        } catch (error) {
+          console.warn(
+            "Geolocation denied or unavailable after IP lookup:",
+            error.message || error
+          );
+          // Leave weatherData as null if both methods fail
+          setLoading(false);
+        }
       } else {
-        fetchWeatherByIP();
+        // geolocation not available and IP failed
+        setLoading(false);
       }
     };
 

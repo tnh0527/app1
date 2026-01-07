@@ -40,7 +40,6 @@ const getCachedOrFetch = async (key, ttl, fetchFn) => {
   const cached = weatherCache.get(key);
 
   if (cached && Date.now() - cached.timestamp < ttl) {
-    console.log(`Cache hit for ${key}`);
     return cached.data;
   }
 
@@ -107,11 +106,6 @@ export const fetchAirQuality = async (lat, lng) => {
     }
 
     // Final fallback: use mock data based on location
-    console.info(
-      "Using estimated AQI data for",
-      lat.toFixed(2),
-      lng.toFixed(2)
-    );
     return generateMockAQI(lat, lng);
   });
 };
@@ -332,14 +326,6 @@ export const fetchAQIGrid = async (bounds, gridPoints = 5) => {
   }
 
   const results = await Promise.all(fetchPromises);
-
-  // Log if using significant amount of mock data
-  const mockCount = results.filter((r) => r.isMock).length;
-  if (mockCount > 0) {
-    console.info(
-      `AQI Grid: Using ${mockCount}/${results.length} estimated data points`
-    );
-  }
 
   return results;
 };

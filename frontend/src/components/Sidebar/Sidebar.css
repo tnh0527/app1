@@ -407,7 +407,6 @@
 .guide-section {
   margin-top: auto;
   padding-top: 12px;
-  /* remove hard border — use a themed divider instead */
   flex-shrink: 0;
 }
 
@@ -445,6 +444,22 @@
     rgba(18, 20, 26, 0.35)
   );
   border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Center the AI Assistant label in the ai-link box while keeping the icon on the left */
+.ai-link {
+  position: relative;
+}
+.ai-link .nav-link-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ai-link .nav-link-icon {
+  position: relative;
+  z-index: 2;
 }
 
 /* Disabled (inert) nav link styling for Guide */

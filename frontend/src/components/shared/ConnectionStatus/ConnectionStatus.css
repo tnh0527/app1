@@ -1,0 +1,292 @@
+/* Connection Status Banner - Modern Futuristic Theme */
+.connection-status-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background: rgba(145, 88, 88, 0.5);
+  backdrop-filter: blur(var(--glass-blur, 20px)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) saturate(180%);
+  border-bottom: 1px solid var(--glass-border, rgba(212, 168, 83, 0.2));
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(212, 168, 83, 0.08);
+  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Subtle gold accent line at top */
+.connection-status-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--clr-accent-gold, #d4a853) 20%,
+    var(--clr-accent-gold-light, #e5c07b) 50%,
+    var(--clr-accent-gold, #d4a853) 80%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+
+/* Animated pulse indicator */
+.connection-status-banner::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--clr-accent-gold-light, #e5c07b) 50%,
+    transparent 100%
+  );
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scaleX(0.3);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scaleX(1);
+  }
+}
+
+.connection-status-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Centered variant used when content should be centered horizontally */
+.connection-status-content.centered {
+  justify-content: center;
+}
+
+.connection-status-info.centered {
+  text-align: center;
+  align-items: center;
+}
+
+/* Hide only the manual retry button (we keep the icon visible for reconnect animation) */
+.connection-retry-btn {
+  display: none;
+}
+
+.connection-status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(212, 168, 83, 0.1);
+  border: 1px solid rgba(212, 168, 83, 0.25);
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+/* Centered icon variant used inside the info block */
+.connection-status-icon.centered-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  margin: 0 auto 8px auto;
+}
+
+.connection-status-icon i {
+  font-size: 16px;
+  color: var(--clr-accent-gold, #d4a853);
+}
+
+.reconnect-spinner {
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.connection-status-info {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.connection-status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.connection-status-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clr-accent-gold, #d4a853);
+  letter-spacing: 0.3px;
+  font-family: var(--font-family-space, "Space Grotesk", sans-serif);
+  line-height: 1.2;
+}
+
+.connection-status-message {
+  font-size: 12px;
+  color: var(--clr-silver, #9ca3af);
+  font-weight: 400;
+  font-family: var(--font-family-bai, "Bai Jamjuree", sans-serif);
+  line-height: 1.3;
+}
+
+.connection-retry-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--clr-accent-gold, #d4a853);
+  border-radius: 6px;
+  color: var(--clr-accent-gold, #d4a853);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-family-space, "Space Grotesk", sans-serif);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+.connection-retry-btn:hover:not(:disabled) {
+  background: rgba(212, 168, 83, 0.15);
+  border-color: var(--clr-accent-gold-light, #e5c07b);
+  color: var(--clr-accent-gold-light, #e5c07b);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(212, 168, 83, 0.2);
+}
+
+.connection-retry-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.connection-retry-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(212, 168, 83, 0.3);
+}
+
+.connection-retry-btn i {
+  font-size: 12px;
+}
+
+/* Reconnecting state - subtle pulse on icon */
+.connection-status-banner.reconnecting .connection-status-icon {
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 168, 83, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(212, 168, 83, 0);
+  }
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .connection-status-content {
+    padding: 8px 16px;
+    gap: 12px;
+  }
+
+  .connection-status-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .connection-status-icon i {
+    font-size: 14px;
+  }
+
+  .connection-status-title {
+    font-size: 12px;
+  }
+
+  .connection-status-message {
+    font-size: 11px;
+  }
+
+  .connection-retry-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .connection-status-content {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .connection-status-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .connection-status-icon i {
+    font-size: 12px;
+  }
+
+  .connection-status-title {
+    font-size: 11px;
+  }
+
+  .connection-status-message {
+    font-size: 10px;
+  }
+
+  .connection-retry-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  .connection-retry-btn i {
+    font-size: 10px;
+  }
+}

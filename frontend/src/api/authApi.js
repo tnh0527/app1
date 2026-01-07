@@ -31,6 +31,12 @@ const authApi = {
       token,
       new_password: newPassword,
     }),
+
+  // Account deletion
+  deleteAccount: (password) =>
+    api.delete("/auth/delete-account/", {
+      data: password ? { password } : {},
+    }),
 };
 
 export default authApi;

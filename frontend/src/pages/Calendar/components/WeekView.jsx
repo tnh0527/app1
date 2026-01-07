@@ -25,6 +25,15 @@ const WeekView = () => {
     return t;
   }, []);
 
+  const isPastDate = useCallback(
+    (date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d < today;
+    },
+    [today]
+  );
+
   const weekDays = useMemo(() => {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
@@ -72,10 +81,14 @@ const WeekView = () => {
     (date, hour) => {
       const clickedDate = new Date(date);
       clickedDate.setHours(hour, 0, 0, 0);
+      if (isPastDate(clickedDate)) {
+        goToDate(date);
+        return;
+      }
       goToDate(date);
       openEventModal(clickedDate);
     },
-    [goToDate, openEventModal]
+    [goToDate, openEventModal, isPastDate]
   );
 
   const handleEventClick = useCallback(

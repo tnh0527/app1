@@ -8,7 +8,7 @@ import WeatherModal from "../../components/Weather/WeatherModal";
 import SavedLocations from "../../components/Weather/SavedLocations";
 import AdvancedWeatherMap from "../../components/Weather/AdvancedWeatherMap";
 import ErrorBoundary from "../../components/shared/ErrorBoundary";
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ProfileContext } from "../../contexts/ProfileContext";
 import { transformLocationInput } from "../../utils/capitalCities";
@@ -17,6 +17,7 @@ import {
   addSavedLocation,
   getSavedLocations,
 } from "../../api/weatherLocationsApi";
+import { useAutoRetry } from "../../utils/connectionHooks";
 import {
   getCache,
   setCache,
@@ -39,7 +40,6 @@ const BOTTOM_CARD_OPTIONS = [
 ];
 
 const WeatherContent = () => {
-  const DEFAULT_LOCATION = "Houston, Texas, USA";
   const { location: urlLocation } = useParams();
   const navigate = useNavigate();
 
@@ -180,14 +180,7 @@ const WeatherContent = () => {
     }
   };
   const handleSuggestionClick = (suggestion) => {
-    // Transform in case it's a country name -> use capital city
     const transformedLocation = transformLocationInput(suggestion);
-    console.log(
-      "Location clicked:",
-      suggestion,
-      "-> transformed:",
-      transformedLocation
-    );
     setCurrentLocation(transformedLocation);
     setSuggestions([]);
   };
@@ -204,17 +197,21 @@ const WeatherContent = () => {
   };
 
   // Fetch saved locations to check if current location is saved
+  const fetchSavedLocations = useCallback(async () => {
+    try {
+      const locations = await getSavedLocations();
+      setSavedLocationsList(locations);
+    } catch (error) {
+      console.error("Failed to fetch saved locations:", error);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchSavedLocations = async () => {
-      try {
-        const locations = await getSavedLocations();
-        setSavedLocationsList(locations);
-      } catch (error) {
-        console.error("Failed to fetch saved locations:", error);
-      }
-    };
     fetchSavedLocations();
-  }, [savedLocationsRefresh]);
+  }, [savedLocationsRefresh, fetchSavedLocations]);
+
+  // Retry saved locations fetch when connection restored
+  // Import useAutoRetry at top and use it below
 
   // Check if current location is already saved
   useEffect(() => {
@@ -492,264 +489,281 @@ const WeatherContent = () => {
     }
   };
 
-  const fetchWeatherData = async (location, forceRefresh = false) => {
-    if (!location) {
-      return;
-    }
-    setIsLoading(true);
-
-    const sessionCacheKey = getWeatherCacheKey(location);
-
-    // Check session cache first (fastest, within-session navigation)
-    if (!forceRefresh) {
-      const sessionCachedData = getCache(sessionCacheKey);
-      if (sessionCachedData) {
-        setWeatherStates(sessionCachedData);
-        setIsLoading(false);
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const fetchWeatherData = useCallback(
+    async (location, forceRefresh = false) => {
+      if (!location) {
         return;
       }
-    }
+      setIsLoading(true);
 
-    // Check for localStorage cached data (120min expiration)
-    try {
-      const cachedData = getCachedWeatherData(location);
-      // Ensure cache has the new 'currentConditions' and 'hourlyForecast' fields
-      if (
-        !forceRefresh &&
-        cachedData &&
-        cachedData.currentConditions &&
-        cachedData.hourlyForecast
-      ) {
-        setWeatherStates(cachedData);
-        // Also store in session cache for faster subsequent loads
-        setCache(sessionCacheKey, cachedData);
-        setIsLoading(false);
-        return;
-      }
-      // Fetch fresh data using axios
-      const response = await api.get("/api/weather/", {
-        params: { location },
-      });
-      const weatherData = response.data;
+      const sessionCacheKey = getWeatherCacheKey(location);
 
-      // Store coordinates for save location feature
-      if (weatherData.coordinates) {
-        setCurrentCoordinates(weatherData.coordinates);
+      // Check session cache first (fastest, within-session navigation)
+      if (!forceRefresh) {
+        const sessionCachedData = getCache(sessionCacheKey);
+        if (sessionCachedData) {
+          setWeatherStates(sessionCachedData);
+          setIsLoading(false);
+          return;
+        }
       }
 
-      // Set AQI and UV data
-      setAQI(weatherData.air_uv_data["aqi_data"]);
-      setUvData(weatherData.air_uv_data["uv_data"]);
+      // Check for localStorage cached data (120min expiration)
+      try {
+        const cachedData = getCachedWeatherData(location);
+        // Ensure cache has the new 'currentConditions' and 'hourlyForecast' fields
+        if (
+          !forceRefresh &&
+          cachedData &&
+          cachedData.currentConditions &&
+          cachedData.hourlyForecast
+        ) {
+          setWeatherStates(cachedData);
+          // Also store in session cache for faster subsequent loads
+          setCache(sessionCacheKey, cachedData);
+          setIsLoading(false);
+          return;
+        }
+        // Fetch fresh data using axios
+        const response = await api.get("/api/weather/", {
+          params: { location },
+        });
+        const weatherData = response.data;
 
-      // Set sunrise and sunset data (today and tomorrow for hourly forecast)
-      const dailyData = weatherData.weather_data["daily"];
-      setSunriseSunset({
-        sunrise: dailyData[0].sunrise,
-        sunset: dailyData[0].sunset,
-        tomorrowSunrise: dailyData[1]?.sunrise || null,
-        tomorrowSunset: dailyData[1]?.sunset || null,
-      });
-      setTimeZone(weatherData.time_zone_data);
-      // set 10-day forecast data
-      setForecastData(
-        dailyData.map((day) => ({
-          date: day.date,
-          condition: day.weather_code,
-          tempMax: day.max_temperature,
-          tempMin: day.min_temperature,
-          unit: "F",
-        }))
-      );
-      const hourlyData = weatherData.weather_data["hourly"];
+        // Store coordinates for save location feature
+        if (weatherData.coordinates) {
+          setCurrentCoordinates(weatherData.coordinates);
+        }
 
-      // Humidity and Dewpoint data
-      const humidDewData = hourlyData.map((hour) => ({
-        time: hour.time,
-        humidity: hour.humidity,
-        dewpoint: hour.dew_point,
-      }));
-      setHumidData(humidDewData);
+        // Set AQI and UV data
+        setAQI(weatherData.air_uv_data["aqi_data"]);
+        setUvData(weatherData.air_uv_data["uv_data"]);
 
-      // Wind data
-      const hourlyWindData = hourlyData.map((hour) => ({
-        time: hour.time,
-        windspeed: hour.wind_speed,
-        winddirection: hour.wind_direction,
-      }));
-      setWindData(hourlyWindData);
-
-      // Visibility data
-      const visibilityData = hourlyData.map((hour) => ({
-        time: hour.time,
-        visibility: hour.visibility,
-      }));
-      setVisibilityData(visibilityData);
-
-      // Pressure data
-      const pressureData = hourlyData.map((hour) => ({
-        time: hour.time,
-        pressure: hour.pressure,
-      }));
-      setPressureData(pressureData);
-
-      // Cloud Cover data
-      const cloudCoverData = hourlyData.map((hour) => ({
-        time: hour.time,
-        cloud_cover: hour.cloud_cover,
-      }));
-      setCloudCoverData(cloudCoverData);
-
-      // Hourly Forecast Data (including wind speed for windy detection)
-      const hourlyForecastData = hourlyData.map((hour) => ({
-        time: hour.time,
-        temperature: hour.temperature,
-        condition: hour.weather_code,
-        is_day: hour.is_day,
-        wind_speed: hour.wind_speed,
-        unit: "F",
-      }));
-      setHourlyForecast(hourlyForecastData);
-
-      // Fetch 15-minute data
-      const minutelyData = weatherData.weather_data["minutely_15"];
-      // console.log("15-mins:", minutelyData);
-
-      // Set current weather data based on 15-minute interval
-      const currentTime = new Date();
-      const currentMinuteIndex = Math.floor(
-        (currentTime.getHours() * 60 + currentTime.getMinutes()) / 15
-      );
-      const currentMinuteData =
-        minutelyData[currentMinuteIndex] || minutelyData[0] || {};
-
-      const currentWeatherData = minutelyData.map((minute_15) => ({
-        temperature: minute_15.temperature,
-        condition: minute_15.weather_code,
-        is_day: minute_15.is_day,
-        feels_like: minute_15.apparent_temperature,
-        unit: "F",
-      }));
-      setCurrentWeather(currentWeatherData);
-
-      // Set weather condition and current values for effects
-      if (currentMinuteData.weather_code) {
-        setWeatherCondition(currentMinuteData.weather_code);
-      }
-      // Set current temperature for effects
-      if (currentMinuteData.temperature !== undefined) {
-        setCurrentTemp(currentMinuteData.temperature);
-      }
-      // Set current feels like for effects
-      if (currentMinuteData.apparent_temperature !== undefined) {
-        setCurrentFeelsLike(currentMinuteData.apparent_temperature);
-      }
-
-      // Store current conditions for cards
-      const newCurrentConditions = {
-        visibility: currentMinuteData.visibility,
-        pressure: currentMinuteData.pressure,
-        cloud_cover: currentMinuteData.cloud_cover,
-      };
-      setCurrentConditions(newCurrentConditions);
-
-      setVisibilityData(visibilityData);
-      setPressureData(pressureData);
-      setCloudCoverData(cloudCoverData);
-
-      // Feelslike data
-      const temperatureData = minutelyData.map((minute_15) => ({
-        time: minute_15.time,
-        temperature: minute_15.temperature,
-        apparent_temperature: minute_15.apparent_temperature,
-        unit: "F",
-      }));
-      setFeelsLikeData(temperatureData);
-
-      setDailyTemps({
-        tempMax: dailyData[0].max_temperature,
-        tempMin: dailyData[0].min_temperature,
-        unit: "F",
-      });
-
-      // data for Map (coordinates + a couple properties used by overlays)
-      const currentHourIndex = new Date().getHours();
-      const currentHour = hourlyData[currentHourIndex] || {};
-
-      // Set current wind speed for effects (from hourly since 15-min doesn't have wind)
-      if (currentHour.wind_speed !== undefined) {
-        setCurrentWindSpeed(currentHour.wind_speed);
-      }
-
-      const mapboxGeoData = {
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [
-                weatherData.coordinates["lng"],
-                weatherData.coordinates["lat"],
-              ], // Use coordinates from weather data
-            },
-            properties: {
-              precip: currentMinuteData.precipitation,
-              wind_speed: currentHour.wind_speed,
-              wind_direction: currentHour.wind_direction,
-            },
-          },
-        ],
-      };
-      setMapData(mapboxGeoData);
-      // Prepare cache data object
-      const cacheData = {
-        AQI: weatherData.air_uv_data["aqi_data"],
-        uvData: weatherData.air_uv_data["uv_data"],
-        sunriseSunset: {
+        // Set sunrise and sunset data (today and tomorrow for hourly forecast)
+        const dailyData = weatherData.weather_data["daily"];
+        setSunriseSunset({
           sunrise: dailyData[0].sunrise,
           sunset: dailyData[0].sunset,
           tomorrowSunrise: dailyData[1]?.sunrise || null,
           tomorrowSunset: dailyData[1]?.sunset || null,
-        },
-        timeZone: weatherData.time_zone_data,
-        forecastData: dailyData.map((day) => ({
-          date: day.date,
-          condition: day.weather_code,
-          tempMax: day.max_temperature,
-          tempMin: day.min_temperature,
+        });
+        setTimeZone(weatherData.time_zone_data);
+        // set 10-day forecast data
+        setForecastData(
+          dailyData.map((day) => ({
+            date: day.date,
+            condition: day.weather_code,
+            tempMax: day.max_temperature,
+            tempMin: day.min_temperature,
+            unit: "F",
+          }))
+        );
+        const hourlyData = weatherData.weather_data["hourly"];
+
+        // Humidity and Dewpoint data
+        const humidDewData = hourlyData.map((hour) => ({
+          time: hour.time,
+          humidity: hour.humidity,
+          dewpoint: hour.dew_point,
+        }));
+        setHumidData(humidDewData);
+
+        // Wind data
+        const hourlyWindData = hourlyData.map((hour) => ({
+          time: hour.time,
+          windspeed: hour.wind_speed,
+          winddirection: hour.wind_direction,
+        }));
+        setWindData(hourlyWindData);
+
+        // Visibility data
+        const visibilityData = hourlyData.map((hour) => ({
+          time: hour.time,
+          visibility: hour.visibility,
+        }));
+        setVisibilityData(visibilityData);
+
+        // Pressure data
+        const pressureData = hourlyData.map((hour) => ({
+          time: hour.time,
+          pressure: hour.pressure,
+        }));
+        setPressureData(pressureData);
+
+        // Cloud Cover data
+        const cloudCoverData = hourlyData.map((hour) => ({
+          time: hour.time,
+          cloud_cover: hour.cloud_cover,
+        }));
+        setCloudCoverData(cloudCoverData);
+
+        // Hourly Forecast Data (including wind speed for windy detection)
+        const hourlyForecastData = hourlyData.map((hour) => ({
+          time: hour.time,
+          temperature: hour.temperature,
+          condition: hour.weather_code,
+          is_day: hour.is_day,
+          wind_speed: hour.wind_speed,
           unit: "F",
-        })),
-        feelsLikeData: temperatureData,
-        humidData: humidDewData,
-        windData: hourlyWindData,
-        visibilityData: visibilityData,
-        pressureData: pressureData,
-        cloudCoverData: cloudCoverData,
-        currentWeather: currentWeatherData,
-        currentConditions: newCurrentConditions,
-        dailyTemps: {
+        }));
+        setHourlyForecast(hourlyForecastData);
+
+        // Fetch 15-minute data
+        const minutelyData = weatherData.weather_data["minutely_15"];
+
+        // Set current weather data based on 15-minute interval
+        const currentTime = new Date();
+        const currentMinuteIndex = Math.floor(
+          (currentTime.getHours() * 60 + currentTime.getMinutes()) / 15
+        );
+        const currentMinuteData =
+          minutelyData[currentMinuteIndex] || minutelyData[0] || {};
+
+        const currentWeatherData = minutelyData.map((minute_15) => ({
+          temperature: minute_15.temperature,
+          condition: minute_15.weather_code,
+          is_day: minute_15.is_day,
+          feels_like: minute_15.apparent_temperature,
+          unit: "F",
+        }));
+        setCurrentWeather(currentWeatherData);
+
+        // Set weather condition and current values for effects
+        if (currentMinuteData.weather_code) {
+          setWeatherCondition(currentMinuteData.weather_code);
+        }
+        // Set current temperature for effects
+        if (currentMinuteData.temperature !== undefined) {
+          setCurrentTemp(currentMinuteData.temperature);
+        }
+        // Set current feels like for effects
+        if (currentMinuteData.apparent_temperature !== undefined) {
+          setCurrentFeelsLike(currentMinuteData.apparent_temperature);
+        }
+
+        // Store current conditions for cards
+        const newCurrentConditions = {
+          visibility: currentMinuteData.visibility,
+          pressure: currentMinuteData.pressure,
+          cloud_cover: currentMinuteData.cloud_cover,
+        };
+        setCurrentConditions(newCurrentConditions);
+
+        setVisibilityData(visibilityData);
+        setPressureData(pressureData);
+        setCloudCoverData(cloudCoverData);
+
+        // Feelslike data
+        const temperatureData = minutelyData.map((minute_15) => ({
+          time: minute_15.time,
+          temperature: minute_15.temperature,
+          apparent_temperature: minute_15.apparent_temperature,
+          unit: "F",
+        }));
+        setFeelsLikeData(temperatureData);
+
+        setDailyTemps({
           tempMax: dailyData[0].max_temperature,
           tempMin: dailyData[0].min_temperature,
           unit: "F",
-        },
-        hourlyForecast: hourlyForecastData,
-        mapData: mapboxGeoData,
-        // Weather effects data
-        weatherCondition: currentMinuteData.weather_code,
-        currentTemp: currentMinuteData.temperature,
-        currentWindSpeed: currentHour.wind_speed,
-        currentFeelsLike: currentMinuteData.apparent_temperature,
-      };
+        });
 
-      // Cache in both localStorage (long-term) and session cache (navigation)
-      cacheWeatherData(location, cacheData);
-      setCache(sessionCacheKey, cacheData);
-    } catch (error) {
-      console.error("Error fetching weather data:", error);
-    } finally {
-      setIsLoading(false);
+        // data for Map (coordinates + a couple properties used by overlays)
+        const currentHourIndex = new Date().getHours();
+        const currentHour = hourlyData[currentHourIndex] || {};
+
+        // Set current wind speed for effects (from hourly since 15-min doesn't have wind)
+        if (currentHour.wind_speed !== undefined) {
+          setCurrentWindSpeed(currentHour.wind_speed);
+        }
+
+        const mapboxGeoData = {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: [
+                  weatherData.coordinates["lng"],
+                  weatherData.coordinates["lat"],
+                ], // Use coordinates from weather data
+              },
+              properties: {
+                precip: currentMinuteData.precipitation,
+                wind_speed: currentHour.wind_speed,
+                wind_direction: currentHour.wind_direction,
+              },
+            },
+          ],
+        };
+        setMapData(mapboxGeoData);
+        // Prepare cache data object
+        const cacheData = {
+          AQI: weatherData.air_uv_data["aqi_data"],
+          uvData: weatherData.air_uv_data["uv_data"],
+          sunriseSunset: {
+            sunrise: dailyData[0].sunrise,
+            sunset: dailyData[0].sunset,
+            tomorrowSunrise: dailyData[1]?.sunrise || null,
+            tomorrowSunset: dailyData[1]?.sunset || null,
+          },
+          timeZone: weatherData.time_zone_data,
+          forecastData: dailyData.map((day) => ({
+            date: day.date,
+            condition: day.weather_code,
+            tempMax: day.max_temperature,
+            tempMin: day.min_temperature,
+            unit: "F",
+          })),
+          feelsLikeData: temperatureData,
+          humidData: humidDewData,
+          windData: hourlyWindData,
+          visibilityData: visibilityData,
+          pressureData: pressureData,
+          cloudCoverData: cloudCoverData,
+          currentWeather: currentWeatherData,
+          currentConditions: newCurrentConditions,
+          dailyTemps: {
+            tempMax: dailyData[0].max_temperature,
+            tempMin: dailyData[0].min_temperature,
+            unit: "F",
+          },
+          hourlyForecast: hourlyForecastData,
+          mapData: mapboxGeoData,
+          // Weather effects data
+          weatherCondition: currentMinuteData.weather_code,
+          currentTemp: currentMinuteData.temperature,
+          currentWindSpeed: currentHour.wind_speed,
+          currentFeelsLike: currentMinuteData.apparent_temperature,
+        };
+
+        // Cache in both localStorage (long-term) and session cache (navigation)
+        cacheWeatherData(location, cacheData);
+        setCache(sessionCacheKey, cacheData);
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // Retry current weather fetch when connection is restored
+  const retryFetchCurrentWeather = useCallback(() => {
+    if (currentLocation) {
+      fetchWeatherData(currentLocation);
     }
-  };
+  }, [currentLocation, fetchWeatherData]);
+
+  useAutoRetry(retryFetchCurrentWeather, [currentLocation], { enabled: true });
+
+  // Retry saved locations fetch when connection restored
+  useAutoRetry(fetchSavedLocations, [savedLocationsRefresh], { enabled: true });
+
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Helper to set weather states
   const setWeatherStates = (data) => {
@@ -796,16 +810,72 @@ const WeatherContent = () => {
       // URL has location - use it (e.g., browser reload or direct navigation)
       hasUrlLocationRef.current = true; // Mark that we have a URL location
       setCurrentLocation(decodedUrlLoc);
+      isInitialMount.current = false;
     } else {
-      // No URL location - navigate to default (profile will override if available)
+      // No URL location - detect location using IP first, then browser geolocation
       hasUrlLocationRef.current = false;
-      const defaultLoc = DEFAULT_LOCATION;
-      setCurrentLocation(defaultLoc);
-      const encodedLoc = encodeLocation(defaultLoc);
-      isNavigatingRef.current = true;
-      navigate(`/weather/${encodedLoc}`, { replace: true });
+
+      const detectLocation = async () => {
+        let detectedLocation = null;
+
+        // Try IP-based lookup first
+        try {
+          const ipResponse = await fetch("https://ipapi.co/json/");
+          const ipData = await ipResponse.json();
+
+          if (ipData.city && ipData.region && ipData.country_name) {
+            detectedLocation = `${ipData.city}, ${ipData.region}, ${ipData.country_name}`;
+          }
+        } catch (error) {
+          console.warn("IP-based location detection failed:", error);
+        }
+
+        // If IP lookup failed, try browser geolocation as fallback
+        if (!detectedLocation && "geolocation" in navigator) {
+          try {
+            const pos = await new Promise((resolve, reject) => {
+              const opts = { timeout: 10000, maximumAge: 300000 };
+              navigator.geolocation.getCurrentPosition(resolve, reject, opts);
+            });
+
+            // Reverse geocode to get location name
+            const geoResponse = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`
+            );
+            const geoData = await geoResponse.json();
+            const city =
+              geoData.address?.city ||
+              geoData.address?.town ||
+              geoData.address?.village ||
+              "";
+            const state = geoData.address?.state || "";
+            const country = geoData.address?.country || "";
+
+            if (city && state && country) {
+              detectedLocation = `${city}, ${state}, ${country}`;
+            } else if (city && country) {
+              detectedLocation = `${city}, ${country}`;
+            }
+          } catch (error) {
+            console.warn("Browser geolocation detection failed:", error);
+          }
+        }
+
+        // If both methods failed, open search modal for user input
+        if (detectedLocation) {
+          setCurrentLocation(detectedLocation);
+          const encodedLoc = encodeLocation(detectedLocation);
+          isNavigatingRef.current = true;
+          navigate(`/weather/${encodedLoc}`, { replace: true });
+        } else {
+          // No location detected - prompt user to search
+          setSearchModalOpen(true);
+        }
+        isInitialMount.current = false;
+      };
+
+      detectLocation();
     }
-    isInitialMount.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

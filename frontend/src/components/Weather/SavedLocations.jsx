@@ -229,23 +229,37 @@ const SavedLocations = ({
     sunriseISO,
     sunsetISO,
     timezone,
-    // eslint-disable-next-line no-unused-vars
     fallbackIsDay
   ) => {
     if (sunriseISO && sunsetISO && timezone) {
       try {
         const tz = timezone.time_zone || timezone;
-        const currentTime = moment().tz(tz);
+        const now = moment().tz(tz);
         const sunrise = moment.tz(sunriseISO, tz);
         const sunset = moment.tz(sunsetISO, tz);
-        return currentTime.isAfter(sunrise) && currentTime.isBefore(sunset);
-      } catch {
+
+        // Normalize all times to today's date in the target timezone for comparison
+        const todayStr = now.format("YYYY-MM-DD");
+        const sunriseToday = moment.tz(
+          `${todayStr} ${sunrise.format("HH:mm:ss")}`,
+          tz
+        );
+        const sunsetToday = moment.tz(
+          `${todayStr} ${sunset.format("HH:mm:ss")}`,
+          tz
+        );
+
+        // It's daytime if current time is between sunrise and sunset
+        const isDay =
+          now.isSameOrAfter(sunriseToday) && now.isBefore(sunsetToday);
+        return isDay;
+      } catch (err) {
+        console.warn("Error computing day/night:", err);
         // fallthrough to fallback
       }
     }
-    // Always use current time calculation, don't rely on stored is_day flag
-    // Default to daytime (true) if we can't determine
-    return true;
+    // Use the API-provided is_day flag if available, otherwise default to true
+    return fallbackIsDay !== undefined ? fallbackIsDay : true;
   };
 
   /* background gradient removed: previews use MP4 video instead */

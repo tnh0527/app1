@@ -40,13 +40,11 @@ def ensure_birthday_event(sender, instance, **kwargs):
 
     # Use birthdate's year for the master event; recurrence handles yearly occurrences
     birth = instance.birthdate
-    start_dt = datetime(birth.year, birth.month, birth.day, 0, 0)
-    try:
-        start_dt = dj_timezone.make_aware(start_dt)
-    except Exception:
-        # If timezone utilities fail, fall back to naive datetime
-        pass
-
+    # Create timezone-aware datetime using UTC to avoid naive datetime warnings
+    start_dt = dj_timezone.make_aware(
+        datetime(birth.year, birth.month, birth.day, 0, 0),
+        timezone=dj_timezone.utc
+    )
     end_dt = start_dt
 
     from schedule_app.services import default_generation_window, regenerate_occurrences

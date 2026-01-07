@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 const Humidity = ({ humidDewData }) => {
   const [currentHumidity, setCurrentHumidity] = useState(null);
   const [currentDewpoint, setCurrentDewpoint] = useState(null);
-  // console.log("Humid", humidDewData);
 
   useEffect(() => {
     const updateLevel = () => {

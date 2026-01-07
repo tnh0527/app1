@@ -5,10 +5,7 @@ import {
 } from "../../api/weatherLocationsApi";
 import "./LocationSelector.css";
 
-const LocationSelector = ({
-  currentLocation,
-  onLocationSelect,
-}) => {
+const LocationSelector = ({ currentLocation, onLocationSelect }) => {
   const [savedLocations, setSavedLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   // eslint-disable-next-line no-unused-vars
@@ -50,7 +47,6 @@ const LocationSelector = ({
       lng: parseFloat(location.longitude),
     });
   };
-
 
   // Auto-scroll to active location
   useEffect(() => {

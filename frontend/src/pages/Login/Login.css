@@ -1929,6 +1929,40 @@
   padding: 14px 14px 14px 44px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
+
+  /* Autofill overrides specific to the forgot-password modal input
+   Prevent browser autofill from forcing a solid white background. */
+  .modal-input-group input:-webkit-autofill,
+  .modal-input-group input:-webkit-autofill:hover,
+  .modal-input-group input:-webkit-autofill:focus,
+  .modal-input-group textarea:-webkit-autofill,
+  .modal-input-group textarea:-webkit-autofill:hover,
+  .modal-input-group textarea:-webkit-autofill:focus,
+  .modal-input-group select:-webkit-autofill,
+  .modal-input-group select:-webkit-autofill:focus {
+    -webkit-text-fill-color: inherit !important;
+    color: inherit !important;
+    background-color: #ffffff08 !important;
+    -webkit-box-shadow: 0 0 0px 1000px #ffffff08 inset !important;
+    box-shadow: 0 0 0px 1000px #ffffff08 inset !important;
+    -webkit-transition: background-color 5000s ease-in-out 0s,
+      color 5000s ease-in-out 0s !important;
+    transition: background-color 5000s ease-in-out 0s,
+      color 5000s ease-in-out 0s !important;
+  }
+
+  /* Firefox autofill override for modal input */
+  .modal-input-group input:-moz-autofill,
+  .modal-input-group textarea:-moz-autofill,
+  .modal-input-group select:-moz-autofill {
+    box-shadow: 0 0 0px 1000px #ffffff08 inset !important;
+    background-clip: padding-box !important;
+    color: inherit !important;
+  }
+
+  .modal-input-group input:-webkit-autofill::first-line {
+    color: inherit !important;
+  }
   border-radius: 10px;
   color: #fff;
   font-size: 14px;

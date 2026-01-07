@@ -5,7 +5,6 @@ import { Tooltip } from "react-tooltip";
 const Forecast = ({ forecast, isLoading = false }) => {
   const data = forecast && forecast.length > 0 ? forecast : null;
   const loading = isLoading || !data;
-  // console.log("Forecasts:", forecast);
 
   // Helper function to format date into weekday and day/month, treating date as local
   const formatDate = (dateString) => {

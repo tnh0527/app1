@@ -1,6 +1,6 @@
 import "./ProfilePicModal.css";
 import { useState } from "react";
-import { csrfToken } from "../../../data/data";
+import api from "../../../api/axios";
 
 const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,32 +23,24 @@ const ProfilePicModal = ({ isOpen, onClose, onUpload }) => {
       try {
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const response = await fetch(
-          "http://localhost:8000/profile/profile-pic/",
-          {
-            method: "PUT",
-            headers: {
-              "X-CSRFToken": csrfToken,
-            },
-            credentials: "include",
-            body: formData,
-          }
-        );
-        if (response.ok) {
+
+        const response = await api.put("/profile/profile-pic/", formData, {
+          // Let Axios set the multipart boundary; don't force Content-Type.
+          headers: {},
+          validateStatus: (status) => status < 500,
+        });
+
+        if (response.status >= 200 && response.status < 300) {
           onUpload(selectedImage);
           window.location.reload();
         } else {
           let errorMessage = "Failed to update profile picture.";
           try {
-            const errorData = await response.json();
-            errorMessage = errorData?.error || errorMessage;
+            const errorData = response.data;
+            errorMessage =
+              errorData?.error || errorData?.detail || errorMessage;
           } catch {
-            try {
-              const text = await response.text();
-              if (text) errorMessage = text;
-            } catch {
-              // ignore
-            }
+            // ignore
           }
           console.error("Error updating profile picture:", errorMessage);
         }

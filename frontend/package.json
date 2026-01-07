@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:fullstack": "node scripts/dev-fullstack.mjs",
+    "prebuild": "node -e \"const fs = require('fs'); const path = './dist'; if (fs.existsSync(path)) { fs.rmSync(path, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -54,6 +55,7 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "postcss": "^8.5.6",
+    "supabase": "^2.71.0",
     "tailwindcss": "^4.1.18",
     "vite": "^6.4.1",
     "wait-on": "^8.0.5"

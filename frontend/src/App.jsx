@@ -4,9 +4,10 @@ import {
   RouterProvider,
   createBrowserRouter,
 } from "react-router-dom";
-import { ProfileProvider } from "./contexts";
+import { ProfileProvider, ConnectionProvider } from "./contexts";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedLayout } from "./components";
+import ConnectionStatus from "./components/shared/ConnectionStatus";
 import {
   AppShell,
   Dashboard,
@@ -148,9 +149,12 @@ function App() {
   return (
     <div className="app">
       <AuthProvider>
-        <ProfileProvider>
-          <RouterProvider router={route} />
-        </ProfileProvider>
+        <ConnectionProvider>
+          <ProfileProvider>
+            <ConnectionStatus />
+            <RouterProvider router={route} />
+          </ProfileProvider>
+        </ConnectionProvider>
       </AuthProvider>
     </div>
   );

@@ -21,7 +21,9 @@ const useCountdown = (targetDate) => {
       }
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
       setCountdown({ days, hours, minutes });
@@ -42,11 +44,14 @@ const useCountdown = (targetDate) => {
 const formatDateRange = (startDate, endDate) => {
   const start = new Date(startDate);
   const end = new Date(endDate);
-  
+
   const options = { month: "short", day: "numeric" };
   const startStr = start.toLocaleDateString("en-US", options);
-  const endStr = end.toLocaleDateString("en-US", { ...options, year: "numeric" });
-  
+  const endStr = end.toLocaleDateString("en-US", {
+    ...options,
+    year: "numeric",
+  });
+
   return `${startStr} - ${endStr}`;
 };
 
@@ -125,11 +130,17 @@ export const TravelHero = ({ summary, activeTrip, nextTrip, onViewTrip }) => {
                   <div
                     className="gauge-fill"
                     style={{
-                      width: `${Math.min(nextTrip.budget_utilization_percentage, 100)}%`,
+                      width: `${Math.min(
+                        nextTrip.budget_utilization_percentage,
+                        100
+                      )}%`,
                     }}
                   ></div>
                 </div>
-                <span>{Math.round(nextTrip.budget_utilization_percentage)}% budget used</span>
+                <span>
+                  {Math.round(nextTrip.budget_utilization_percentage)}% budget
+                  used
+                </span>
               </div>
             </div>
 
@@ -167,7 +178,9 @@ export const TravelHero = ({ summary, activeTrip, nextTrip, onViewTrip }) => {
             <i className="bi bi-globe-americas"></i>
           </div>
           <div className="stat-content">
-            <span className="stat-value">{summary?.countries_visited || 0}</span>
+            <span className="stat-value">
+              {summary?.countries_visited || 0}
+            </span>
             <span className="stat-label">Countries Visited</span>
           </div>
           <div className="stat-accent"></div>
@@ -189,7 +202,9 @@ export const TravelHero = ({ summary, activeTrip, nextTrip, onViewTrip }) => {
             <i className="bi bi-calendar-check"></i>
           </div>
           <div className="stat-content">
-            <span className="stat-value">{summary?.total_days_traveled || 0}</span>
+            <span className="stat-value">
+              {summary?.total_days_traveled || 0}
+            </span>
             <span className="stat-label">Days Traveled</span>
           </div>
           <div className="stat-accent"></div>
@@ -223,4 +238,3 @@ export const TravelHero = ({ summary, activeTrip, nextTrip, onViewTrip }) => {
 };
 
 export default TravelHero;
-

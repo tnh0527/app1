@@ -430,6 +430,18 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+@media screen and (max-width: 900px) {
+  .day-view {
+    overflow-x: auto;
+    min-width: 720px;
+  }
+
+  .day-view-header,
+  .day-time-grid {
+    min-width: 700px;
+  }
+}
+
 /* Responsive */
 @media screen and (max-width: 768px) {
   .day-view {

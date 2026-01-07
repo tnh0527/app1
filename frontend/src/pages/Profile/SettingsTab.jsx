@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useAutoRetry } from "../../utils/connectionHooks";
 import { SyncLoader } from "react-spinners";
 import authApi from "../../api/authApi";
 
@@ -20,11 +21,53 @@ const SettingsTab = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   // Fetch Google link status on mount
+  const fetchGoogleStatus = useCallback(async () => {
+    try {
+      const response = await authApi.getGoogleLinkStatus();
+      setGoogleStatus(response.data);
+    } catch (error) {
+      console.error("Failed to fetch Google status:", error);
+      setMessage({ type: "error", text: "Failed to load account settings." });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchGoogleStatus();
-  }, []);
+  }, [fetchGoogleStatus]);
+
+  // Retry fetching Google status when connection is restored
+  useAutoRetry(fetchGoogleStatus, [], { enabled: true });
+
+  const handleGoogleCallback = useCallback(
+    async (response) => {
+      if (response.credential) {
+        setActionLoading(true);
+        setMessage({ type: "", text: "" });
+        try {
+          await authApi.linkGoogle(response.credential);
+          setMessage({
+            type: "success",
+            text: "Google account linked successfully!",
+          });
+          fetchGoogleStatus();
+        } catch (error) {
+          const errorMsg =
+            error.response?.data?.error || "Failed to link Google account.";
+          setMessage({ type: "error", text: errorMsg });
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    },
+    [fetchGoogleStatus]
+  );
 
   // Initialize Google Identity Services
   useEffect(() => {
@@ -38,7 +81,7 @@ const SettingsTab = () => {
             callback: handleGoogleCallback,
             auto_select: false,
             cancel_on_tap_outside: true,
-            use_fedcm_for_prompt: false, // Disable FedCM to avoid blocking
+            use_fedcm_for_prompt: false,
           });
         } catch (error) {
           console.error("Google Sign-In initialization error:", error);
@@ -50,11 +93,9 @@ const SettingsTab = () => {
       }
     };
 
-    // Check if script is already loaded
     if (window.google) {
       initializeGoogle();
     } else {
-      // Load script if not present
       const script = document.createElement("script");
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
@@ -69,40 +110,7 @@ const SettingsTab = () => {
       };
       document.body.appendChild(script);
     }
-  }, []);
-
-  const fetchGoogleStatus = async () => {
-    try {
-      const response = await authApi.getGoogleLinkStatus();
-      setGoogleStatus(response.data);
-    } catch (error) {
-      console.error("Failed to fetch Google status:", error);
-      setMessage({ type: "error", text: "Failed to load account settings." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleCallback = useCallback(async (response) => {
-    if (response.credential) {
-      setActionLoading(true);
-      setMessage({ type: "", text: "" });
-      try {
-        await authApi.linkGoogle(response.credential);
-        setMessage({
-          type: "success",
-          text: "Google account linked successfully!",
-        });
-        fetchGoogleStatus();
-      } catch (error) {
-        const errorMsg =
-          error.response?.data?.error || "Failed to link Google account.";
-        setMessage({ type: "error", text: errorMsg });
-      } finally {
-        setActionLoading(false);
-      }
-    }
-  }, []);
+  }, [handleGoogleCallback]);
 
   const handleLinkGoogle = () => {
     if (window.google && GOOGLE_CLIENT_ID) {
@@ -253,6 +261,25 @@ const SettingsTab = () => {
     });
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleteError("");
+    setActionLoading(true);
+
+    try {
+      // Call the delete account API with optional password
+      await authApi.deleteAccount(deletePassword || null);
+
+      // Account deleted successfully - redirect to auth page
+      window.location.href = "/auth";
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.error ||
+        "Failed to delete account. Please try again.";
+      setDeleteError(errorMsg);
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="settings-tab-content">
@@ -260,20 +287,50 @@ const SettingsTab = () => {
         <div className="settings-section">
           <div className="section-header">
             <h3>
-              <div className="skeleton" style={{ width: "200px", height: "20px", display: "inline-block" }}></div>
+              <div
+                className="skeleton"
+                style={{
+                  width: "200px",
+                  height: "20px",
+                  display: "inline-block",
+                }}
+              ></div>
             </h3>
-            <p className="section-description">
-              <div className="skeleton" style={{ width: "300px", height: "14px" }}></div>
-            </p>
+            <div className="section-description">
+              <div
+                className="skeleton"
+                style={{ width: "300px", height: "14px" }}
+              ></div>
+            </div>
           </div>
           <div className="connected-accounts-list">
-            <div className="account-card" style={{ background: "rgba(255, 255, 255, 0.02)" }}>
-              <div className="skeleton" style={{ width: "48px", height: "48px", borderRadius: "10px" }}></div>
+            <div
+              className="account-card"
+              style={{ background: "rgba(255, 255, 255, 0.02)" }}
+            >
+              <div
+                className="skeleton"
+                style={{ width: "48px", height: "48px", borderRadius: "10px" }}
+              ></div>
               <div className="account-info" style={{ flex: 1, minWidth: 0 }}>
-                <div className="skeleton" style={{ width: "60%", maxWidth: "120px", height: "18px", marginBottom: "8px" }}></div>
-                <div className="skeleton" style={{ width: "40%", maxWidth: "150px", height: "14px" }}></div>
+                <div
+                  className="skeleton"
+                  style={{
+                    width: "60%",
+                    maxWidth: "120px",
+                    height: "18px",
+                    marginBottom: "8px",
+                  }}
+                ></div>
+                <div
+                  className="skeleton"
+                  style={{ width: "40%", maxWidth: "150px", height: "14px" }}
+                ></div>
               </div>
-              <div className="skeleton" style={{ width: "120px", height: "36px", borderRadius: "6px" }}></div>
+              <div
+                className="skeleton"
+                style={{ width: "120px", height: "36px", borderRadius: "6px" }}
+              ></div>
             </div>
           </div>
         </div>
@@ -282,40 +339,82 @@ const SettingsTab = () => {
         <div className="settings-section">
           <div className="section-header">
             <h3>
-              <div className="skeleton" style={{ width: "180px", height: "20px", display: "inline-block" }}></div>
+              <div
+                className="skeleton"
+                style={{
+                  width: "180px",
+                  height: "20px",
+                  display: "inline-block",
+                }}
+              ></div>
             </h3>
-            <p className="section-description">
-              <div className="skeleton" style={{ width: "280px", height: "14px" }}></div>
-            </p>
+            <div className="section-description">
+              <div
+                className="skeleton"
+                style={{ width: "280px", height: "14px" }}
+              ></div>
+            </div>
           </div>
           <div className="security-status">
             <div className="security-item">
               <div className="security-icon">
-                <div className="skeleton" style={{ width: "100%", height: "100%", borderRadius: "8px" }}></div>
+                <div
+                  className="skeleton"
+                  style={{ width: "100%", height: "100%", borderRadius: "8px" }}
+                ></div>
               </div>
               <div className="security-info" style={{ flex: 1, minWidth: 0 }}>
                 <span className="security-label">
-                  <div className="skeleton" style={{ width: "100px", height: "14px", marginBottom: "4px" }}></div>
+                  <div
+                    className="skeleton"
+                    style={{
+                      width: "100px",
+                      height: "14px",
+                      marginBottom: "4px",
+                    }}
+                  ></div>
                 </span>
                 <span className="security-value">
-                  <div className="skeleton" style={{ width: "80px", height: "16px" }}></div>
+                  <div
+                    className="skeleton"
+                    style={{ width: "80px", height: "16px" }}
+                  ></div>
                 </span>
               </div>
-              <div className="skeleton" style={{ width: "140px", height: "36px", borderRadius: "6px" }}></div>
+              <div
+                className="skeleton"
+                style={{ width: "140px", height: "36px", borderRadius: "6px" }}
+              ></div>
             </div>
             <div className="security-item">
               <div className="security-icon">
-                <div className="skeleton" style={{ width: "100%", height: "100%", borderRadius: "8px" }}></div>
+                <div
+                  className="skeleton"
+                  style={{ width: "100%", height: "100%", borderRadius: "8px" }}
+                ></div>
               </div>
               <div className="security-info" style={{ flex: 1, minWidth: 0 }}>
                 <span className="security-label">
-                  <div className="skeleton" style={{ width: "80px", height: "14px", marginBottom: "4px" }}></div>
+                  <div
+                    className="skeleton"
+                    style={{
+                      width: "80px",
+                      height: "14px",
+                      marginBottom: "4px",
+                    }}
+                  ></div>
                 </span>
                 <span className="security-value">
-                  <div className="skeleton" style={{ width: "100px", height: "16px" }}></div>
+                  <div
+                    className="skeleton"
+                    style={{ width: "100px", height: "16px" }}
+                  ></div>
                 </span>
               </div>
-              <div className="skeleton" style={{ width: "140px", height: "36px", borderRadius: "6px" }}></div>
+              <div
+                className="skeleton"
+                style={{ width: "140px", height: "36px", borderRadius: "6px" }}
+              ></div>
             </div>
           </div>
         </div>
@@ -323,11 +422,28 @@ const SettingsTab = () => {
         {/* Skeleton for Info Section */}
         <div className="settings-section info-section">
           <div className="info-card">
-            <div className="skeleton" style={{ width: "24px", height: "24px", borderRadius: "4px", flexShrink: 0 }}></div>
+            <div
+              className="skeleton"
+              style={{
+                width: "24px",
+                height: "24px",
+                borderRadius: "4px",
+                flexShrink: 0,
+              }}
+            ></div>
             <div className="info-content">
-              <div className="skeleton" style={{ width: "180px", height: "18px", marginBottom: "8px" }}></div>
-              <div className="skeleton" style={{ width: "100%", height: "14px", marginBottom: "4px" }}></div>
-              <div className="skeleton" style={{ width: "90%", height: "14px" }}></div>
+              <div
+                className="skeleton"
+                style={{ width: "180px", height: "18px", marginBottom: "8px" }}
+              ></div>
+              <div
+                className="skeleton"
+                style={{ width: "100%", height: "14px", marginBottom: "4px" }}
+              ></div>
+              <div
+                className="skeleton"
+                style={{ width: "90%", height: "14px" }}
+              ></div>
             </div>
           </div>
         </div>
@@ -678,12 +794,135 @@ const SettingsTab = () => {
             <p>
               You can use multiple sign-in methods. When you link Google, both
               Google sign-in and password sign-in (if set) will work. You cannot
-              unlink Google if you haven&apos;t set a password, as you need at least
-              one way to access your account.
+              unlink Google if you haven&apos;t set a password, as you need at
+              least one way to access your account.
             </p>
           </div>
         </div>
       </div>
+
+      {/* Danger Zone - Delete Account */}
+      <div className="settings-section danger-zone">
+        <h3 className="danger-heading">
+          <i className="bi bi-exclamation-triangle"></i> Danger Zone
+        </h3>
+        <div className="danger-content">
+          <div className="danger-info">
+            <p>
+              Permanently remove your Personal Account and all of its contents
+              from the Nexus platform. This action is not reversible, so please
+              continue with caution.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="danger-btn danger-btn--simple"
+            onClick={() => setShowDeleteConfirmation(true)}
+            disabled={actionLoading}
+          >
+            Delete Account
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && (
+        <div
+          className="modal-overlay"
+          onClick={() => !actionLoading && setShowDeleteConfirmation(false)}
+        >
+          <div
+            className="modal-content delete-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>
+                <i className="bi bi-exclamation-triangle-fill"></i>
+                Confirm Account Deletion
+              </h2>
+              <button
+                className="close-btn"
+                onClick={() => setShowDeleteConfirmation(false)}
+                disabled={actionLoading}
+              >
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="warning-banner">
+                <i className="bi bi-exclamation-circle-fill"></i>
+                <div>
+                  <p>
+                    Permanently remove your Personal Account and all of its
+                    contents from the Vercel platform. This action is not
+                    reversible, so please continue with caution.
+                  </p>
+                </div>
+              </div>
+
+              {googleStatus.has_password && (
+                <div className="form-group">
+                  <label htmlFor="deletePassword">
+                    Enter your password to confirm:
+                  </label>
+                  <input
+                    type="password"
+                    id="deletePassword"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Your password"
+                    autoComplete="current-password"
+                    disabled={actionLoading}
+                  />
+                </div>
+              )}
+
+              {!googleStatus.has_password && (
+                <p className="google-only-warning">
+                  You are signed in with Google. Click Delete My Account to
+                  proceed with deletion.
+                </p>
+              )}
+
+              {deleteError && (
+                <div className="delete-error">
+                  <i className="bi bi-exclamation-circle"></i>
+                  {deleteError}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="cancel-btn"
+                onClick={() => {
+                  setShowDeleteConfirmation(false);
+                  setDeletePassword("");
+                  setDeleteError("");
+                }}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="delete-confirm-btn"
+                onClick={handleDeleteAccount}
+                disabled={
+                  actionLoading ||
+                  (googleStatus.has_password && !deletePassword)
+                }
+              >
+                {actionLoading ? (
+                  <SyncLoader loading={true} size={5} color="#fff" />
+                ) : (
+                  <>Delete My Account</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

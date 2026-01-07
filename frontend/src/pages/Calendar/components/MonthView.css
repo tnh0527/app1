@@ -244,6 +244,12 @@
   transform: scale(1.1);
 }
 
+.day-add-btn--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Events container */
 .month-day-events {
   display: flex;
@@ -464,6 +470,28 @@
 
   .holiday-icon {
     font-size: 10px;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .month-view {
+    min-width: 900px;
+  }
+
+  .month-view-header,
+  .month-view-grid {
+    grid-template-columns: repeat(7, minmax(110px, 1fr));
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .month-view {
+    min-width: 720px;
+  }
+
+  .month-view-header,
+  .month-view-grid {
+    grid-template-columns: repeat(7, minmax(90px, 1fr));
   }
 }
 

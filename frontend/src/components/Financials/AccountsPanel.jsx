@@ -51,15 +51,21 @@ const AccountCard = ({ account }) => {
   return (
     <div className="account-card" style={{ "--accent-color": account.color }}>
       <div className="acc-icon">
-        <i className={`bi ${getAccountIcon(account.type, account.subtype)}`}></i>
+        <i
+          className={`bi ${getAccountIcon(account.type, account.subtype)}`}
+        ></i>
       </div>
       <div className="acc-info">
         <span className="acc-name">{account.name}</span>
-        <span className="acc-institution">{account.institution || "Manual"}</span>
+        <span className="acc-institution">
+          {account.institution || "Manual"}
+        </span>
       </div>
       <div className="acc-value-container">
         <span
-          className={`acc-value ${account.type === "debt" ? "negative" : "positive"}`}
+          className={`acc-value ${
+            account.type === "debt" ? "negative" : "positive"
+          }`}
         >
           {account.type === "debt" ? "-" : ""}
           {formatCurrency(Math.abs(account.value))}
@@ -127,7 +133,9 @@ export const AccountsPanel = ({ accounts, onRefresh }) => {
             onClick={() => setActiveTab(tab.id)}
           >
             <span className="cat-label">{tab.label}</span>
-            <span className={`cat-total ${tab.id === "debt" ? "negative" : ""}`}>
+            <span
+              className={`cat-total ${tab.id === "debt" ? "negative" : ""}`}
+            >
               {tab.id === "debt" && categoryTotals[tab.id] > 0 && "-"}
               {formatCurrency(Math.abs(categoryTotals[tab.id]))}
             </span>
@@ -167,4 +175,3 @@ export const AccountsPanel = ({ accounts, onRefresh }) => {
 };
 
 export default AccountsPanel;
-

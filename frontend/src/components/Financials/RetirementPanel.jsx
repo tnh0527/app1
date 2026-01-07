@@ -132,7 +132,9 @@ const RetirementAccountCard = ({ account }) => {
           )}
         </div>
       </div>
-      <div className={`retirement-card-shine ${isHovered ? "active" : ""}`}></div>
+      <div
+        className={`retirement-card-shine ${isHovered ? "active" : ""}`}
+      ></div>
     </div>
   );
 };
@@ -241,7 +243,10 @@ export const RetirementPanel = ({ accounts }) => {
             <div
               className="projection-fill"
               style={{
-                width: `${Math.min(100, (projectedGrowth / totalRetirement) * 100)}%`,
+                width: `${Math.min(
+                  100,
+                  (projectedGrowth / totalRetirement) * 100
+                )}%`,
               }}
             ></div>
           </div>
@@ -252,4 +257,3 @@ export const RetirementPanel = ({ accounts }) => {
 };
 
 export default RetirementPanel;
-

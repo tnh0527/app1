@@ -320,32 +320,54 @@
 
 /* ========== Nearby Place Markers ========== */
 .nearby-place-marker {
-  transition: transform 0.2s ease;
+  /* Keep the marker element's transform stable so Mapbox positioning isn't affected */
+  transform: rotate(-45deg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.nearby-place-marker:hover {
-  transform: rotate(-45deg) scale(1.1) !important;
-  z-index: 100;
+/* Animate only the inner icon on hover to avoid changing the marker's bounding box
+   which prevents mouseleave/mouseenter flicker while zooming or when popups appear. */
+.nearby-place-marker i {
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+
+.nearby-place-marker:hover i {
+  transform: rotate(45deg) scale(1.12);
+}
+
+/* Smooth popup transitions */
+.mapboxgl-popup.nearby-place-popup {
+  transition: opacity 0.2s ease;
+}
+
+.mapboxgl-popup.nearby-place-popup .mapboxgl-popup-content {
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ========== Route Origin & Destination Markers ========== */
 .route-origin-marker {
   cursor: pointer;
-  transition: transform 0.2s ease;
 }
 
 .route-origin-marker:hover {
   transform: scale(1.15);
+  transition: transform 0.2s ease;
 }
 
 .route-dest-marker {
   cursor: pointer;
-  transition: transform 0.2s ease;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .route-dest-marker:hover {
   transform: scale(1.1);
+  transition: transform 0.2s ease;
 }
 
 /* Pulsing animation for destination marker */
@@ -1573,6 +1595,66 @@
   margin-top: 16px;
 }
 
+/* Active Category Indicator */
+.awm-active-category-indicator {
+  margin-bottom: 12px;
+}
+
+.awm-active-category-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(var(--category-color-rgb, 212, 168, 83), 0.12);
+  border: 1px solid var(--category-color, #d4a853);
+  border-radius: var(--awm-radius-sm);
+  font-size: 12px;
+  color: var(--awm-text-primary);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.awm-active-category-badge i:first-child {
+  color: var(--category-color, #d4a853);
+  font-size: 14px;
+}
+
+.awm-active-category-badge span {
+  flex: 1;
+  font-weight: 500;
+}
+
+.awm-clear-category-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--awm-text-muted);
+  cursor: pointer;
+  transition: var(--awm-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.awm-clear-category-btn:hover {
+  color: var(--category-color, #d4a853);
+  transform: scale(1.1);
+}
+
+.awm-clear-category-btn i {
+  font-size: 16px;
+}
+
 .awm-find-nearby-btn {
   width: 100%;
   display: flex;
@@ -2559,7 +2641,6 @@
   .awm-action-btn i {
     font-size: 16px;
   }
-}
 
 @media (max-width: 480px) {
   .awm-map-wrapper {
@@ -2797,4 +2878,3 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}

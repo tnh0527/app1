@@ -11,3 +11,4 @@ htmlcov/
 media/
 venv/
 *.sqlite3
+staticfiles/

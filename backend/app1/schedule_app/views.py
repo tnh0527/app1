@@ -1,5 +1,7 @@
 from datetime import timedelta
+import datetime
 
+from dateutil.parser import isoparse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -13,6 +15,21 @@ from .services import (
     get_or_create_default_calendar,
     regenerate_occurrences,
 )
+
+
+def parse_datetime_param(value):
+    """Parse a datetime string ensuring timezone awareness."""
+    if not value:
+        return None
+    try:
+        dt = isoparse(value)
+        # If naive, assume UTC
+        if dt.tzinfo is None:
+            # Use stdlib UTC tzinfo (django.utils.timezone has no 'utc' attribute)
+            dt = timezone.make_aware(dt, timezone=datetime.timezone.utc)
+        return dt
+    except (ValueError, TypeError):
+        return None
 
 
 @api_view(["GET", "POST", "PUT", "DELETE"])
@@ -30,8 +47,8 @@ def schedule(request, pk=None):
     calendar = get_or_create_default_calendar(user)
 
     if request.method == "GET":
-        start = request.query_params.get("start")
-        end = request.query_params.get("end")
+        start = parse_datetime_param(request.query_params.get("start"))
+        end = parse_datetime_param(request.query_params.get("end"))
         qs = EventOccurrence.objects.filter(
             event__calendar=calendar, is_cancelled=False
         )

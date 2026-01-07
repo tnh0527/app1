@@ -19,6 +19,7 @@ import {
   ErrorState,
   TimeoutState,
 } from "../../components/shared/LoadingStates";
+import { useAutoRetry } from "../../utils/connectionHooks";
 
 const REQUEST_TIMEOUT = 15000; // 15 seconds timeout
 
@@ -73,6 +74,11 @@ const Subscriptions = () => {
       setLoading(false);
     }
   }, []);
+
+  // Auto-retry data fetch when connection is restored
+  useAutoRetry(fetchDashboardData, [], {
+    enabled: !loading && (error || isTimedOut),
+  });
 
   useEffect(() => {
     fetchDashboardData();

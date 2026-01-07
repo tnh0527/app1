@@ -12,7 +12,6 @@ const AirQuality = ({ airQuality }) => {
         return hour === currentHour;
       });
       setCurrentAQI(currentData);
-      // console.log("AQI:", currentData);
     };
     updateAQI();
     const interval = setInterval(() => {

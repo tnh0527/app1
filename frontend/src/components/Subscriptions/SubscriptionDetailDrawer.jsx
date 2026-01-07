@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "./SubscriptionDetailDrawer.css";
-import { dashboardApi } from "../../api/subscriptionsApi";
+import { dashboardApi, subscriptionsApi } from "../../api/subscriptionsApi";
 import { Line } from "react-chartjs-2";
 
 const CATEGORIES = [
@@ -35,7 +35,9 @@ const SubscriptionDetailDrawer = ({ subscription, onClose, onUpdate }) => {
   useEffect(() => {
     // Simulate fetching charge history
     const mockHistory = Array.from({ length: 6 }, (_, i) => ({
-      month: new Date(Date.now() - i * 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+      month: new Date(
+        Date.now() - i * 30 * 24 * 60 * 60 * 1000
+      ).toLocaleDateString("en-US", {
         month: "short",
       }),
       amount: subscription.amount || 0,
@@ -90,7 +92,6 @@ const SubscriptionDetailDrawer = ({ subscription, onClose, onUpdate }) => {
 
   const handleSyncToCalendar = async () => {
     try {
-      const { subscriptionsApi } = await import("../../api/subscriptionsApi");
       const result = await subscriptionsApi.syncToCalendar(subscription.id);
       if (result.success) {
         alert(`Calendar event ${result.action}!`);
@@ -180,13 +181,19 @@ const SubscriptionDetailDrawer = ({ subscription, onClose, onUpdate }) => {
           <div className="drawer-section summary-section">
             <div className="summary-card">
               <span className="summary-label">Amount</span>
-              <span className="summary-value">{formatAmount(subscription.amount)}</span>
-              <span className="summary-cycle">{subscription.billing_cycle}</span>
+              <span className="summary-value">
+                {formatAmount(subscription.amount)}
+              </span>
+              <span className="summary-cycle">
+                {subscription.billing_cycle}
+              </span>
             </div>
             <div className="summary-card">
               <span className="summary-label">Monthly Cost</span>
               <span className="summary-value">
-                {formatAmount(subscription.normalized_monthly_amount || subscription.amount)}
+                {formatAmount(
+                  subscription.normalized_monthly_amount || subscription.amount
+                )}
               </span>
             </div>
             <div className="summary-card">
@@ -216,10 +223,7 @@ const SubscriptionDetailDrawer = ({ subscription, onClose, onUpdate }) => {
                 Details
               </h3>
               {!isEditing && (
-                <button
-                  className="edit-btn"
-                  onClick={() => setIsEditing(true)}
-                >
+                <button className="edit-btn" onClick={() => setIsEditing(true)}>
                   <i className="bi bi-pencil"></i>
                   Edit
                 </button>
@@ -362,9 +366,14 @@ const SubscriptionDetailDrawer = ({ subscription, onClose, onUpdate }) => {
                 <i className="bi bi-check2-circle"></i>
                 Log Usage
               </button>
-              <button className="action-btn calendar" onClick={handleSyncToCalendar}>
+              <button
+                className="action-btn calendar"
+                onClick={handleSyncToCalendar}
+              >
                 <i className="bi bi-calendar-plus"></i>
-                {subscription.calendar_event_id ? "Update Calendar" : "Add to Calendar"}
+                {subscription.calendar_event_id
+                  ? "Update Calendar"
+                  : "Add to Calendar"}
               </button>
               <button className="action-btn delete" onClick={handleDelete}>
                 <i className="bi bi-trash"></i>
@@ -379,4 +388,3 @@ const SubscriptionDetailDrawer = ({ subscription, onClose, onUpdate }) => {
 };
 
 export default SubscriptionDetailDrawer;
-
