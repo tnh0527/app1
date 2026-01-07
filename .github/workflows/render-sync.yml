@@ -1,4 +1,4 @@
-name: Sync Env Vars to Render
+name: Sync Vars/Secrets to Render
 
 on:
   push:
