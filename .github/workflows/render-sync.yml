@@ -58,6 +58,12 @@ jobs:
           SESSION_COOKIE_SECURE: ${{ secrets.SESSION_COOKIE_SECURE }}
           CSRF_COOKIE_SECURE: ${{ secrets.CSRF_COOKIE_SECURE }}
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          # Repository / Environment variables fallback (non-secret vars)
+          VAR_DB_NAME: ${{ vars.DB_NAME }}
+          VAR_DB_USER: ${{ vars.DB_USER }}
+          VAR_DB_HOST: ${{ vars.DB_HOST }}
+          VAR_DB_PORT: ${{ vars.DB_PORT }}
+          VAR_DB_PASSWORD: ${{ vars.DB_PASSWORD }}
 
         run: |
           set -e
@@ -77,8 +83,15 @@ jobs:
 
           echo "Constructing JSON payload..."
 
+          # Prefer secrets, but fall back to repository/environment variables when secrets are missing
+          DB_NAME="${DB_NAME:-$VAR_DB_NAME}"
+          DB_USER="${DB_USER:-$VAR_DB_USER}"
+          DB_PASSWORD="${DB_PASSWORD:-$VAR_DB_PASSWORD}"
+          DB_HOST="${DB_HOST:-$VAR_DB_HOST}"
+          DB_PORT="${DB_PORT:-$VAR_DB_PORT}"
+
           # Create a JSON array of objects {key: "...", value: "..."}
-          # filtering out any secrets that are empty
+          # filtering out any values that are empty
           jq -n \
             --arg secret_key "$SECRET_KEY" \
             --arg debug "$DEBUG" \
@@ -158,12 +171,22 @@ jobs:
           echo "Payload generated (keys only):"
           jq 'map(.key)' env_vars.json
 
+          # Quick check whether DB_NAME is included
+          jq '.[] | select(.key=="DB_NAME")' env_vars.json || echo "DB_NAME not present in payload"
+
           echo "Syncing to Render..."
-          curl --fail --request PUT \
-            --url "https://api.render.com/v1/services/$RENDER_SERVICE_ID/env-vars" \
-            --header "Authorization: Bearer $RENDER_API_KEY" \
+          # Capture Render response and HTTP code to make failures visible in logs
+          RESP=$(curl -s -w "\n%{http_code}" --header "Authorization: Bearer $RENDER_API_KEY" \
             --header 'Content-Type: application/json' \
-            --data @env_vars.json
+            --request PUT --url "https://api.render.com/v1/services/$RENDER_SERVICE_ID/env-vars" \
+            --data @env_vars.json)
+          echo "Render response:"
+          echo "$RESP"
+          STATUS_CODE=$(echo "$RESP" | tail -n1)
+          if [ "$STATUS_CODE" -lt 200 ] || [ "$STATUS_CODE" -ge 300 ]; then
+            echo "Render API returned HTTP $STATUS_CODE; failing the job."
+            exit 1
+          fi
 
           echo "Sync complete."
 
