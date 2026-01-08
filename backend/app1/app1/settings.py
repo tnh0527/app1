@@ -376,6 +376,20 @@ if DEBUG:
     SESSION_COOKIE_SAMESITE = 'Lax'
     CSRF_COOKIE_SAMESITE = 'Lax'
 
+# Cookie domain configuration for cross-subdomain setups
+# This allows the backend to set cookies (sessionid, csrftoken) that are visible
+# to the frontend on `www.nexusdb.site` so client-side JS can read `csrftoken`.
+COOKIE_DOMAIN = os.getenv('COOKIE_DOMAIN', '') or None
+if COOKIE_DOMAIN:
+    # Ensure the value starts with a dot for cross-subdomain cookies
+    if not COOKIE_DOMAIN.startswith('.'):
+        COOKIE_DOMAIN = f".{COOKIE_DOMAIN}"
+    CSRF_COOKIE_DOMAIN = COOKIE_DOMAIN
+    SESSION_COOKIE_DOMAIN = COOKIE_DOMAIN
+else:
+    CSRF_COOKIE_DOMAIN = None
+    SESSION_COOKIE_DOMAIN = None
+
 if not DEBUG and SECURE_SSL_REDIRECT:
     # Security Headers (only enable when actually redirecting to HTTPS)
     SECURE_BROWSER_XSS_FILTER = True

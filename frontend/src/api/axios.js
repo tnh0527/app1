@@ -101,7 +101,10 @@ api.interceptors.request.use(
         } catch (e) {}
         config.headers["X-CSRFToken"] = csrfToken;
       } else {
-        console.debug("[api] no csrftoken found before unsafe request", config.url);
+        console.debug(
+          "[api] no csrftoken found before unsafe request",
+          config.url
+        );
       }
     }
     return config;

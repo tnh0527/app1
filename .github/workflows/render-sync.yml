@@ -54,6 +54,7 @@ jobs:
           DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          COOKIE_DOMAIN: ${{ secrets.COOKIE_DOMAIN }}
           SECURE_SSL_REDIRECT: ${{ secrets.SECURE_SSL_REDIRECT }}
           SESSION_COOKIE_SECURE: ${{ secrets.SESSION_COOKIE_SECURE }}
           CSRF_COOKIE_SECURE: ${{ secrets.CSRF_COOKIE_SECURE }}
@@ -73,6 +74,7 @@ jobs:
           VAR_EMAIL_HOST: ${{ vars.EMAIL_HOST }}
           VAR_EMAIL_PORT: ${{ vars.EMAIL_PORT }}
           VAR_FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+          VAR_COOKIE_DOMAIN: ${{ vars.COOKIE_DOMAIN }}
           VAR_SECURE_SSL_REDIRECT: ${{ vars.SECURE_SSL_REDIRECT }}
           VAR_SESSION_COOKIE_SECURE: ${{ vars.SESSION_COOKIE_SECURE }}
           VAR_VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
@@ -110,6 +112,7 @@ jobs:
           EMAIL_HOST="${EMAIL_HOST:-$VAR_EMAIL_HOST}"
           EMAIL_PORT="${EMAIL_PORT:-$VAR_EMAIL_PORT}"
           FRONTEND_URL="${FRONTEND_URL:-$VAR_FRONTEND_URL}"
+          COOKIE_DOMAIN="${COOKIE_DOMAIN:-$VAR_COOKIE_DOMAIN}"
           SECURE_SSL_REDIRECT="${SECURE_SSL_REDIRECT:-$VAR_SECURE_SSL_REDIRECT}"
           SESSION_COOKIE_SECURE="${SESSION_COOKIE_SECURE:-$VAR_SESSION_COOKIE_SECURE}"
           VITE_API_BASE_URL="${VITE_API_BASE_URL:-$VAR_VITE_API_BASE_URL}"
@@ -153,6 +156,7 @@ jobs:
             --arg secure_ssl_redirect "$SECURE_SSL_REDIRECT" \
             --arg session_cookie_secure "$SESSION_COOKIE_SECURE" \
             --arg csrf_cookie_secure "$CSRF_COOKIE_SECURE" \
+            --arg cookie_domain "$COOKIE_DOMAIN" \
             '[
               {key: "SECRET_KEY", value: $secret_key},
               {key: "DEBUG", value: $debug},
@@ -186,6 +190,7 @@ jobs:
               {key: "EMAIL_HOST_PASSWORD", value: $email_host_password},
               {key: "DEFAULT_FROM_EMAIL", value: $default_from_email},
               {key: "FRONTEND_URL", value: $frontend_url},
+              {key: "COOKIE_DOMAIN", value: $cookie_domain},
               {key: "VITE_API_BASE_URL", value: $vite_api_base_url},
               {key: "SECURE_SSL_REDIRECT", value: $secure_ssl_redirect},
               {key: "SESSION_COOKIE_SECURE", value: $session_cookie_secure},
