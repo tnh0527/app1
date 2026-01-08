@@ -13,6 +13,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.conf import settings
+
+from app1.cache_utils import CacheableMixin, cached_api_view, generate_cache_key
 
 from .models import (
     FinancialAccount,
@@ -43,10 +46,13 @@ from .services import (
 )
 
 
-class FinancialAccountViewSet(viewsets.ModelViewSet):
+class FinancialAccountViewSet(CacheableMixin, viewsets.ModelViewSet):
     """ViewSet for managing financial accounts."""
     
     permission_classes = [IsAuthenticated]
+    cache_ttl = settings.CACHE_TTL.get("financials_accounts", 300)
+    cache_prefix = "financials_accounts"
+    cache_per_user = True
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -291,6 +297,11 @@ class DashboardSummaryView(APIView):
     
     permission_classes = [IsAuthenticated]
     
+    @cached_api_view(
+        ttl=settings.CACHE_TTL.get("financials_summary", 600),
+        key_prefix="financials_summary",
+        include_user=True
+    )
     def get(self, request):
         service = FinancialsService(request.user)
         return Response(service.get_dashboard_summary())
@@ -301,6 +312,11 @@ class TimelineView(APIView):
     
     permission_classes = [IsAuthenticated]
     
+    @cached_api_view(
+        ttl=settings.CACHE_TTL.get("financials_snapshots", 600),
+        key_prefix="financials_timeline",
+        include_user=True
+    )
     def get(self, request):
         # Parse query params
         range_param = request.query_params.get('range', '1y')
@@ -358,6 +374,11 @@ class FullDashboardView(APIView):
     
     permission_classes = [IsAuthenticated]
     
+    @cached_api_view(
+        ttl=settings.CACHE_TTL.get("financials_summary", 600),
+        key_prefix="financials_full_dashboard",
+        include_user=True
+    )
     def get(self, request):
         user = request.user
         range_param = request.query_params.get('range', '1y')

@@ -9,3 +9,6 @@ export { SidebarContext, SidebarProvider } from "./SidebarContext";
 
 // Connection Context
 export { ConnectionProvider, useConnection } from "./ConnectionContext";
+
+// Header Context
+export { HeaderProvider, useHeader, useHeaderAction } from "./HeaderContext";

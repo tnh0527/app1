@@ -1,15 +1,17 @@
 import "./TopHeader.css";
-import { useContext, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useContext, useState, useMemo, useCallback } from "react";
+import { useLocation, Link, useParams } from "react-router-dom";
 import { ProfileContext } from "../../contexts/ProfileContext";
 import { SidebarContext } from "../../contexts/SidebarContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useHeader } from "../../contexts/HeaderContext";
 import { iconsImgs, defaultUserIcon } from "../../utils/images";
 import { Icon } from "@iconify/react";
 import { Tooltip } from "react-tooltip";
 import authApi from "../../api/authApi";
+import { getRouteConfig, resolveRouteConfig } from "../../config/routeConfig";
 
-// Page metadata for dynamic header content
+// Fallback page metadata (kept for backwards compatibility)
 const PAGE_META = {
   "/dashboard": {
     title: "Dashboard",
@@ -58,20 +60,21 @@ const TopHeader = () => {
   const { isSidebarOpen } = useContext(SidebarContext);
   const { logout } = useAuth();
   const location = useLocation();
+  const params = useParams();
+
+  // Get header context if available
+  let headerContext = null;
+  try {
+    headerContext = useHeader();
+  } catch {
+    // HeaderProvider not available, use defaults
+  }
+
   const [notificationCount] = useState(3); // Placeholder count
-  // eslint-disable-next-line no-unused-vars
   const [showNotifications, _setShowNotifications] = useState(false);
 
-  // Get page metadata based on current path
-  const getPageMeta = () => {
-    const path = "/" + location.pathname.split("/")[1];
-    return PAGE_META[path] || PAGE_META["/dashboard"];
-  };
-
-  const pageMeta = getPageMeta();
-
   // Format current date for dashboard
-  const formatDate = () => {
+  const formatDate = useCallback(() => {
     const currentTime = new Date();
     return currentTime.toLocaleDateString("en-US", {
       weekday: "long",
@@ -79,15 +82,47 @@ const TopHeader = () => {
       day: "numeric",
       year: "numeric",
     });
-  };
+  }, []);
 
-  // Get subtitle - if it's a function (dashboard), call it with the date
-  const getSubtitle = () => {
-    if (typeof pageMeta.subtitle === "function") {
-      return pageMeta.subtitle(formatDate());
+  // Get page metadata based on current path using new config system
+  const pageMeta = useMemo(() => {
+    const currentDate = formatDate();
+
+    // Try to get from route config first
+    try {
+      const routeConfig = getRouteConfig(location.pathname, params);
+      const resolved = resolveRouteConfig(routeConfig, params, currentDate);
+
+      // Apply custom overrides from context
+      if (headerContext?.customTitle) {
+        resolved.title = headerContext.customTitle;
+      }
+      if (headerContext?.customSubtitle) {
+        resolved.subtitle = headerContext.customSubtitle;
+      }
+
+      return resolved;
+    } catch {
+      // Fallback to old PAGE_META system
+      const path = "/" + location.pathname.split("/")[1];
+      const meta = PAGE_META[path] || PAGE_META["/dashboard"];
+      return {
+        ...meta,
+        subtitle:
+          typeof meta.subtitle === "function"
+            ? meta.subtitle(currentDate)
+            : meta.subtitle,
+      };
     }
-    return pageMeta.subtitle;
-  };
+  }, [
+    location.pathname,
+    params,
+    formatDate,
+    headerContext?.customTitle,
+    headerContext?.customSubtitle,
+  ]);
+
+  // Action buttons removed: header actions deprecated
 
   const handleLogout = async () => {
     try {
@@ -143,26 +178,28 @@ const TopHeader = () => {
   return (
     <header
       className={`top-header ${!isSidebarOpen ? "sidebar-collapsed" : ""}`}
+      role="banner"
     >
       <Tooltip id="header-tooltip" style={{ zIndex: "999" }} />
 
       {/* Left Section - Page Info */}
       <div className="header-left">
-        <div className="page-info">
+        <nav className="page-info" aria-label="Current page">
           <div className="page-icon-wrapper">
-            <Icon icon={pageMeta.icon} className="page-icon" />
+            <Icon
+              icon={pageMeta.icon}
+              className="page-icon"
+              aria-hidden="true"
+            />
           </div>
           <div className="page-text">
             <h1 className="page-title">{pageMeta.title}</h1>
-            <p className="page-subtitle">{getSubtitle()}</p>
+            <p className="page-subtitle">{pageMeta.subtitle}</p>
           </div>
-        </div>
+        </nav>
       </div>
 
-      {/* Center Section - Search (optional, can be expanded later) */}
-      <div className="header-center">
-        {/* Placeholder for global search - can be implemented later */}
-      </div>
+      {/* Center Section removed (action buttons and toolbar) */}
 
       {/* Right Section - Notifications & Profile */}
       <div className="header-right">

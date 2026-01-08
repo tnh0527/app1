@@ -44,7 +44,7 @@ export const iconMap = {
 export const videoMap = {
   Fog: "/videos/foggy.mp4",
   "Depositing rime fog": "/videos/foggy.mp4",
-  Windy: "/videos/windy.mp4",
+  Windy: "/videos/cloudy.mp4",
   "Drizzle: Light": "/videos/slight-rain.mp4",
   "Drizzle: Moderate": "/videos/slight-rain.mp4",
   "Drizzle: Dense": {
@@ -93,7 +93,7 @@ export const videoMap = {
     night: "/videos/cloudy-night.mp4",
   },
   default: {
-    clear: "",
-    night: "",
+    clear: "/videos/sunny-sky.mp4",
+    night: "/videos/night-sky.mp4",
   },
 };

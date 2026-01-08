@@ -4,6 +4,8 @@ import logging
 from django.conf import settings
 from django.core.cache import cache
 from rest_framework.views import APIView
+
+from .weather_codes import weather_code_descriptions
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -13,6 +15,7 @@ from .models import SavedLocation
 from .serializers import SavedLocationSerializer, SavedLocationReorderSerializer
 from .services import weather_service
 from datetime import datetime, timedelta, timezone
+from app1.cache_utils import cached_api_view, CacheableMixin, generate_cache_key
 
 logger = logging.getLogger(__name__)
 
@@ -171,12 +174,185 @@ class WeatherView(APIView):
     Air Quality:
     1. WAQI (Primary) - Detailed station data
     2. Open-Meteo AQI (Fallback)
+    
+    Caching Strategy:
+    - Weather data cached for 5-15 minutes depending on type
+    - Geocode/timezone cached for 24 hours (static data)
+    - Cache keys based on location coordinates
     """
     permission_classes = [AllowAny]
 
     # Cache TTLs (in seconds)
-    GEOCODE_CACHE_TTL = 86400  # 24 hours - locations don't change
-    TIMEZONE_CACHE_TTL = 86400  # 24 hours - timezones don't change
+    GEOCODE_CACHE_TTL = settings.CACHE_TTL.get("weather_geocode", 86400)  # 24 hours
+    TIMEZONE_CACHE_TTL = settings.CACHE_TTL.get("weather_timezone", 86400)  # 24 hours
+    WEATHER_CACHE_TTL = settings.CACHE_TTL.get("weather_forecast", 900)  # 15 minutes
+    COMBINED_CACHE_TTL = settings.WEATHER_CACHE_TTL.get("forecast", 900)
+
+    # Lightweight server-side mapping for background videos (aligns with frontend assets)
+    VIDEO_MAP = {
+        "Fog": "/videos/foggy.mp4",
+        "Depositing rime fog": "/videos/foggy.mp4",
+        "Windy": "/videos/cloudy.mp4",
+        "Drizzle: Light": "/videos/slight-rain.mp4",
+        "Drizzle: Moderate": "/videos/slight-rain.mp4",
+        "Drizzle: Dense": {
+            "day": "/videos/day-rainy.mp4",
+            "night": "/videos/night-rainy.mp4",
+        },
+        "Freezing drizzle: Light": "/videos/snowy.mp4",
+        "Freezing drizzle: Dense": "/videos/snowy.mp4",
+        "Rain: Slight": "/videos/slight-rain.mp4",
+        "Rain: Moderate": {
+            "day": "/videos/day-rainy.mp4",
+            "night": "/videos/night-rainy.mp4",
+        },
+        "Rain: Heavy": {
+            "day": "/videos/day-rainy.mp4",
+            "night": "/videos/night-rainy.mp4",
+        },
+        "Freezing rain: Light": "/videos/snowy.mp4",
+        "Freezing rain: Heavy": "/videos/snowy.mp4",
+        "Snow fall: Slight": "/videos/snowy.mp4",
+        "Snow fall: Moderate": "/videos/snowy.mp4",
+        "Snow fall: Heavy": "/videos/snowy.mp4",
+        "Rain showers: Slight": "/videos/slight-rain.mp4",
+        "Rain showers: Moderate": {
+            "day": "/videos/day-rainy.mp4",
+            "night": "/videos/night-rainy.mp4",
+        },
+        "Rain showers: Violent": "/videos/thunderstorm.mp4",
+        "Thunderstorm: Slight or moderate": "/videos/thunderstorm.mp4",
+        "Thunderstorm with slight hail": "/videos/thunderstorm.mp4",
+        "Thunderstorm with heavy hail": "/videos/thunderstorm.mp4",
+        "Clear sky": {"day": "/videos/sunny-sky.mp4", "night": "/videos/night-sky.mp4"},
+        "Mainly clear": {"day": "/videos/sunny-sky.mp4", "night": "/videos/night-sky.mp4"},
+        "Partly cloudy": {"day": "/videos/partly-cloudy.mp4", "night": "/videos/cloudy-night.mp4"},
+        "Overcast": {"day": "/videos/cloudy.mp4", "night": "/videos/cloudy-night.mp4"},
+        "default": {"day": "/videos/sunny-sky.mp4", "night": "/videos/night-sky.mp4"},
+    }
+
+    def _select_video(self, description, is_day=1):
+        mapping = self.VIDEO_MAP.get(description) or self.VIDEO_MAP.get("default")
+        if isinstance(mapping, dict):
+            return mapping.get("day" if is_day else "night") or mapping.get("day")
+        return mapping
+
+    def _find_closest_by_time(self, entries):
+        if not entries:
+            return None
+        now = datetime.now(timezone.utc)
+        best = None
+        best_diff = None
+        for item in entries:
+            t_str = item.get("time") or item.get("timestamp") or item.get("dt")
+            if not t_str:
+                continue
+            try:
+                # datetime.fromisoformat handles offset-aware strings; fallback to parse naive
+                parsed = datetime.fromisoformat(t_str.replace("Z", "+00:00"))
+            except Exception:
+                try:
+                    parsed = datetime.strptime(t_str, "%Y-%m-%d %H:%M")
+                except Exception:
+                    continue
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            diff = abs((parsed - now).total_seconds())
+            if best_diff is None or diff < best_diff:
+                best_diff = diff
+                best = item
+        return best or entries[0]
+
+    def _compute_is_day(self, current, daily, time_zone_data):
+        if current and "is_day" in current:
+            return 1 if current.get("is_day") else 0
+
+        tzid = None
+        if time_zone_data:
+            tzid = time_zone_data.get("time_zone") or time_zone_data.get("timezone")
+        tz = timezone.utc
+        if tzid:
+            try:
+                # Python 3.9+ standard library
+                from zoneinfo import ZoneInfo
+
+                tz = ZoneInfo(tzid)
+            except Exception:
+                tz = timezone.utc
+
+        try:
+            now = datetime.now(tz)
+            if daily:
+                today = daily[0]
+                sunrise = today.get("sunrise")
+                sunset = today.get("sunset")
+                if sunrise and sunset:
+                    sunrise_dt = datetime.fromisoformat(sunrise.replace("Z", "+00:00"))
+                    sunset_dt = datetime.fromisoformat(sunset.replace("Z", "+00:00"))
+                    if sunrise_dt.tzinfo is None:
+                        sunrise_dt = sunrise_dt.replace(tzinfo=timezone.utc)
+                    if sunset_dt.tzinfo is None:
+                        sunset_dt = sunset_dt.replace(tzinfo=timezone.utc)
+                    sunrise_local = sunrise_dt.astimezone(tz)
+                    sunset_local = sunset_dt.astimezone(tz)
+                    return 1 if sunrise_local <= now <= sunset_local else 0
+        except Exception:
+            pass
+        return 1
+
+    def _compute_ui_meta(self, weather_data, time_zone_data=None):
+        hourly = weather_data.get("hourly") or []
+        minutely = weather_data.get("minutely_15") or []
+        daily = weather_data.get("daily") or []
+
+        current = self._find_closest_by_time(hourly) or self._find_closest_by_time(minutely) or (hourly[0] if hourly else (minutely[0] if minutely else None))
+        # `weather_code` may be either a numeric WMO code (int) or an already
+        # human-readable description (string) depending on which upstream API
+        # produced the data. Handle both.
+        raw_weather_code = current.get("weather_code") if current else None
+        condition_code = None
+        condition = None
+        if raw_weather_code is not None and raw_weather_code != "":
+            if isinstance(raw_weather_code, (int, float)):
+                try:
+                    condition_code = int(raw_weather_code)
+                except Exception:
+                    condition_code = None
+                if condition_code is not None:
+                    condition = weather_code_descriptions.get(condition_code)
+            else:
+                # Assume it's already a description string
+                condition = str(raw_weather_code)
+        is_day = self._compute_is_day(current, daily, time_zone_data)
+
+        temps = [
+            (d.get("min_temperature"), d.get("max_temperature"))
+            for d in daily
+            if d.get("min_temperature") is not None and d.get("max_temperature") is not None
+        ]
+        if temps:
+            min_vals = [t[0] for t in temps]
+            max_vals = [t[1] for t in temps]
+            global_min = min(min_vals)
+            global_max = max(max_vals)
+            global_range = max(1, global_max - global_min)
+        else:
+            global_min = None
+            global_max = None
+            global_range = None
+
+        return {
+            "current_condition": condition,
+            # Preserve the numeric code when available; otherwise leave null.
+            "current_condition_code": condition_code,
+            "is_day": is_day,
+            "video_src": self._select_video(condition, is_day),
+            "heatbar": {
+                "min": global_min,
+                "max": global_max,
+                "range": global_range,
+            },
+        }
 
     def _get_cache_key(self, prefix, *args):
         """Generate a cache key from prefix and arguments"""
@@ -317,6 +493,29 @@ class WeatherView(APIView):
 
         lat, lng = coordinates["lat"], coordinates["lng"]
 
+        cache_key = generate_cache_key(
+            "weather_combined",
+            round(lat, 3),
+            round(lng, 3),
+        )
+        cached_combined = cache.get(cache_key)
+        if cached_combined:
+            # Recompute UI meta so day/night and video change immediately without waiting for cache expiry
+            try:
+                weather_data_cached = cached_combined.get("weather_data") or {}
+                tz_data_cached = cached_combined.get("time_zone_data") or {}
+                cached_combined = {
+                    **cached_combined,
+                    "ui_meta": self._compute_ui_meta(weather_data_cached, tz_data_cached),
+                }
+            except Exception:
+                pass
+
+            response = Response(cached_combined, status=status.HTTP_200_OK)
+            response['Cache-Control'] = f'public, max-age={self.WEATHER_CACHE_TTL}'
+            response['Vary'] = 'Accept'
+            return response
+
         time_zone_data = self.get_time_zone(lat, lng)
         if time_zone_data is None:
             return Response(
@@ -343,6 +542,7 @@ class WeatherView(APIView):
             "coordinates": coordinates,
             "air_uv_data": air_uv_data,
             "weather_data": weather_data,
+            "ui_meta": self._compute_ui_meta(weather_data, time_zone_data),
             "data_sources": {
                 "weather": weather_data.get("source", "Unknown"),
                 "air_quality": air_uv_data.get("source", "Unknown"),
@@ -351,7 +551,13 @@ class WeatherView(APIView):
             },
         }
 
-        return Response(combined_data, status=status.HTTP_200_OK)
+        cache.set(cache_key, combined_data, timeout=self.COMBINED_CACHE_TTL)
+
+        # Add HTTP cache headers
+        response = Response(combined_data, status=status.HTTP_200_OK)
+        response['Cache-Control'] = f'public, max-age={self.WEATHER_CACHE_TTL}'
+        response['Vary'] = 'Accept'
+        return response
 
 
 class WeatherAPIStatusView(APIView):
@@ -361,6 +567,8 @@ class WeatherAPIStatusView(APIView):
     """
 
     permission_classes = [AllowAny]
+    
+    @cached_api_view(ttl=3600, key_prefix="weather_status")  # 1 hour cache
 
     def get(self, request):
         api_status = weather_service.get_api_status()

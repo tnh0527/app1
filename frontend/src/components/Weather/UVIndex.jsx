@@ -1,34 +1,100 @@
 import "./UVIndex.css";
 import { useState, useEffect } from "react";
+import moment from "moment-timezone";
 
-const UVIndex = ({ hourlyUVIndex }) => {
+const UVIndex = ({ hourlyUVIndex, timeZone, sunData }) => {
   const maxUVIndex = 12;
   const [currentUVIndex, setCurrentUVIndex] = useState(null);
   const [peakUVData, setPeakUVData] = useState(null);
 
+  const resolvedTimeZone =
+    (timeZone && (timeZone.time_zone || timeZone)) || "UTC";
+
+  const normalizeUvValue = (value) => {
+    const num = Number(value);
+    if (Number.isNaN(num) || num < 0) return 0;
+    return Math.ceil(num * 10) / 10;
+  };
+
+  const computeIsDayFromSun = (sunriseISO, sunsetISO, tz) => {
+    if (sunriseISO && sunsetISO) {
+      const now = moment().tz(tz);
+      const sunrise = moment.tz(sunriseISO, tz);
+      const sunset = moment.tz(sunsetISO, tz);
+
+      if (sunrise.isValid() && sunset.isValid()) {
+        if (sunset.isBefore(sunrise)) {
+          return !(now.isAfter(sunset) && now.isBefore(sunrise));
+        }
+        return now.isSameOrAfter(sunrise) && now.isBefore(sunset);
+      }
+    }
+    return true;
+  };
+
   useEffect(() => {
     const updateUVIndex = () => {
-      if (!hourlyUVIndex) return;
-      const currentHour = new Date().getHours();
-      const currentData = hourlyUVIndex.find((hourData) => {
-        const hour = parseInt(hourData.time.split("T")[1].split(":")[0], 10);
-        return hour === currentHour;
-      });
-      if (currentData) {
-        currentData.uv_index = (
-          Math.ceil(currentData.uv_index * 10) / 10
-        ).toFixed(1);
+      if (!hourlyUVIndex || hourlyUVIndex.length === 0) {
+        setCurrentUVIndex(null);
+        setPeakUVData(null);
+        return;
       }
-      setCurrentUVIndex(currentData);
-      // console.log("UV:", currentData);
 
-      const peakData = hourlyUVIndex.reduce((prev, curr) => {
-        return curr.uv_index > prev.uv_index ? curr : prev;
-      }, hourlyUVIndex[0]);
-      if (peakData) {
-        peakData.uv_index = (Math.ceil(peakData.uv_index * 10) / 10).toFixed(1);
+      const entries = hourlyUVIndex
+        .map((hourData) => {
+          const ts = moment.tz(hourData.time, resolvedTimeZone);
+          if (!ts.isValid()) return null;
+          return {
+            ...hourData,
+            uv_index: normalizeUvValue(hourData.uv_index),
+            ts,
+          };
+        })
+        .filter(Boolean);
+
+      if (!entries.length) {
+        setCurrentUVIndex(null);
+        setPeakUVData(null);
+        return;
       }
-      setPeakUVData(peakData);
+
+      const now = moment().tz(resolvedTimeZone);
+      const closest = entries.reduce((best, item) => {
+        const diff = Math.abs(item.ts.valueOf() - now.valueOf());
+        if (!best || diff < best.diff) return { data: item, diff };
+        return best;
+      }, null)?.data;
+
+      const isDaytime = computeIsDayFromSun(
+        sunData?.sunrise,
+        sunData?.sunset,
+        resolvedTimeZone
+      );
+
+      const currentValue = closest ? normalizeUvValue(closest.uv_index) : 0;
+      setCurrentUVIndex(
+        closest
+          ? {
+              ...closest,
+              uv_index: (isDaytime ? currentValue : 0).toFixed(1),
+            }
+          : { uv_index: "0.0", time: now.toISOString() }
+      );
+
+      const peakData = entries.reduce((prev, curr) => {
+        const prevVal = normalizeUvValue(prev.uv_index);
+        const currVal = normalizeUvValue(curr.uv_index);
+        return currVal > prevVal ? curr : prev;
+      }, entries[0]);
+
+      setPeakUVData(
+        peakData
+          ? {
+              ...peakData,
+              uv_index: normalizeUvValue(peakData.uv_index).toFixed(1),
+            }
+          : null
+      );
     };
     updateUVIndex();
     const interval = setInterval(() => {
@@ -36,15 +102,13 @@ const UVIndex = ({ hourlyUVIndex }) => {
     }, 3600000); // Update every hour
 
     return () => clearInterval(interval);
-  }, [hourlyUVIndex]);
+  }, [hourlyUVIndex, resolvedTimeZone, sunData]);
 
-  const peakUVTime = peakUVData
-    ? new Date(peakUVData.time).toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "";
+  const peakMoment = peakUVData
+    ? moment.tz(peakUVData.time, resolvedTimeZone)
+    : null;
+  const peakUVTime =
+    peakMoment && peakMoment.isValid() ? peakMoment.format("h:mm A") : "";
 
   return (
     <div className={`highlight ${!currentUVIndex ? "skeleton" : ""}`}>

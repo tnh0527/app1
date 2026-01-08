@@ -13,6 +13,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.conf import settings
+
+from app1.cache_utils import CacheableMixin, cached_api_view
 
 from .models import (
     Trip,
@@ -51,10 +54,13 @@ from .services import (
 )
 
 
-class TripViewSet(viewsets.ModelViewSet):
+class TripViewSet(CacheableMixin, viewsets.ModelViewSet):
     """ViewSet for managing trips."""
     
     permission_classes = [IsAuthenticated]
+    cache_ttl = settings.CACHE_TTL.get("travel_trips", 600)
+    cache_prefix = "travel_trips"
+    cache_per_user = True
     
     def get_serializer_class(self):
         if self.action == 'create':

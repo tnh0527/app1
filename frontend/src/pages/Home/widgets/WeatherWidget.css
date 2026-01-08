@@ -897,3 +897,14 @@
     padding-bottom: 48px;
   }
 }
+
+/* Force the current main weather icon to wheat color only
+   Use high specificity and !important to override gradient/text-fill rules
+   Targets the icon inside the current-main-left area so other icons
+   in the widget remain unaffected. */
+.weather-widget .current-main .current-main-left i.current-weather-icon {
+  color: wheat !important;
+  background: none !important;
+  -webkit-text-fill-color: wheat !important;
+  -webkit-background-clip: unset !important;
+}

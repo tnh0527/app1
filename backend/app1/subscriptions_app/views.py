@@ -9,6 +9,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Sum
+from django.conf import settings
+
+from app1.cache_utils import CacheableMixin, cached_api_view
 
 from .models import (
     Subscription,
@@ -36,11 +39,14 @@ from .services import (
 )
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):
+class SubscriptionViewSet(CacheableMixin, viewsets.ModelViewSet):
     """
     ViewSet for Subscription CRUD operations.
     """
     permission_classes = [IsAuthenticated]
+    cache_ttl = settings.CACHE_TTL.get("subscriptions_list", 300)
+    cache_prefix = "subscriptions"
+    cache_per_user = True
     
     def get_queryset(self):
         return Subscription.objects.filter(user=self.request.user)
@@ -252,6 +258,11 @@ class SubscriptionDashboardView(APIView):
     """Full subscription dashboard data."""
     permission_classes = [IsAuthenticated]
     
+    @cached_api_view(
+        ttl=settings.CACHE_TTL.get("subscriptions_summary", 600),
+        key_prefix="subscriptions_dashboard",
+        include_user=True
+    )
     def get(self, request):
         analytics = SubscriptionAnalyticsService(request.user)
         alerting = SubscriptionAlertingService(request.user)
@@ -275,6 +286,11 @@ class SubscriptionSummaryView(APIView):
     """Dashboard summary endpoint."""
     permission_classes = [IsAuthenticated]
     
+    @cached_api_view(
+        ttl=settings.CACHE_TTL.get("subscriptions_summary", 600),
+        key_prefix="subscriptions_summary",
+        include_user=True
+    )
     def get(self, request):
         analytics = SubscriptionAnalyticsService(request.user)
         return Response(analytics.get_dashboard_summary())

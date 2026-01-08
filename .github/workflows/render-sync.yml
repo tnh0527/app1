@@ -53,6 +53,9 @@ jobs:
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
           DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          CACHE_ENABLED: ${{ secrets.CACHE_ENABLED }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           COOKIE_DOMAIN: ${{ secrets.COOKIE_DOMAIN }}
           SECURE_SSL_REDIRECT: ${{ secrets.SECURE_SSL_REDIRECT }}
@@ -78,6 +81,9 @@ jobs:
           VAR_SECURE_SSL_REDIRECT: ${{ vars.SECURE_SSL_REDIRECT }}
           VAR_SESSION_COOKIE_SECURE: ${{ vars.SESSION_COOKIE_SECURE }}
           VAR_VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VAR_REDIS_URL: ${{ vars.REDIS_URL }}
+          VAR_CACHE_ENABLED: ${{ vars.CACHE_ENABLED }}
+          VAR_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
 
         run: |
           set -e
@@ -116,6 +122,9 @@ jobs:
           SECURE_SSL_REDIRECT="${SECURE_SSL_REDIRECT:-$VAR_SECURE_SSL_REDIRECT}"
           SESSION_COOKIE_SECURE="${SESSION_COOKIE_SECURE:-$VAR_SESSION_COOKIE_SECURE}"
           VITE_API_BASE_URL="${VITE_API_BASE_URL:-$VAR_VITE_API_BASE_URL}"
+          REDIS_URL="${REDIS_URL:-$VAR_REDIS_URL}"
+          CACHE_ENABLED="${CACHE_ENABLED:-$VAR_CACHE_ENABLED}"
+          SENTRY_DSN="${SENTRY_DSN:-$VAR_SENTRY_DSN}"
 
           # Create a JSON array of objects {key: "...", value: "..."}
           # filtering out any values that are empty
@@ -153,6 +162,9 @@ jobs:
             --arg default_from_email "$DEFAULT_FROM_EMAIL" \
             --arg frontend_url "$FRONTEND_URL" \
             --arg vite_api_base_url "$VITE_API_BASE_URL" \
+            --arg redis_url "$REDIS_URL" \
+            --arg cache_enabled "$CACHE_ENABLED" \
+            --arg sentry_dsn "$SENTRY_DSN" \
             --arg secure_ssl_redirect "$SECURE_SSL_REDIRECT" \
             --arg session_cookie_secure "$SESSION_COOKIE_SECURE" \
             --arg csrf_cookie_secure "$CSRF_COOKIE_SECURE" \
@@ -192,6 +204,9 @@ jobs:
               {key: "FRONTEND_URL", value: $frontend_url},
               {key: "COOKIE_DOMAIN", value: $cookie_domain},
               {key: "VITE_API_BASE_URL", value: $vite_api_base_url},
+              {key: "REDIS_URL", value: $redis_url},
+              {key: "CACHE_ENABLED", value: $cache_enabled},
+              {key: "SENTRY_DSN", value: $sentry_dsn},
               {key: "SECURE_SSL_REDIRECT", value: $secure_ssl_redirect},
               {key: "SESSION_COOKIE_SECURE", value: $session_cookie_secure},
               {key: "CSRF_COOKIE_SECURE", value: $csrf_cookie_secure}

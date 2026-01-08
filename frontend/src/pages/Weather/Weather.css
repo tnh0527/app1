@@ -22,6 +22,78 @@
   /* keep the global left page padding but remove the right gap */
   padding-left: var(--page-horizontal-padding);
   padding-right: var(--page-horizontal-padding);
+  position: relative;
+}
+
+/* Top-center save error banner shown when user tries to save >5 locations */
+.save-error-top-center {
+  /* animation duration purposely matches the JS auto-dismiss timeout (6s)
+     Banner appears instantly; a short shake runs immediately; the smooth
+     fade-out happens only at the end of the duration. */
+  --save-error-duration: 6s;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(220, 35, 50, 0.95);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  z-index: 1200;
+  max-width: calc(100% - 160px);
+  /* show immediately */
+  opacity: 1;
+  transform-origin: center top;
+  animation: saveErrorSequence var(--save-error-duration)
+    cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+.save-error-top-message {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  text-align: center;
+}
+.save-error-top-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes saveErrorSequence {
+  /* 0-12%: immediate presence + quick shake
+     12%-85%: hold visible
+     85%-100%: fade/slide out */
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) rotate(0) scale(1);
+  }
+  4% {
+    transform: translateX(calc(-50% - 6px)) translateY(0) rotate(-2deg) scale(1);
+  }
+  8% {
+    transform: translateX(calc(-50% + 6px)) translateY(0) rotate(2deg) scale(1);
+  }
+  12% {
+    transform: translateX(-50%) translateY(0) rotate(0) scale(1);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.98);
+  }
 }
 
 .weather-dashboard h3 {

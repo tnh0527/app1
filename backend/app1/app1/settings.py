@@ -28,12 +28,11 @@ local_dotenv = BASE_DIR / ".env.local"
 # the environment variable `LOAD_LOCAL_DOTENV=true` on your development machine.
 if os.getenv("LOAD_LOCAL_DOTENV", "false").lower() in ("1", "true", "yes"):
     if local_dotenv.exists():
-        # dotenv_values returns a dict of key->value; write them into os.environ
-        # so they influence the rest of the settings load (SECRET_KEY, DEBUG, etc.).
-        from dotenv import dotenv_values
-        for _k, _v in dotenv_values(local_dotenv).items():
-            if _v is not None:
-                os.environ[_k] = _v
+        load_dotenv(local_dotenv, override=True)
+
+# Initialize Sentry for error tracking (must be early in settings)
+from .sentry import init_sentry
+init_sentry()
 
 
 # Quick-start development settings - unsuitable for production
@@ -103,6 +102,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Cache headers and ETags
+    "app1.cache_middleware.CacheHeadersMiddleware",
+    "app1.cache_middleware.ETagMiddleware",
+    # GZip compression
+    "django.middleware.gzip.GZipMiddleware",
 ]
 
 # CORS Configuration - specify allowed origins for security
@@ -147,7 +151,7 @@ SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_SAVE_EVERY_REQUEST = True  # Refresh session on each request
+SESSION_SAVE_EVERY_REQUEST = False  # Avoid session save/update races after logout
 
 
 ROOT_URLCONF = "app1.urls"
@@ -223,15 +227,99 @@ IEX_CLOUD_API_KEY = os.getenv("IEX_CLOUD_API_KEY", "")
 IEX_CLOUD_BASE_URL = os.getenv("IEX_CLOUD_BASE_URL", "https://cloud.iexapis.com/stable")
 
 # Caching Configuration
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "weather-cache",
-        "TIMEOUT": 900,  # 15 minutes default
-        "OPTIONS": {"MAX_ENTRIES": 1000},
-    }
+# Redis connection string from environment variable
+# Format: redis://[:password@]host[:port][/db] or rediss:// for TLS
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
+# Build Redis connection options (used by django-redis)
+_redis_options = {
+    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+    'SOCKET_CONNECT_TIMEOUT': 5,
+    'SOCKET_TIMEOUT': 5,
+    'RETRY_ON_TIMEOUT': True,
+    'CONNECTION_POOL_KWARGS': {
+        'max_connections': 50,
+        'retry_on_timeout': True,
+    },
 }
 
+# Extract password and SSL flag from the URL when present
+from urllib.parse import urlparse
+_parsed_redis = urlparse(REDIS_URL)
+_redis_password = _parsed_redis.password
+_redis_ssl = _parsed_redis.scheme == 'rediss'
+
+if _redis_password:
+    _redis_options['PASSWORD'] = _redis_password
+
+if _redis_ssl:
+    _redis_options['CONNECTION_POOL_KWARGS']['ssl'] = True
+    _redis_options['CONNECTION_POOL_KWARGS']['ssl_cert_reqs'] = None
+
+# Cache configuration - use Redis if available, fallback to LocMem
+CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'true').lower() in ('true', '1', 'yes')
+
+# Attempt to use Redis when enabled, otherwise fall back to LocMem
+if CACHE_ENABLED:
+    try:
+        import logging
+        import redis as _redis_client
+
+        _client = _redis_client.from_url(REDIS_URL, socket_connect_timeout=2)
+        _client.ping()
+
+        CACHES = {
+            "default": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": REDIS_URL,
+                "TIMEOUT": 900,  # 15 minutes default
+                "OPTIONS": _redis_options,
+                "KEY_PREFIX": "nexus",
+            },
+            # Separate cache for sessions (if using Redis for sessions)
+            "sessions": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": REDIS_URL,
+                "TIMEOUT": 1209600,  # 2 weeks
+                "OPTIONS": _redis_options,
+                "KEY_PREFIX": "nexus_session",
+            },
+        }
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Redis not reachable at %s — falling back to LocMem cache", REDIS_URL
+        )
+        CACHE_ENABLED = False
+        CACHES = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "nexus-cache",
+                "TIMEOUT": 900,
+                "OPTIONS": {"MAX_ENTRIES": 1000},
+            },
+            "sessions": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "nexus-sessions",
+                "TIMEOUT": 1209600,
+            },
+        }
+else:
+    # Explicitly disabled: use local memory cache
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "nexus-cache",
+            "TIMEOUT": 900,
+            "OPTIONS": {"MAX_ENTRIES": 1000},
+        },
+        "sessions": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "nexus-sessions",
+            "TIMEOUT": 1209600,
+        },
+    }
 # Weather Cache TTLs (in seconds)
 WEATHER_CACHE_TTL = {
     "forecast": 900,  # 15 minutes for forecast data
@@ -239,6 +327,32 @@ WEATHER_CACHE_TTL = {
     "air_quality": 1800,  # 30 minutes for AQI (doesn't change rapidly)
     "geocode": 86400,  # 24 hours for geocoding (static data)
     "timezone": 86400,  # 24 hours for timezone (static data)
+}
+
+# General Cache TTLs (in seconds) for different data types
+CACHE_TTL = {
+    # Weather-related
+    "weather_forecast": 900,      # 15 minutes
+    "weather_current": 300,       # 5 minutes
+    "weather_aqi": 1800,          # 30 minutes
+    "weather_geocode": 86400,     # 24 hours
+    "weather_timezone": 86400,    # 24 hours
+    # Financials
+    "financials_accounts": 300,   # 5 minutes (user may update frequently)
+    "financials_snapshots": 600,  # 10 minutes
+    "financials_summary": 600,    # 10 minutes
+    "stock_quote": 60,            # 1 minute (market data is time-sensitive)
+    # Subscriptions
+    "subscriptions_list": 300,    # 5 minutes
+    "subscriptions_summary": 600, # 10 minutes
+    # Travel
+    "travel_trips": 600,          # 10 minutes
+    "travel_analytics": 900,      # 15 minutes
+    # Profile
+    "profile_data": 300,          # 5 minutes
+    # General
+    "api_status": 3600,           # 1 hour
+    "static_content": 86400,      # 24 hours
 }
 
 # Password validation
@@ -352,6 +466,17 @@ LOGGING = {
         "django.server": {
             "handlers": ["console"],
             "level": "INFO" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+        # Cache logging
+        "app1.cache_utils": {
+            "handlers": ["console"] if DEBUG else ["console", "file"],
+            "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": False,
+        },
+        "app1.cache_middleware": {
+            "handlers": ["console"] if DEBUG else ["console", "file"],
+            "level": "DEBUG" if DEBUG else "INFO",
             "propagate": False,
         },
     },

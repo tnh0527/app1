@@ -63,7 +63,11 @@ const CardSlot = ({
       case "wind":
         return { windstatusData: data.windData };
       case "uv":
-        return { hourlyUVIndex: data.uvData };
+        return {
+          hourlyUVIndex: data.uvData,
+          timeZone: data.timeZone,
+          sunData: data.sunriseSunset,
+        };
       case "sunrise":
         return { sunData: data.sunriseSunset, timeZone: data.timeZone };
       case "humidity":

@@ -107,12 +107,7 @@
   text-overflow: ellipsis;
 }
 
-/* Center Section */
-.header-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
+/* Center/Action buttons removed - styles deprecated */
 
 /* Right Section */
 .header-right {
@@ -480,9 +475,7 @@
     padding: 0 16px;
   }
 
-  .header-center {
-    display: none;
-  }
+  /* header-center removed */
 
   .page-text {
     display: none;

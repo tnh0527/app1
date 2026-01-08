@@ -17,6 +17,13 @@ sqlparse==0.5.1
 tzdata==2024.2
 urllib3==2.2.3
 
+# Redis caching
+django-redis==5.4.0
+redis==5.0.1
+
+# Error tracking
+sentry-sdk[django]==2.19.2
+
 # Production dependencies
 gunicorn==23.0.0
 whitenoise==6.7.0

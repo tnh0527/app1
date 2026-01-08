@@ -636,7 +636,7 @@ export const WeatherWidget = ({
                     className={`bi ${getWeatherIcon(
                       current.weather_code,
                       current.is_day
-                    )} weather-icon-large`}
+                    )} weather-icon-large current-weather-icon`}
                   ></i>
                   <div className="temp-display">
                     <span style={{ fontSize: "42px" }} className="current-temp">

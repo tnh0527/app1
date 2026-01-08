@@ -85,6 +85,7 @@ const WeatherContent = () => {
 
   // State for saved locations
   const [savedLocationsRefresh, setSavedLocationsRefresh] = useState(0);
+  const [saveError, setSaveError] = useState(null);
   const [isLocationSaved, setIsLocationSaved] = useState(false);
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [savedLocationsList, setSavedLocationsList] = useState([]);
@@ -281,9 +282,12 @@ const WeatherContent = () => {
 
     // Check if we've reached the maximum (5 locations)
     if (savedLocationsList.length >= 5) {
-      alert(
+      // Show inline error UI instead of alert
+      setSaveError(
         "Maximum 5 locations can be saved. Please remove one to add a new location."
       );
+      // auto-clear after 6s
+      setTimeout(() => setSaveError(null), 6000);
       return;
     }
 
@@ -983,6 +987,18 @@ const WeatherContent = () => {
   return (
     <div className="main-content">
       <div className="weather-page-wrapper">
+        {saveError && (
+          <div className="save-error-top-center" role="alert">
+            <div className="save-error-top-message">{saveError}</div>
+            <button
+              className="save-error-top-close"
+              onClick={() => setSaveError(null)}
+              aria-label="Dismiss save error"
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
+          </div>
+        )}
         <div className="weather-dashboard">
           {/* Search Modal */}
           <SearchModal
@@ -1000,6 +1016,12 @@ const WeatherContent = () => {
               currentLocation={currentLocation}
               onLocationSelect={handleSavedLocationClick}
               refreshTrigger={savedLocationsRefresh}
+              onLocationsChanged={() => {
+                // parent should refresh saved locations list when children change
+                setSavedLocationsRefresh((p) => p + 1);
+                // also clear any saveError if present
+                setSaveError(null);
+              }}
             />
           </div>
           {/* Current Weather */}
@@ -1017,6 +1039,8 @@ const WeatherContent = () => {
             onSaveLocation={handleSaveLocation}
             isLocationSaved={isLocationSaved}
             isSavingLocation={isSavingLocation}
+            saveError={saveError}
+            onClearSaveError={() => setSaveError(null)}
             onSearchClick={handleSearchClick}
             onHomeClick={handleHomeClick}
             hasHomeAddress={hasHomeAddress}

@@ -18,6 +18,8 @@ const CurrentWeather = ({
   onSaveLocation,
   isLocationSaved,
   isSavingLocation,
+  saveError,
+  onClearSaveError,
   onSearchClick,
   onHomeClick,
   hasHomeAddress,
@@ -111,7 +113,7 @@ const CurrentWeather = ({
 
       // Use layout values to determine if scrollable content exists
       const { scrollLeft, scrollWidth, clientWidth } = el;
-      const canScroll = scrollWidth > clientWidth + 2; // small tolerance
+      const canScroll = scrollWidth - clientWidth > 4; // small tolerance to detect overflow
       const atLeft = scrollLeft <= 5;
       const atRight = scrollLeft + clientWidth >= scrollWidth - 5;
 
@@ -126,7 +128,8 @@ const CurrentWeather = ({
     // Run after layout to ensure children sizes are known
     const runUpdate = () => requestAnimationFrame(updateHints);
 
-    // Initial run
+    // Initial run with delay to ensure content is rendered
+    const initialTimer = setTimeout(runUpdate, 100);
     runUpdate();
 
     const el = scrollRef.current;
@@ -139,10 +142,19 @@ const CurrentWeather = ({
     const mo = new MutationObserver(runUpdate);
     mo.observe(el, { childList: true, subtree: true });
 
+    // Observe size changes to recompute scrollability when layout shifts
+    let ro = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => runUpdate());
+      ro.observe(el);
+    }
+
     return () => {
+      clearTimeout(initialTimer);
       el.removeEventListener("scroll", updateHints);
       window.removeEventListener("resize", runUpdate);
       mo.disconnect();
+      if (ro) ro.disconnect();
     };
   }, [hourlyForecast]);
 
