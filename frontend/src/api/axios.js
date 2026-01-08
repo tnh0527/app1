@@ -17,6 +17,22 @@ const getCsrfToken = () => {
   return cookieValue;
 };
 
+// Ensure the browser has a CSRF cookie by calling the session endpoint when needed.
+// Runs only when we're about to make an unsafe request and no csrftoken exists yet.
+let csrfFetchPromise = null;
+const ensureCsrfCookie = async (baseUrl) => {
+  if (getCsrfToken()) return;
+  if (!csrfFetchPromise) {
+    const url = new URL(
+      "/auth/session/",
+      baseUrl || window.location.origin
+    ).toString();
+    csrfFetchPromise = fetch(url, { credentials: "include" }).catch(() => {});
+  }
+  await csrfFetchPromise;
+  csrfFetchPromise = null;
+};
+
 // Resolve effective API base URL with a localhost fallback when running the
 // frontend on localhost. This lets you set VITE_API_BASE_URL to your
 // production backend for deployments while still running the frontend
@@ -67,11 +83,14 @@ const api = axios.create({
 
 // Interceptor to add CSRF token to every request
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const method = (config.method || "get").toLowerCase();
     // Only send CSRF token for unsafe methods.
     // Sending it on GET/HEAD triggers CORS preflight and can break if the server redirects.
     const needsCsrf = !["get", "head", "options"].includes(method);
+    if (needsCsrf && !getCsrfToken()) {
+      await ensureCsrfCookie(api.defaults.baseURL);
+    }
     if (needsCsrf) {
       const csrfToken = getCsrfToken();
       if (csrfToken) {

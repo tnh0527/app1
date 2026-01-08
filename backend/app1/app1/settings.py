@@ -18,6 +18,23 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+# Load optional local overrides for development (e.g. `.env.local`).
+# This ensures running the dev server with `.env.local` will override
+# values from `.env` so you can disable SSL redirect / secure cookies.
+local_dotenv = BASE_DIR / ".env.local"
+# Only apply local overrides when explicitly allowed. This avoids accidentally
+# overriding production environment variables if `.env.local` is present
+# in the repository or on the deployment host. To enable local overrides set
+# the environment variable `LOAD_LOCAL_DOTENV=true` on your development machine.
+if os.getenv("LOAD_LOCAL_DOTENV", "false").lower() in ("1", "true", "yes"):
+    if local_dotenv.exists():
+        # dotenv_values returns a dict of key->value; write them into os.environ
+        # so they influence the rest of the settings load (SECRET_KEY, DEBUG, etc.).
+        from dotenv import dotenv_values
+        for _k, _v in dotenv_values(local_dotenv).items():
+            if _v is not None:
+                os.environ[_k] = _v
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -347,6 +364,17 @@ LOGGING = {
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
 SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'
 CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False') == 'True'
+
+# Convenience for local development: if DEBUG is True, disable HTTPS-only redirects
+# and secure-only cookies so localhost works without special env overrides.
+# Also change SameSite from 'None' to 'Lax' because browsers reject cookies with
+# SameSite=None that don't have Secure=True.
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
 
 if not DEBUG and SECURE_SSL_REDIRECT:
     # Security Headers (only enable when actually redirecting to HTTPS)
