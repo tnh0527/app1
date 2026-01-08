@@ -8,6 +8,7 @@ import { ProfileProvider, ConnectionProvider } from "./contexts";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedLayout } from "./components";
 import ConnectionStatus from "./components/shared/ConnectionStatus";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import {
   AppShell,
   Dashboard,
@@ -153,6 +154,7 @@ function App() {
           <ProfileProvider>
             <ConnectionStatus />
             <RouterProvider router={route} />
+            <SpeedInsights />
           </ProfileProvider>
         </ConnectionProvider>
       </AuthProvider>

@@ -47,7 +47,7 @@ function _isLocalHostHost(host) {
 function _hostnameFromUrl(url) {
   try {
     return new URL(url).hostname;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
