@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 import secrets
+import logging
 from .serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializer
 from .models import User
 
@@ -43,6 +44,10 @@ class LoginView(views.APIView):
 
     @method_decorator(ensure_csrf_cookie)
     def post(self, request):
+        logger = logging.getLogger(__name__)
+        # Log whether the CSRF header is present for debugging (do not log token values in prod)
+        logger.info("LoginView: X-CSRFToken header present: %s", bool(request.headers.get('X-CSRFToken')))
+        logger.info("LoginView: META HTTP_X_CSRFTOKEN present: %s", bool(request.META.get('HTTP_X_CSRFTOKEN')))
         serializer = LoginSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             user = serializer.validated_data["user"]
@@ -74,6 +79,9 @@ class GoogleAuthView(views.APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        logger = logging.getLogger(__name__)
+        logger.info("GoogleAuthView: X-CSRFToken header present: %s", bool(request.headers.get('X-CSRFToken')))
+        logger.info("GoogleAuthView: META HTTP_X_CSRFTOKEN present: %s", bool(request.META.get('HTTP_X_CSRFTOKEN')))
         serializer = GoogleAuthSerializer(data=request.data)
         if serializer.is_valid():
             try:

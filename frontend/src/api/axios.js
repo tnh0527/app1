@@ -94,7 +94,14 @@ api.interceptors.request.use(
     if (needsCsrf) {
       const csrfToken = getCsrfToken();
       if (csrfToken) {
+        // Log presence (obfuscated) for debugging in deployed app
+        try {
+          const short = csrfToken.slice(0, 6) + "...";
+          console.debug("[api] attaching X-CSRFToken", short);
+        } catch (e) {}
         config.headers["X-CSRFToken"] = csrfToken;
+      } else {
+        console.debug("[api] no csrftoken found before unsafe request", config.url);
       }
     }
     return config;
